@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investria - Mon profil</title>
+  <script src="navbar.js" defer></script>
+  <style>
+    :root{--navy:#0b2a55;--gold:#f2b705;--bg:#f6f8fc;--card:#fff;--text:#0f172a;--muted:#64748b;--border:rgba(15,23,42,.10);--shadow:0 16px 40px rgba(2,6,23,.08)}
+    *{box-sizing:border-box} body{margin:0;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    .navbar a,.navbar a:visited,.navbar a:hover,.navbar a:active,.navbar a:focus,.brand,.brand:visited,.brand:hover,.brand:active,.brand:focus{text-decoration:none!important}
+    .container{max-width:1180px;margin:24px auto 60px;padding:0 16px}
+    .head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+    .title{margin:0;color:var(--navy);font-size:30px;font-weight:1000}
+    .btn{border:0;cursor:pointer;border-radius:14px;padding:10px 14px;font-weight:900}
+    .btn.primary{color:#fff;background:linear-gradient(180deg,#123b77,#0b2a55)}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px}
+    .card h3{margin:0 0 10px;color:var(--navy)}
+    .top{display:flex;flex-direction:column;gap:14px;align-items:center;padding-bottom:12px;border-bottom:1px solid rgba(15,23,42,.08);margin-bottom:12px}
+#v_avatar{
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  object-fit:cover;
+  border:0;
+  background:transparent;
+  flex:0 0 auto;
+}
+@media (max-width:900px){#v_avatar{width:190px;height:190px}}
+@media (max-width:560px){#v_avatar{width:160px;height:160px}}
+    .name{margin:0;font-size:20px;font-weight:1000;color:var(--navy)}
+    .pill{display:inline-flex;align-items:center;gap:7px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);font-size:12px;font-weight:900}
+    .statusTop{position:absolute;top:14px;right:14px;z-index:2}
+    .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+    .dot.ok{background:#16a34a}
+    .dl{display:grid;grid-template-columns:220px 1fr;border:1px solid rgba(15,23,42,.08);border-radius:14px;overflow:hidden}
+    @media (max-width:560px){.dl{grid-template-columns:1fr}}
+    .dt,.dd{padding:11px 12px;border-top:1px solid rgba(15,23,42,.07)}
+    .dt{font-size:12px;font-weight:900;text-transform:uppercase;color:#334155;background:rgba(11,42,85,.03)}
+    .dd{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:800}
+    .copy{border:1px solid rgba(11,42,85,.15);background:#fff;border-radius:10px;padding:6px 10px;font-size:12px;font-weight:900;cursor:pointer}
+    .doc{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:10px 11px;margin-top:9px}
+    .doc p{margin:0}
+    .doc b{color:var(--navy);text-transform:uppercase;font-size:13px}
+    .doc small{color:var(--muted)}
+    .open{border:1px solid rgba(11,42,85,.16);border-radius:12px;padding:8px 10px;font-weight:900;color:#fff;background:linear-gradient(180deg,#123b77,#0b2a55)}
+    .hint{margin-top:10px;font-size:13px;color:#55657d;border:1px dashed rgba(11,42,85,.18);border-radius:12px;padding:10px}
+    .overlay{position:fixed;inset:0;background:rgba(2,6,23,.45);display:none;align-items:center;justify-content:center;z-index:3000;padding:14px}
+    .overlay.open{display:flex}
+    .modal{width:min(900px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px}
+    .mhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .span2{grid-column:span 2}
+    @media (max-width:820px){.form{grid-template-columns:1fr}.span2{grid-column:span 1}}
+    label{display:block;margin:0 0 5px;font-size:12px;text-transform:uppercase;font-weight:900;color:#1e3a8a}
+    input,textarea{width:100%;border:1px solid var(--border);border-radius:12px;padding:10px 11px;outline:none}
+    textarea{min-height:84px;resize:vertical}
+    .chips{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:5px 10px;font-size:12px;font-weight:800;cursor:pointer;user-select:none}
+    .chip.selected{border-color:#1d4ed8;background:rgba(29,78,216,.10);color:#1e3a8a}
+    .chip input{accent-color:#1d4ed8}
+    .hidden{display:none}
+    .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+    .msg{display:none;margin-top:10px;padding:10px 12px;border-radius:12px;font-size:13px;font-weight:800}
+    .ok{background:rgba(22,163,74,.10);border:1px solid rgba(22,163,74,.25);color:#14532d}
+    .err{background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.25);color:#7f1d1d}
+  </style>
+</head>
+<body>
+<main class="container">
+  <div class="head">
+    <h1 class="title">Mon profil</h1>
+    <button class="btn primary" id="editBtn" type="button">Modifier</button>
+  </div>
+  <section class="grid">
+    <article class="card">
+      <h3>Mes informations</h3>
+      <span class="pill statusTop" id="pill"><span class="dot" id="dot"></span><span id="v_statut">-</span></span>
+      <div class="top">
+        <img class="avatar" id="v_avatar" src="https://via.placeholder.com/160x160.png?text=Avatar" alt="Avatar">
+      </div>
+      <div class="dl">
+        <div class="dt">Nom</div><div class="dd"><span id="v_nom">-</span></div>
+        <div class="dt">Email</div><div class="dd"><span id="v_email">-</span></div>
+        <div class="dt">Telephone</div><div class="dd"><span id="v_tel">-</span></div>
+        <div class="dt">CIN</div><div class="dd"><span id="v_cin">-</span></div>
+        <div class="dt">Date naissance</div><div class="dd"><span id="v_dob">-</span></div>
+        <div class="dt">Nationalite</div><div class="dd"><span id="v_nat">-</span></div>
+        <div class="dt">Adresse</div><div class="dd"><span id="v_addr_user">-</span></div>
+        <div class="dt">Ville</div><div class="dd"><span id="v_city">-</span></div>
+        <div class="dt">Adresse profil</div><div class="dd"><span id="v_addr">-</span></div>
+        <div class="dt">RIB</div><div class="dd"><span id="v_rib">-</span></div>
+        <div class="dt">Bio</div><div class="dd"><span id="v_bio">-</span></div>
+        <div class="dt">Autre secteur</div><div class="dd"><span id="v_autre">-</span></div>
+        <div class="dt">Secteurs</div><div class="dd"><span id="v_secteurs">-</span></div>
+      </div>
+      <div class="hint">Astuce : gardez vos informations a jour pour accelerer la validation.</div>
+    </article>
+    <article class="card">
+      <h3>Mes documents</h3>
+      <div class="doc"><div><p><b>CIN Recto</b></p><small id="m_cinRectoUrl">Aucun fichier</small></div><a class="open" id="o_cinRectoUrl" href="#" target="_blank">Ouvrir PDF</a></div>
+      <div class="doc"><div><p><b>CIN Verso</b></p><small id="m_cinVersoUrl">Aucun fichier</small></div><a class="open" id="o_cinVersoUrl" href="#" target="_blank">Ouvrir PDF</a></div>
+      <div class="doc"><div><p><b>Justificatif domicile</b></p><small id="m_justificatifDomicileUrl">Aucun fichier</small></div><a class="open" id="o_justificatifDomicileUrl" href="#" target="_blank">Ouvrir PDF</a></div>
+      <div class="doc"><div><p><b>Registre commerce</b></p><small id="m_registreCommerceUrl">Aucun fichier</small></div><a class="open" id="o_registreCommerceUrl" href="#" target="_blank">Ouvrir PDF</a></div>
+      <div class="doc"><div><p><b>Patente</b></p><small id="m_patenteUrl">Aucun fichier</small></div><a class="open" id="o_patenteUrl" href="#" target="_blank">Ouvrir PDF</a></div>
+      <div class="doc"><div><p><b>Matricule fiscal</b></p><small id="m_matriculeFiscalUrl">Aucun fichier</small></div><a class="open" id="o_matriculeFiscalUrl" href="#" target="_blank">Ouvrir PDF</a></div>
+      <div class="doc"><div><p><b>Carte fiscale</b></p><small id="m_carteFiscaleUrl">Aucun fichier</small></div><a class="open" id="o_carteFiscaleUrl" href="#" target="_blank">Ouvrir PDF</a></div>
+      <div class="hint">Conseil : privilegiez des PDF lisibles pour eviter les refus.</div>
+    </article>
+  </section>
+  <div id="okMsg" class="msg ok"></div>
+  <div id="errMsg" class="msg err"></div>
+</main>
+
+<div class="overlay" id="ov">
+  <div class="modal">
+    <div class="mhead"><h3>Modifier mon profil</h3><button class="btn" id="closeEditBtn" type="button">Fermer</button></div>
+    <form id="editForm" novalidate>
+      <div class="form">
+        <div><label for="f_nom">Nom</label><input id="f_nom"></div>
+        <div><label for="f_prenom">Prenom</label><input id="f_prenom"></div>
+        <div><label for="f_telephone">Telephone</label><input id="f_telephone"></div>
+        <div><label for="f_cin">CIN</label><input id="f_cin"></div>
+        <div><label for="f_dateNaissance">Date naissance</label><input id="f_dateNaissance" type="date"></div>
+        <div><label for="f_nationalite">Nationalite</label><input id="f_nationalite"></div>
+        <div><label for="f_adresseUser">Adresse user</label><input id="f_adresseUser"></div>
+        <div><label for="f_ville">Ville</label><input id="f_ville"></div>
+        <div class="span2"><label for="f_adresseProfil">Adresse profil</label><input id="f_adresseProfil"></div>
+        <div><label for="f_rib">RIB</label><input id="f_rib" maxlength="34"></div>
+        <div>
+          <label>Photo profil</label>
+          <input id="f_photoUrl" type="hidden">
+          <button class="btn" id="uploadPhotoBtn" type="button">Charger une image</button>
+          <div id="f_photoName" class="help">Aucune image</div>
+        </div>
+        <div class="span2"><label for="f_bio">Bio</label><textarea id="f_bio"></textarea></div>
+        <div class="span2">
+          <label>Secteurs</label>
+          <div class="chips" id="secteursGroup">
+            <label class="chip"><input type="checkbox" value="AGRITECH"> AGRITECH</label>
+            <label class="chip"><input type="checkbox" value="EDTECH"> EDTECH</label>
+            <label class="chip"><input type="checkbox" value="FINTECH"> FINTECH</label>
+            <label class="chip"><input type="checkbox" value="HEALTHTECH"> HEALTHTECH</label>
+            <label class="chip"><input type="checkbox" value="GREENTECH"> GREENTECH</label>
+            <label class="chip"><input type="checkbox" value="INDUSTRIE"> INDUSTRIE</label>
+            <label class="chip"><input type="checkbox" value="SERVICES"> SERVICES</label>
+            <label class="chip"><input id="f_secteurAutreChk" type="checkbox" value="AUTRE"> AUTRE</label>
+          </div>
+          <div id="autreSecteurWrap" class="hidden"><label for="f_autreSecteur">Precisez autre secteur *</label><input id="f_autreSecteur"></div>
+        </div>
+      </div>
+      <div class="actions"><button class="btn" id="cancelEditBtn" type="button">Annuler</button><button class="btn primary" type="submit">Enregistrer</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+const AUTRE_MARKER="[AUTRE_SECTEUR]"; let currentPayload={user:null,profil:null};
+function withBridge(ok,ko){const s=Date.now();const t=setInterval(()=>{if(window.javaBridge){clearInterval(t);ok(window.javaBridge);return;}if(Date.now()-s>2500){clearInterval(t);if(ko)ko();}},100);}
+function showOk(m){const b=document.getElementById("okMsg");b.textContent=m;b.style.display="block";document.getElementById("errMsg").style.display="none";}
+function showErr(m){const b=document.getElementById("errMsg");b.textContent=m;b.style.display="block";document.getElementById("okMsg").style.display="none";}
+function splitBioAndAutre(b){const l=(b||"").split(/\r?\n/);let a="";const k=[];l.forEach(x=>{const t=x.trim();if(t.startsWith(AUTRE_MARKER))a=t.replace(AUTRE_MARKER,"").trim();else if(t)k.push(x);});return{bio:k.join("\n"),autre:a};}
+function st(id,v){const e=document.getElementById(id);if(!e)return;e.textContent=(v&&String(v).trim())?v:"-";}
+function href(p){if(!p||!String(p).trim())return"";const s=String(p).trim();if(s.startsWith("file:/")||s.startsWith("http://")||s.startsWith("https://"))return encodeURI(s);return encodeURI("file:///"+s.replaceAll("\\","/"));}
+function fname(p){if(!p)return"";const s=String(p).replaceAll("\\","/");const i=s.lastIndexOf("/");return i>=0?s.substring(i+1):s;}
+function setDoc(k,p){const a=document.getElementById("o_"+k),m=document.getElementById("m_"+k);if(!p||!String(p).trim()){a.style.pointerEvents="none";a.style.opacity=".45";a.removeAttribute("href");a.onclick=null;m.textContent="Aucun fichier";return;}a.href=href(p);a.target="_self";a.dataset.path=String(p);a.onclick=(ev)=>{ev.preventDefault();withBridge((b)=>{if(typeof b.openFile==="function"){const r=b.openFile(a.dataset.path||"");if(r==="OK")return;}window.location.href=a.href;},()=>{window.location.href=a.href;});};a.style.pointerEvents="auto";a.style.opacity="1";m.textContent=fname(p);}
+function normalizeRib(v){return (v||"").replace(/\s+/g,"").trim();}
+function isValidRib(v){const r=normalizeRib(v);if(!r)return true;return /^[0-9]{10,34}$/.test(r);}
+function getCheckedSecteursCsv(){return Array.from(document.querySelectorAll('#secteursGroup input[type="checkbox"]:checked')).map(c=>c.value).join(",");}
+function syncSecteurChipsUI(){document.querySelectorAll('#secteursGroup .chip').forEach(chip=>{const cb=chip.querySelector('input[type="checkbox"]');if(!cb)return;chip.classList.toggle("selected",!!cb.checked);});}
+function setCheckedSecteurs(csv){const set=new Set((csv||"").split(",").map(s=>s.trim()).filter(Boolean));document.querySelectorAll('#secteursGroup input[type="checkbox"]').forEach(c=>c.checked=set.has(c.value));syncSecteurChipsUI();toggleAutreSecteurInput();}
+function toggleAutreSecteurInput(){const c=document.getElementById("f_secteurAutreChk"),w=document.getElementById("autreSecteurWrap"),i=document.getElementById("f_autreSecteur"),sh=!!(c&&c.checked);w.classList.toggle("hidden",!sh);i.required=sh;if(!sh)i.value="";}
+function render(payload){currentPayload=payload||{user:null,profil:null};const u=currentPayload.user||{},p=currentPayload.profil||{},x=splitBioAndAutre(p.bio||"");
+  st("v_fullName",([u.nom||"",u.prenom||""].join(" ").trim()||"-"));st("v_nom",u.nom);st("v_prenom",u.prenom);st("v_email",u.email);st("v_tel",u.telephone);st("v_cin",u.cin);st("v_dob",u.dateNaissance);st("v_nat",u.nationalite);st("v_addr_user",u.adresse);st("v_city",u.ville);st("v_addr",p.adresse);st("v_rib",p.rib);st("v_bio",x.bio);st("v_autre",x.autre);st("v_secteurs",p.secteurs);
+  st("v_statut",u.statutVerification||"-");const dot=document.getElementById("dot"),pill=document.getElementById("pill");dot.classList.toggle("ok",u.statutVerification==="VERIFIE");pill.classList.toggle("ok",u.statutVerification==="VERIFIE");
+  const ph=document.getElementById("v_avatar");
+  const photoRaw=(p.photoUrl&&String(p.photoUrl).trim())?String(p.photoUrl).trim():"";
+  if(!photoRaw){ph.src="https://via.placeholder.com/500x500.png?text=Photo";}
+  else{
+    withBridge((b)=>{
+      if(typeof b.normalizeLocalFileUri==="function"){
+        const uri=b.normalizeLocalFileUri(photoRaw);
+        if(uri){ph.src=uri;return;}
+      }
+      if(typeof b.readImageAsDataUrl==="function"){
+        const data=b.readImageAsDataUrl(photoRaw);
+        if(data && !String(data).startsWith("ERROR:")){ph.src=data;return;}
+      }
+      ph.src=href(photoRaw);
+    },()=>{ph.src=href(photoRaw);});
+  }
+  ph.onerror=()=>{ph.src="https://via.placeholder.com/500x500.png?text=Photo";};
+  setDoc("cinRectoUrl",p.cinRectoUrl);setDoc("cinVersoUrl",p.cinVersoUrl);setDoc("justificatifDomicileUrl",p.justificatifDomicileUrl);setDoc("registreCommerceUrl",p.registreCommerceUrl);setDoc("patenteUrl",p.patenteUrl);setDoc("matriculeFiscalUrl",p.matriculeFiscalUrl);setDoc("carteFiscaleUrl",p.carteFiscaleUrl);}
+function fillForm(){const u=currentPayload.user||{},p=currentPayload.profil||{},x=splitBioAndAutre(p.bio||"");
+  ["nom","prenom","telephone","cin","dateNaissance","nationalite","ville"].forEach(k=>document.getElementById("f_"+k).value=u[k]||"");
+  document.getElementById("f_adresseUser").value=u.adresse||"";document.getElementById("f_adresseProfil").value=p.adresse||"";document.getElementById("f_rib").value=p.rib||"";document.getElementById("f_photoUrl").value=p.photoUrl||"";document.getElementById("f_photoName").textContent=p.photoUrl?"Image chargee":"Aucune image";document.getElementById("f_bio").value=x.bio||"";document.getElementById("f_autreSecteur").value=x.autre||"";setCheckedSecteurs(p.secteurs||"");}
+function openEdit(){fillForm();document.getElementById("ov").classList.add("open");}
+function closeEdit(){document.getElementById("ov").classList.remove("open");}
+function refresh(){withBridge((b)=>{if(typeof b.getCurrentUserWithProfil!=="function")return showErr("Bridge: getCurrentUserWithProfil indisponible.");render(JSON.parse(b.getCurrentUserWithProfil()||"{}"));},()=>showErr("Bridge Java indisponible."));}
+document.getElementById("editBtn").addEventListener("click",openEdit);document.getElementById("closeEditBtn").addEventListener("click",closeEdit);document.getElementById("cancelEditBtn").addEventListener("click",closeEdit);document.getElementById("f_secteurAutreChk").addEventListener("change",toggleAutreSecteurInput);
+document.querySelectorAll('#secteursGroup input[type="checkbox"]').forEach(cb=>cb.addEventListener("change",()=>{syncSecteurChipsUI();toggleAutreSecteurInput();}));
+document.getElementById("uploadPhotoBtn").addEventListener("click",()=>withBridge((b)=>{if(typeof b.uploadImage!=="function")return showErr("Bridge: uploadImage indisponible.");const r=b.uploadImage("photo_profil");if(!r)return;if(r.startsWith("ERROR:"))return showErr(r.replace("ERROR:",""));document.getElementById("f_photoUrl").value=r;document.getElementById("f_photoName").textContent="Image chargee";showOk("Photo chargee avec succes.");},()=>showErr("Bridge Java indisponible.")));
+document.getElementById("editForm").addEventListener("submit",(e)=>{e.preventDefault();const rib=document.getElementById("f_rib").value;if(!isValidRib(rib))return showErr("RIB invalide. Utilisez uniquement des chiffres (10 a 34).");if(document.getElementById("f_secteurAutreChk").checked&&!document.getElementById("f_autreSecteur").value.trim())return showErr("Veuillez preciser le secteur AUTRE.");
+  withBridge((b)=>{if(typeof b.updateCurrentUserAndProfil!=="function")return showErr("Bridge: updateCurrentUserAndProfil indisponible.");const res=b.updateCurrentUserAndProfil(
+    document.getElementById("f_nom").value.trim(),document.getElementById("f_prenom").value.trim(),document.getElementById("f_telephone").value.trim(),document.getElementById("f_cin").value.trim(),document.getElementById("f_dateNaissance").value.trim(),document.getElementById("f_nationalite").value.trim(),document.getElementById("f_adresseUser").value.trim(),document.getElementById("f_ville").value.trim(),document.getElementById("f_adresseProfil").value.trim(),normalizeRib(rib),document.getElementById("f_bio").value.trim(),document.getElementById("f_photoUrl").value.trim(),getCheckedSecteursCsv(),document.getElementById("f_autreSecteur").value.trim());
+    if(res==="OK"){
+      closeEdit();
+      refresh();
+      try {
+        if (typeof window.__refreshNavbarUser === "function") {
+          window.__refreshNavbarUser();
+        } else {
+          window.dispatchEvent(new CustomEvent("investia:user-updated"));
+        }
+      } catch (e) {}
+      showOk("Profil mis a jour avec succes.");
+      return;
+    }
+    showErr((res||"ERROR").replace("ERROR:",""));
+  },()=>showErr("Bridge Java indisponible."));
+});
+try{if(sessionStorage.getItem("openProfileEdit")==="1"){sessionStorage.removeItem("openProfileEdit");setTimeout(openEdit,120);}}catch(e){}
+syncSecteurChipsUI();
+refresh();
+</script>
+</body>
+</html>

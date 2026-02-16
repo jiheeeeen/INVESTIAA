@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Investia — Inscription</title>
+
+    <!-- ✅ WebView: pas de /css/... => chemin relatif -->
+    <link rel="stylesheet" href="../css/signup.css">
+</head>
+
+<body>
+<div class="wrap">
+
+    <!-- Left info panel -->
+    <section class="hero">
+        <div>
+            <div class="brand">
+                <div class="logo">
+                    <span class="mark" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M4 14.5c4.5-6 9.5-6 16-9.5" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+                        <path d="M6 19c2.5-4.5 7-6 13-8" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>
+                      </svg>
+                    </span>
+                    Investia
+                </div>
+                <span class="badge"><span class="dot"></span>Inscription</span>
+            </div>
+
+            <h1>Créez votre compte</h1>
+            <p>Accédez à une expérience simple et sécurisée pour publier des projets et financer des idées ambitieuses.</p>
+
+            <div class="features">
+                <div class="feat">
+                    <div class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M7 7h10M7 11h10M7 15h7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div><b>Projets validés</b><span>Validation avant publication.</span></div>
+                </div>
+
+                <div class="feat">
+                    <div class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M4 12h5l2 7 4-14 2 7h3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div><b>Suivi clair</b><span>Montants, étapes, transparence.</span></div>
+                </div>
+
+                <div class="feat">
+                    <div class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2l8 4v6c0 5-3 9-8 10-5-1-8-5-8-10V6l8-4Z" stroke="white" stroke-width="2"/>
+                            <path d="M9 12l2 2 4-5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div><b>Sécurité</b><span>Rôles et contrôle d’accès.</span></div>
+                </div>
+
+                <div class="feat">
+                    <div class="icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 3v18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M8 8h7a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h7" stroke="white" stroke-width="2" stroke-linecap="round" opacity=".9"/>
+                        </svg>
+                    </div>
+                    <div><b>Financement simple</b><span>Investisseur & entrepreneur.</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Signup form -->
+    <section class="card">
+        <p class="subtitle">Créez votre compte en quelques secondes.</p>
+
+        <form id="signupForm" novalidate>
+            <div class="grid">
+                <div>
+                    <label for="fullName">Nom complet <small>*</small></label>
+                    <input id="fullName" name="fullName" required maxlength="80" placeholder="Ex : Amira Ben Salah" />
+                </div>
+
+                <div>
+                    <label for="phone">Téléphone <small>*</small></label>
+                    <input id="phone" name="phone" required placeholder="Ex : +216 22 333 444" />
+                </div>
+
+                <div class="span2">
+                    <label for="email">Email <small>*</small></label>
+                    <input id="email" name="email" type="email" required placeholder="Ex : amira@email.com" />
+                    <div class="help">L’email doit être unique.</div>
+                </div>
+
+                <div>
+                    <label for="role">Rôle <small>*</small></label>
+                    <select id="role" name="role" required>
+                        <option value="">Choisir…</option>
+                        <option value="ENTREPRENEUR">Entrepreneur</option>
+                        <option value="INVESTISSEUR">Investisseur</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="cin">CIN <small>optionnel</small></label>
+                    <input id="cin" name="cin" maxlength="12" placeholder="Ex : 12345678" />
+                </div>
+
+                <div>
+                    <label for="password">Mot de passe <small>*</small></label>
+                    <input id="password" name="password" type="password" required minlength="8" placeholder="Minimum 8 caractères" />
+                </div>
+
+                <div>
+                    <label for="confirmPassword">Confirmer <small>*</small></label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" required minlength="8" placeholder="Répétez le mot de passe" />
+                </div>
+
+                <div class="span2">
+                    <label class="check" style="margin:0; text-transform:none; letter-spacing:0; font-weight:800;">
+                        <input id="terms" type="checkbox" required />
+                        J’accepte les conditions d’utilisation et la politique de confidentialité.
+                    </label>
+                </div>
+            </div>
+
+            <div class="alert error" id="errorBox"></div>
+            <div class="alert ok" id="okBox"></div>
+
+            <div class="row">
+                <button type="submit" id="signupBtn" class="btn primary">Créer mon compte</button>
+            </div>
+
+            <div class="divider">
+                <span>Déjà un compte ?</span>
+                <a href="#" id="goLoginLink" class="link">Se connecter →</a>
+            </div>
+        </form>
+    </section>
+</div>
+
+<!-- ✅ WebView: pas de /js/... => chemin relatif -->
+<script src="../js/signup.js"></script>
+</body>
+</html>

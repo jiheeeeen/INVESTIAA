@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investra — Modifier un projet</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.10);
+      --shadow:0 14px 35px rgba(15,23,42,.08);
+      --primary:#1d4ed8;
+      --accent:#06b6d4;
+      --success:#16a34a;
+      --danger:#ef4444;
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    .container{max-width:1120px; margin:28px auto 60px; padding:0 16px;}
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:16px;
+    }
+    .breadcrumb{
+      display:flex; gap:10px; align-items:center; color:var(--muted); font-size:14px;
+    }
+
+    .btn{
+      border:0; cursor:pointer; font-weight:800; font-size:14px;
+      padding:10px 14px; border-radius:12px;
+      display:inline-flex; align-items:center; gap:8px;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .btn.primary{
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+      color:#fff; box-shadow:0 10px 20px rgba(29,78,216,.18);
+    }
+    .btn.ghost{
+      background:#fff; border:1px solid var(--border); color:var(--text);
+    }
+    .btn:hover{transform:translateY(-1px); filter:brightness(1.02);}
+    .btn:active{transform:translateY(0);}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+
+    .hero{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+      overflow:hidden;
+      position:relative;
+      margin-bottom:18px;
+    }
+    .hero::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(700px 220px at 12% 0%, rgba(29,78,216,.10), transparent 55%),
+        radial-gradient(700px 260px at 98% 20%, rgba(6,182,212,.10), transparent 55%);
+      pointer-events:none;
+    }
+    .hero-inner{position:relative; z-index:1; display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 10px; border-radius:999px;
+      font-size:12px; font-weight:800;
+      border:1px solid rgba(29,78,216,.18);
+      background:rgba(29,78,216,.06);
+      color:#0b2a55;
+    }
+    .dot{width:8px;height:8px;border-radius:50%;
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow:0 0 0 3px rgba(6,182,212,.14);
+    }
+    h1{margin:10px 0 6px; font-size:30px; letter-spacing:.2px;}
+    .pitch{margin:0; color:var(--muted); line-height:1.6; max-width:80ch; font-size:14.5px;}
+    .actions{display:flex; gap:10px; flex-wrap:wrap;}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
+
+    .section-title{
+      margin:0 0 10px;
+      font-size:18px;
+      letter-spacing:.2px;
+      font-weight:900;
+    }
+    .muted{color:var(--muted)}
+    .small{font-size:12px; color:var(--muted); line-height:1.4; margin-top:6px;}
+
+    label{
+      display:block;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.25px;
+      color:#0b2a55;
+      font-weight:900;
+      margin:0 0 6px;
+    }
+    input, select, textarea{
+      width:100%;
+      padding:11px 12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      outline:none;
+      font-size:14px;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    textarea{min-height:110px; resize:vertical;}
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(29,78,216,.35);
+      box-shadow: 0 0 0 4px rgba(29,78,216,.10);
+    }
+
+    .field{margin-bottom:12px;}
+    .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    @media (max-width: 650px){ .row2{grid-template-columns:1fr;} }
+
+    .alert{
+      display:none;
+      margin-top:12px;
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:13px;
+      line-height:1.4;
+      font-weight:800;
+    }
+    .alert.error{border:1px solid rgba(239,68,68,.25); background:rgba(239,68,68,.08); color:#7f1d1d;}
+    .alert.ok{border:1px solid rgba(22,163,74,.25); background:rgba(22,163,74,.08); color:#14532d;}
+
+    .summary{
+      position: sticky;
+      top: 16px;
+    }
+    .kpi-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+    .kpi{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:10px;
+    }
+    .kpi .label{font-size:12px; color:var(--muted); font-weight:700;}
+    .kpi .val{font-size:18px; font-weight:900; margin-top:4px;}
+      .navbar{
+      position:sticky;
+      top:0;
+      z-index:999;
+      background:#fff;
+      border-bottom:1px solid rgba(15,23,42,.08);
+      box-shadow:0 8px 24px rgba(15,23,42,.06);
+    }
+    .nav-inner{max-width:100%;margin:0;padding:10px 18px 10px 10px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
+     param($m) $m.Value -replace 'color:#0f172a;', 'color:#1e3a8a;' 
+    .nav-links a{padding:6px 0; border-bottom:3px solid transparent; color:#1e3a8a; font-weight:800; letter-spacing:.2px;}
+    .nav-links a.active{color:#d97706; border-bottom-color:#d97706;}
+    .nav-links a:hover{color:#d97706;}
+    .nav-user{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:14px;
+      color:#334155;
+    }
+    .avatar{
+      width:30px;height:30px;border-radius:50%;
+      background:#e2e8f0;display:inline-flex;align-items:center;justify-content:center;
+      font-weight:800;color:#0f172a;
+    }      .brand .ia{color:#d97706;}  </style>
+<script src="navbar.js" defer></script></head>
+<body>  
+  <main class="container">
+
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="projet_view.html">← Retour</a>
+        <span>•</span>
+        <span>Projets</span>
+        <span>•</span>
+        <strong class="muted">Modifier un projet</strong>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" type="button" onclick="document.getElementById('projectForm').reset(); refreshKpis();">
+          Réinitialiser
+        </button>
+        <button class="btn ghost" type="button" onclick="setStatusPendingAndSubmit();">
+          Publier
+        </button>
+        <button class="btn primary" type="button" onclick="document.getElementById('projectForm').requestSubmit();">
+          Mettre à jour
+        </button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-inner">
+        <div>
+          <span class="badge"><span class="dot"></span>Projet • Statut : <span id="heroStatut">—</span></span>
+          <h1>Modifier un projet</h1>
+          <p class="pitch">
+            Formulaire aligné avec la table projet. Le champ ID est requis pour identifier le projet.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <form id="projectForm" novalidate>
+      <section class="grid">
+
+        <div>
+          <section class="card">
+            <h2 class="section-title">1) Identification</h2>
+
+            <div class="row2">
+              <div class="field">
+                <label for="idProjet">ID Projet *</label>
+                <input id="idProjet" name="idProjet" type="number" min="1" required placeholder="Ex : 101">
+              </div>
+              <div class="field">
+                <label for="entrepreneurId">Entrepreneur ID *</label>
+                <input id="entrepreneurId" name="entrepreneurId" type="number" min="1" required placeholder="Ex : 42">
+              </div>
+            </div>
+
+            <input id="statut" name="statut" type="hidden" value="">
+
+            <div class="row2">
+              <div class="field">
+                <label for="titre">Titre *</label>
+                <input id="titre" name="titre" required maxlength="80" placeholder="Ex : SmartFarm">
+              </div>
+              <div class="field">
+                <label for="secteur">Secteur *</label>
+                <select id="secteur" name="secteur" required>
+                  <option value="">Choisir…</option>
+                  <option>AgriTech</option>
+                  <option>GreenTech</option>
+                  <option>Énergie / Rural</option>
+                  <option>Santé / Logistique</option>
+                  <option>Industrie / Écologie</option>
+                  <option>EdTech</option>
+                  <option>Autre</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label for="descriptionCourte">Description courte *</label>
+                <input id="descriptionCourte" name="descriptionCourte" required maxlength="140"
+                       placeholder="Résumé court pour l'affichage">
+              </div>
+              <div class="field">
+                <label for="descriptionLongue">Description longue</label>
+                <textarea id="descriptionLongue" name="descriptionLongue"
+                          placeholder="Détails du projet (optionnel)"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" style="margin-top:18px;">
+            <h2 class="section-title">2) Campagne</h2>
+
+            <div class="row2">
+              <div class="field">
+                <label for="objectifTnd">Objectif (TND) *</label>
+                <input id="objectifTnd" name="objectifTnd" type="number" min="1000" step="any" required>
+              </div>
+              <div class="field">
+                <label for="dureeCampagneJours">Durée campagne (jours) *</label>
+                <input id="dureeCampagneJours" name="dureeCampagneJours" type="number" min="7" max="365" step="1" required>
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label for="modeRemboursement">Mode remboursement *</label>
+                <select id="modeRemboursement" name="modeRemboursement" required>
+                  <option value="">Choisir…</option>
+                  <option>MENSUEL</option>
+                  <option>TRIMESTRIEL</option>
+                  <option>SEMESTRIEL</option>
+                  <option>ANNU</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="tauxInteretPct">Taux d'intérêt (%)</label>
+                <input id="tauxInteretPct" name="tauxInteretPct" type="number" min="0" max="50" step="any" placeholder="Optionnel">
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label for="dureeRemboursementMois">Durée remboursement (mois)</label>
+                <input id="dureeRemboursementMois" name="dureeRemboursementMois" type="number" min="1" max="120" step="1" placeholder="Optionnel">
+              </div>
+              <div class="field">
+                <label for="margeBruteEstimeeTnd">Marge brute estimée (TND)</label>
+                <input id="margeBruteEstimeeTnd" name="margeBruteEstimeeTnd" type="number" min="0" step="any" placeholder="Optionnel">
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label for="chargesOpTnd">Charges opérationnelles (TND)</label>
+                <input id="chargesOpTnd" name="chargesOpTnd" type="number" min="0" step="any" placeholder="Optionnel">
+              </div>
+              <div class="field">
+                <label for="chargesFixesTnd">Charges fixes (TND)</label>
+                <input id="chargesFixesTnd" name="chargesFixesTnd" type="number" min="0" step="any" placeholder="Optionnel">
+              </div>
+            </div>
+
+            <div class="row2">
+              <div class="field">
+                <label for="resultatNetEstimeTnd">Résultat net estimé (TND)</label>
+                <input id="resultatNetEstimeTnd" name="resultatNetEstimeTnd" type="number" step="any" readonly>
+              </div>
+            </div>
+          </section>
+
+          <div class="alert error" id="errorBox"></div>
+          <div class="alert ok" id="okBox">✅ Projet prêt à être mis à jour.</div>
+
+          <div class="actions" style="margin-top:18px;">
+            <button class="btn ghost" type="button" onclick="document.getElementById('projectForm').reset(); refreshKpis();">
+              Réinitialiser
+            </button>
+            <button class="btn ghost" type="button" onclick="setStatusPendingAndSubmit();">Publier</button>
+            <button class="btn primary" type="submit">Mettre à jour</button>
+          </div>
+        </div>
+
+        <aside class="summary">
+          <section class="card">
+            <h2 class="section-title">Aperçu rapide</h2>
+            <p class="muted" style="margin:0 0 10px;">Ce résumé suit les champs clés.</p>
+
+            <div class="kpi-grid">
+              <div class="kpi">
+                <div class="label">Objectif</div>
+                <div class="val" id="kGoal">—</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Statut</div>
+                <div class="val" id="kStatut">—</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Taux</div>
+                <div class="val" id="kRate">—</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Remb. (mois)</div>
+                <div class="val" id="kMonths">—</div>
+              </div>
+            </div>
+          </section>
+        </aside>
+
+      </section>
+    </form>
+  </main>
+
+  <script>
+    const fmt = (n) => new Intl.NumberFormat("fr-TN").format(Math.round(n || 0)) + " TND";
+    const errorBox = document.getElementById("errorBox");
+    const okBox = document.getElementById("okBox");
+
+    function withBridge(onReady, onFail){
+      const start = Date.now();
+      const timer = setInterval(() => {
+        if (window.javaBridge) {
+          clearInterval(timer);
+          onReady(window.javaBridge);
+          return;
+        }
+        if (Date.now() - start > 2000) {
+          clearInterval(timer);
+          onFail();
+        }
+      }, 100);
+    }
+
+    function setStatusPendingAndSubmit(){
+      document.getElementById("statut").value = "EN_ATTENTE";
+      document.getElementById("kStatut").textContent = "EN_ATTENTE";
+      document.getElementById("heroStatut").textContent = "EN_ATTENTE";
+      document.getElementById("projectForm").requestSubmit();
+    }
+
+    function calcNetResult(){
+      const marge = Number(document.getElementById("margeBruteEstimeeTnd").value || 0);
+      const chargesOp = Number(document.getElementById("chargesOpTnd").value || 0);
+      const chargesFixes = Number(document.getElementById("chargesFixesTnd").value || 0);
+      const net = marge - chargesOp - chargesFixes;
+      document.getElementById("resultatNetEstimeTnd").value = isNaN(net) ? "" : net;
+    }
+
+    function refreshKpis(){
+      const objectif = Number(document.getElementById("objectifTnd").value || 0);
+      const statut = document.getElementById("statut").value || "—";
+      const taux = document.getElementById("tauxInteretPct").value || "—";
+      const mois = document.getElementById("dureeRemboursementMois").value || "—";
+
+      document.getElementById("kGoal").textContent = objectif ? fmt(objectif) : "—";
+      document.getElementById("kStatut").textContent = statut;
+      document.getElementById("kRate").textContent = taux === "—" ? "—" : taux + " %";
+      document.getElementById("kMonths").textContent = mois;
+      document.getElementById("heroStatut").textContent = statut;
+    }
+
+    function fillFromQuery(){
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      if (id) {
+        document.getElementById("idProjet").value = id;
+        withBridge((bridge) => {
+          if (typeof bridge.getProjetById !== "function") {
+            return;
+          }
+          try {
+            const json = bridge.getProjetById(id);
+            if (json && json !== "null") {
+              const p = JSON.parse(json);
+              document.getElementById("entrepreneurId").value = p.entrepreneurId || "";
+              document.getElementById("statut").value = p.statut || "";
+              document.getElementById("titre").value = p.titre || "";
+              document.getElementById("secteur").value = p.secteur || "";
+              document.getElementById("descriptionCourte").value = p.descriptionCourte || "";
+              document.getElementById("descriptionLongue").value = p.descriptionLongue || "";
+              document.getElementById("objectifTnd").value = p.objectifTnd || "";
+              document.getElementById("dureeCampagneJours").value = p.dureeCampagneJours || "";
+              document.getElementById("modeRemboursement").value = p.modeRemboursement || "";
+              document.getElementById("tauxInteretPct").value = p.tauxInteretPct || "";
+              document.getElementById("dureeRemboursementMois").value = p.dureeRemboursementMois || "";
+              document.getElementById("margeBruteEstimeeTnd").value = p.margeBruteEstimeeTnd || "";
+              document.getElementById("resultatNetEstimeTnd").value = p.resultatNetEstimeTnd || "";
+              document.getElementById("chargesOpTnd").value = "";
+              document.getElementById("chargesFixesTnd").value = "";
+            }
+          } catch (e) {
+          }
+        }, () => {});
+      }
+    }
+
+    document.addEventListener("input", (e) => {
+      if (e.target.matches("#objectifTnd, #tauxInteretPct, #dureeRemboursementMois, #margeBruteEstimeeTnd, #chargesOpTnd, #chargesFixesTnd")) {
+        refreshKpis();
+        calcNetResult();
+      }
+    });
+
+    document.getElementById("projectForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      errorBox.style.display = "none";
+      okBox.style.display = "none";
+
+      calcNetResult();
+
+      const form = e.target;
+      if(!form.checkValidity()){
+        const invalid = [...form.querySelectorAll(":invalid")].map(el => {
+          const label = form.querySelector(`label[for="${el.id}"]`);
+          return label ? label.textContent.trim() : el.name || el.id;
+        });
+        errorBox.textContent = "Champs invalides: " + (invalid.length ? invalid.join(", ") : "verifier le formulaire.");
+        errorBox.style.display = "block";
+        return;
+      }
+
+      withBridge((bridge) => {
+        if (typeof bridge.updateProjet !== "function") {
+          errorBox.textContent = "Bridge Java indisponible.";
+          errorBox.style.display = "block";
+          return;
+        }
+
+        const result = bridge.updateProjet(
+          document.getElementById("idProjet").value,
+          document.getElementById("entrepreneurId").value,
+          document.getElementById("statut").value,
+          document.getElementById("titre").value.trim(),
+          document.getElementById("secteur").value,
+          document.getElementById("descriptionCourte").value.trim(),
+          document.getElementById("descriptionLongue").value.trim(),
+          document.getElementById("objectifTnd").value,
+          document.getElementById("dureeCampagneJours").value,
+          document.getElementById("modeRemboursement").value,
+          document.getElementById("tauxInteretPct").value,
+          document.getElementById("dureeRemboursementMois").value,
+          document.getElementById("margeBruteEstimeeTnd").value,
+          document.getElementById("resultatNetEstimeTnd").value
+        );
+
+        if (result && result.startsWith("OK")) {
+          okBox.style.display = "block";
+          window.location.href = "projet_view.html";
+          return;
+        }
+
+        errorBox.textContent = result ? result.replace("ERROR:", "") : "Erreur inconnue.";
+        errorBox.style.display = "block";
+      }, () => {
+        errorBox.textContent = "Bridge Java indisponible.";
+        errorBox.style.display = "block";
+      });
+    });
+
+    fillFromQuery();
+    calcNetResult();
+    refreshKpis();
+  </script>
+  <script>
+    (function(){
+      const links = Array.from(document.querySelectorAll('.nav-links a'));
+      if (!links.length) return;
+      const file = (window.location.href.split('#')[0].split('?')[0].split('/').pop() || '');
+      let active = null;
+      if (file === 'projet_view.html') {
+        active = links.find(a => a.textContent.toLowerCase().includes('mes projets')) || links[0];
+      } else {
+        active = links.find(a => a.getAttribute('href') === file) || null;
+      }
+      if (active) active.classList.add('active');
+    })();
+  </script></body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

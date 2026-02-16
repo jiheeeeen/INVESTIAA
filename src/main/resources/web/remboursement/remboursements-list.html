@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Remboursements (Liste)</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Liste</span>
+        <h1>Remboursements</h1>
+        <p class="sub">Consulter, filtrer et rembourser un financement via ses echeances.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="../financement/financements-list.html">Retour financements</a>
+        <a class="btnTop btnGold" id="addLink" href="remboursement-add.html">+ Ajouter</a>
+        <a class="btnTop btnNavy" href="remboursements-list.html">Rafraichir</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="crudHead">
+        <div>
+          <h2 class="title" style="margin:0;">Liste des remboursements</h2>
+          <p class="sub" style="margin-top:8px;">Filtre par financement, recherche par ID ou statut.</p>
+        </div>
+        <div class="crudFilters">
+          <div class="fieldSmall">
+            <label for="search">Recherche</label>
+            <input id="search" placeholder="ID, statut..." />
+          </div>
+          <div class="fieldSmall">
+            <label for="fin">Financement</label>
+            <select id="fin">
+              <option value="ALL" selected>Tous</option>
+            </select>
+          </div>
+          <div class="fieldSmall">
+            <label for="statut">Statut</label>
+            <select id="statut">
+              <option value="ALL" selected>Tous</option>
+              <option value="EN_ATTENTE">EN_ATTENTE</option>
+              <option value="PAYE">PAYE</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="kpiLabel">Total du</div><div class="kpiValue" id="kDue">0 TND</div></div>
+        <div class="kpi"><div class="kpiLabel">Total paye</div><div class="kpiValue" id="kPaid">0 TND</div></div>
+        <div class="kpi"><div class="kpiLabel">Nb echeances</div><div class="kpiValue" id="kCount">0</div></div>
+      </div>
+
+      <table aria-label="Table des remboursements">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Financement</th>
+            <th>Date echeance</th>
+            <th>Montant du</th>
+            <th>Montant paye</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div class="note" id="result" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script>
+    let data = [];
+    let financements = [];
+    let lastGoodData = [];
+    let lastGoodFinancements = [];
+    let isRefreshing = false;
+    let initialized = false;
+    let autoRefreshTimer = null;
+    let visibilityHandlerInstalled = false;
+
+    const params = new URLSearchParams(location.search);
+    const financementIdParam = params.get("financementId");
+    const preselectFinancementId = financementIdParam ? String(financementIdParam) : "";
+
+    const tbody = document.getElementById("tbody");
+    const search = document.getElementById("search");
+    const fin = document.getElementById("fin");
+    const statut = document.getElementById("statut");
+    const kDue = document.getElementById("kDue");
+    const kPaid = document.getElementById("kPaid");
+    const kCount = document.getElementById("kCount");
+    const result = document.getElementById("result");
+    const addLink = document.getElementById("addLink");
+
+    let pendingDeleteId = null;
+    let pendingDeleteTimer = null;
+
+    function money(n){
+      return new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    }
+
+    function financementLabel(id){
+      const f = financements.find(x => String(x.id) === String(id));
+      return f ? ("#" + f.id) : ("#" + id);
+    }
+
+    function confirmDelete(targetId){
+      const key = String(targetId);
+      if (pendingDeleteId !== key) {
+        pendingDeleteId = key;
+        if (pendingDeleteTimer) clearTimeout(pendingDeleteTimer);
+        result.style.display = "block";
+        result.textContent = "Cliquez a nouveau pour confirmer la suppression.";
+        pendingDeleteTimer = setTimeout(function(){ pendingDeleteId = null; }, 3000);
+        return false;
+      }
+      if (pendingDeleteTimer) clearTimeout(pendingDeleteTimer);
+      pendingDeleteId = null;
+      return true;
+    }
+
+    function deleteRemboursement(id){
+      if (!id) return;
+      if (!confirmDelete(id)) return;
+      result.style.display = "block";
+      result.textContent = "Suppression en cours...";
+      if (!window.javaBridge || typeof window.javaBridge.deleteRemboursementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      const payload = new URLSearchParams({ id: String(id) }).toString();
+      const raw = window.javaBridge.deleteRemboursementFromJs(payload);
+      if (raw !== undefined && raw !== null && raw !== "") {
+        handleDeleteResult(raw);
+      }
+    }
+
+    function handleDeleteResult(raw){
+      if (raw === undefined || raw === null || raw === "") {
+        result.style.display = "block";
+        result.textContent = "Erreur: reponse vide du bridge.";
+        return;
+      }
+      const res = JSON.parse(String(raw));
+      result.style.display = "block";
+      result.textContent = res.ok ? "Remboursement supprime." : ("Erreur: " + (res.message || "inconnue"));
+      if (res.ok) {
+        refreshFromDb();
+      }
+    }
+    window.onDeleteResult = handleDeleteResult;
+
+    function loadFinancementsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getFinancementsJson !== "function") return false;
+      try {
+        const rows = JSON.parse(window.javaBridge.getFinancementsJson());
+        financements = Array.isArray(rows) ? rows : [];
+        lastGoodFinancements = financements;
+      } catch (e) {
+        financements = lastGoodFinancements;
+        return false;
+      }
+
+      const prevSelected = fin.value || "ALL";
+      const keep = fin.querySelector("option[value='ALL']");
+      fin.innerHTML = "";
+      if (keep) fin.appendChild(keep);
+      financements.forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = String(f.id);
+        opt.textContent = "Financement #" + f.id;
+        fin.appendChild(opt);
+      });
+
+      if (preselectFinancementId) {
+        fin.value = preselectFinancementId;
+      } else if (prevSelected && (prevSelected === "ALL" || fin.querySelector("option[value='" + CSS.escape(prevSelected) + "']"))) {
+        fin.value = prevSelected;
+      }
+      return true;
+    }
+
+    function loadRemboursementsFromDb(){
+      if (!window.javaBridge) return false;
+
+      const selected = fin.value;
+      const hasFilter = selected && selected !== "ALL";
+      const fn = hasFilter ? "getRemboursementsByFinancementJson" : "getRemboursementsJson";
+      if (typeof window.javaBridge[fn] !== "function") {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return false;
+      }
+      try {
+        const raw = hasFilter ? window.javaBridge.getRemboursementsByFinancementJson(Number(selected)) : window.javaBridge.getRemboursementsJson();
+        const rows = JSON.parse(String(raw || "[]"));
+        const next = (Array.isArray(rows) ? rows : []).map(r => ({
+          id: String(r.id),
+          financementId: r.financementId,
+          dateEcheance: r.dateEcheance || "",
+          montantDu: Number(r.montantDu || 0),
+          montantPaye: Number(r.montantPaye || 0),
+          statut: (r.statut || "EN_ATTENTE")
+        }));
+        data = next;
+        lastGoodData = next;
+        return true;
+      } catch (e) {
+        data = lastGoodData;
+        result.style.display = "block";
+        result.textContent = "Erreur chargement remboursements: " + e;
+        return false;
+      }
+    }
+
+    function computeKpis(rows){
+      const totalDu = rows.reduce((a,r) => a + (Number(r.montantDu)||0), 0);
+      const totalPaye = rows.reduce((a,r) => a + (Number(r.montantPaye)||0), 0);
+      kDue.textContent = money(totalDu);
+      kPaid.textContent = money(totalPaye);
+      kCount.textContent = String(rows.length);
+    }
+
+    function applyFilters(){
+      const s = (search.value || "").toLowerCase().trim();
+      const st = statut.value;
+
+      return data.filter(r => {
+        if (st !== "ALL" && String(r.statut) !== st) return false;
+        if (!s) return true;
+        return (
+          String(r.id).toLowerCase().includes(s) ||
+          String(r.statut).toLowerCase().includes(s)
+        );
+      });
+    }
+
+    function render(){
+      const rows = applyFilters();
+      computeKpis(rows);
+
+      tbody.innerHTML = rows.map(r => {
+        const tag = r.statut === "PAYE"
+          ? '<span class="tag ok"><span class="tagDot"></span>PAYE</span>'
+          : '<span class="tag pending"><span class="tagDot"></span>EN_ATTENTE</span>';
+        return `
+          <tr>
+            <td><strong>${r.id}</strong></td>
+            <td><a class="softLink" href="../financement/financement-detail.html?id=${encodeURIComponent(r.financementId)}">${financementLabel(r.financementId)}</a></td>
+            <td>${r.dateEcheance || "-"}</td>
+            <td><strong>${money(r.montantDu)}</strong></td>
+            <td><strong>${money(r.montantPaye)}</strong></td>
+            <td>${tag}</td>
+            <td>
+              <div class="rowBtns">
+                <a class="miniBtn" href="remboursement-detail.html?id=${encodeURIComponent(r.id)}">Detail</a>
+                <a class="miniBtn edit" href="remboursement-edit.html?id=${encodeURIComponent(r.id)}">Modifier</a>
+                <button class="miniBtn del" type="button" data-id="${r.id}">Supprimer</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      tbody.querySelectorAll("button[data-id]").forEach(btn => {
+        btn.addEventListener("click", function(){
+          deleteRemboursement(this.getAttribute("data-id"));
+        });
+      });
+
+      if (addLink) {
+        const selected = fin.value;
+        if (selected && selected !== "ALL") {
+          addLink.href = `remboursement-add.html?financementId=${encodeURIComponent(selected)}`;
+        } else {
+          addLink.href = "remboursement-add.html";
+        }
+      }
+    }
+
+    function refreshFromDb(){
+      if (isRefreshing) return;
+      isRefreshing = true;
+      try {
+        loadFinancementsFromDb();
+        loadRemboursementsFromDb();
+        render();
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    [search, fin, statut].forEach(el => {
+      el.addEventListener("input", function(){ loadRemboursementsFromDb(); render(); });
+      el.addEventListener("change", function(){ loadRemboursementsFromDb(); render(); });
+    });
+
+    window.onJavaBridgeReady = function(){
+      if (initialized) return;
+      initialized = true;
+      try {
+        if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function") {
+          const role = String(window.javaBridge.getCurrentUserRole() || "");
+          if (role === "INVESTISSEUR") {
+            window.location.href = "remboursements-investisseur.html";
+            return;
+          }
+          if (role === "ENTREPRENEUR") {
+        window.location.href = "remboursements-financement.html";
+            return;
+          }
+        }
+      } catch (e) {
+        // ignore and continue on legacy flow
+      }
+      refreshFromDb();
+      if (!autoRefreshTimer) {
+        autoRefreshTimer = setInterval(function(){ refreshFromDb(); }, 10000);
+      }
+      if (!visibilityHandlerInstalled) {
+        visibilityHandlerInstalled = true;
+        document.addEventListener("visibilitychange", function(){
+          if (!document.hidden) refreshFromDb();
+        });
+      }
+    };
+
+    function waitForBridge(retries){
+      if (window.javaBridge) {
+        window.onJavaBridgeReady();
+        return;
+      }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(60);
+  </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia — Ajouter financement</title>
+  <link rel="stylesheet" href="financement.css" />
+  <script src="../../navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Financement • Ajout</span>
+        <h1>Ajouter un financement</h1>
+        <p class="sub">Saisie d'une nouvelle contribution liee a un projet.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="financements-list.html">Retour liste</a>
+        <!-- JavaFX WebView can be flaky with the HTML5 `form` attribute on buttons outside the form. -->
+        <button class="btnTop btnNavy" id="submitBtn" type="button">Enregistrer</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2 class="title">Formulaire</h2>
+      </div>
+
+      <form id="addForm">
+        <div class="formGrid">
+          <div>
+            <label for="project">Projet</label>
+            <select id="project" required></select>
+          </div>
+          <div>
+            <label for="investor">Investisseur</label>
+            <select id="investor" required></select>
+          </div>
+          <div>
+            <label for="amount">Montant (TND)</label>
+            <input id="amount" type="number" min="10" step="10" value="200" required />
+          </div>
+          <div>
+            <label for="method">Paiement</label>
+            <select id="method" required>
+              <option value="CARTE_BANCAIRE">Carte bancaire</option>
+              <option value="VIREMENT">Virement</option>
+              <option value="WALLET">Wallet</option>
+            </select>
+          </div>
+          <div>
+            <label for="rate">Taux estime (%)</label>
+            <input id="rate" type="number" min="0" max="30" step="0.5" value="10" />
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label for="note">Note</label>
+            <textarea id="note" placeholder="Ex: contribution pour soutenir l'impact local..."></textarea>
+          </div>
+        </div>
+        <div class="note" id="result" style="display:none;"></div>
+      </form>
+    </section>
+  </main>
+
+        <script>
+    let lastRaw = "";
+    const form = document.getElementById("addForm");
+    const result = document.getElementById("result");
+    const projectSelect = document.getElementById("project");
+    const investSelect = document.getElementById("investor");
+    const submitBtn = document.getElementById("submitBtn");
+    let createHandled = false;
+    submitBtn.addEventListener("click", (e) => {
+      // Always route the top button through the form submit handler.
+      e.preventDefault();
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    function loadProjectsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getProjectsJson !== "function") return;
+      try {
+        const projects = JSON.parse(window.javaBridge.getProjectsJson());
+        projectSelect.innerHTML = "";
+        projects.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = String(p.id);
+          opt.textContent = p.name;
+          projectSelect.appendChild(opt);
+        });
+        updateSubmitState();
+      } catch (e) {
+        result.style.display = "block";
+        result.textContent = "Erreur chargement projets: " + e;
+        updateSubmitState();
+      }
+    }
+
+
+    function debugCounts(){
+      const pCount = projectSelect.options.length;
+      const iCount = investSelect.options.length;
+      result.style.display = "block";
+      result.textContent = "Projets=" + pCount + ", Investissements=" + iCount;
+    }
+    function loadInvestissementsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getInvestissementsJson !== "function") return;
+      try {
+        const rows = JSON.parse(window.javaBridge.getInvestissementsJson());
+        investSelect.innerHTML = "";
+        rows.forEach(r => {
+          const opt = document.createElement("option");
+          opt.value = String(r.id);
+          opt.textContent = "Investissement #" + r.id + " (INV #" + r.investorId + ")";
+          investSelect.appendChild(opt);
+        });
+        updateSubmitState();
+      } catch (e) {
+        result.style.display = "block";
+        result.textContent = "Erreur chargement investissements: " + e;
+        updateSubmitState();
+      }
+    }
+
+    function updateSubmitState(){
+      const hasProjects = projectSelect.options.length > 0;
+      const hasInvests = investSelect.options.length > 0;
+      submitBtn.disabled = !(hasProjects && hasInvests);
+      if (!hasProjects || !hasInvests) {
+        result.style.display = "block";
+        result.textContent = "Ajout impossible: verifiez qu'il existe au moins un projet et un investissement.";
+      }
+    }
+    window.onJavaBridgeReady = function(){
+      loadProjectsFromDb();
+      loadInvestissementsFromDb();
+    };
+
+    function handleCreateResult(raw){
+      if (createHandled) return;
+      createHandled = true;
+      console.log("handleCreateResult", raw);
+      if (raw === undefined || raw === null || raw === "" ) {
+        result.textContent = "Erreur: reponse vide du bridge.";
+        return;
+      }
+      const res = JSON.parse(String(raw));
+      result.textContent = res.ok ? "Financement ajoute." : ("Erreur: " + (res.message || "inconnue"));
+      if (res.ok) {
+        window.location.href = "financements-list.html";
+      }
+    }
+    window.onCreateResult = handleCreateResult;
+    console.log("onCreateResult bound", window.onCreateResult);
+    function waitForBridge(retries){
+      if (window.javaBridge) {
+        window.onJavaBridgeReady();
+        debugCounts();
+        return;
+      }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible (timeout).";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+
+    waitForBridge(20);
+
+    form.addEventListener("submit", (e)=>{
+      e.preventDefault();
+      createHandled = false;
+      result.style.display = "block";
+      result.textContent = "Enregistrement en cours...";
+
+      if (!window.javaBridge || typeof window.javaBridge.createFinancementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+
+      const projectId = Number(projectSelect.value || 0);
+      const investId = Number(investSelect.value || 0);
+      const amount = Number(document.getElementById("amount").value || 0);
+      const method = document.getElementById("method").value;
+      const status = "CONFIRMED";
+      const rate = Number(document.getElementById("rate").value || 0);
+      const note = document.getElementById("note").value || "";
+
+      const feesPct = 1.00;
+      const duration = 12;
+
+      try {
+        const payload = new URLSearchParams({
+          projectId: String(projectId),
+          investId: String(investId),
+          amount: String(amount),
+          feesPct: String(feesPct),
+          method: method,
+          status: status,
+          rate: String(rate),
+          duration: String(duration),
+          note: note
+        }).toString();
+        const raw = window.javaBridge.createFinancementFromJs(payload);
+        if (raw !== undefined && raw !== null && raw !== "") {
+          handleCreateResult(raw);
+        }
+      } catch (err) {
+        result.textContent = "Erreur JS: " + err;
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

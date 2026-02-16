@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia — Profil entrepreneur</title>
+  <script src="navbar.js" defer></script>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.08);
+      --shadow:0 14px 35px rgba(15,23,42,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .container{max-width:1120px; margin:28px auto 60px; padding:0 16px;}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px;
+    }
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
+    .section-title{
+      margin:0 0 10px;
+      font-size:18px;
+      letter-spacing:.2px;
+      font-weight:900;
+    }
+    .row{
+      display:flex;
+      gap:12px;
+      padding:8px 0;
+      border-bottom:1px solid rgba(15,23,42,.06);
+    }
+    .row:last-child{border-bottom:none;}
+    .label{
+      width:210px;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.25px;
+      color:#0b2a55;
+      font-weight:900;
+      flex:0 0 auto;
+    }
+    .value{color:#0f172a; font-weight:700; word-break:break-word;}
+    .muted{color:var(--muted);}
+    .actions{display:flex; gap:10px; flex-wrap:wrap;}
+    .btn{
+      border:0; cursor:pointer; font-weight:800; font-size:14px;
+      padding:10px 14px; border-radius:12px;
+      display:inline-flex; align-items:center; gap:8px;
+      transition: transform .15s ease, filter .15s ease;
+      background:#fff; border:1px solid var(--border); color:var(--text);
+    }
+    .btn:hover{transform:translateY(-1px); filter:brightness(1.02);}
+    .chips{display:flex; gap:10px; flex-wrap:wrap;}
+    .chip{
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:800;
+      background:#fff;
+    }
+    .alert{
+      display:none;
+      margin-top:12px;
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:13px;
+      line-height:1.4;
+      font-weight:800;
+      border:1px solid rgba(239,68,68,.25);
+      background:rgba(239,68,68,.08);
+      color:#7f1d1d;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="card">
+      <div class="actions" style="margin-bottom:12px;">
+        <button class="btn" type="button" onclick="loadProfil()">Charger profil</button>
+        <a class="btn" href="monProfil.html">Modifier</a>
+      </div>
+
+      <h2 class="section-title">Profil entrepreneur</h2>
+      <div class="alert" id="errorBox"></div>
+
+      <div class="grid">
+        <div class="card">
+          <h3 class="section-title">Identité & Statuts</h3>
+          <div class="row"><div class="label">ID profil</div><div class="value" id="idEntrepreneur">—</div></div>
+          <div class="row"><div class="label">ID user</div><div class="value" id="idUser">—</div></div>
+          <div class="row"><div class="label">Statut compte</div><div class="value" id="statutCompte">—</div></div>
+          <div class="row"><div class="label">Statut verification</div><div class="value" id="statutVerification">—</div></div>
+          <div class="row"><div class="label">Date verification</div><div class="value" id="dateVerification">—</div></div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">Contact & Banque</h3>
+          <div class="row"><div class="label">Adresse</div><div class="value" id="adresse">—</div></div>
+          <div class="row"><div class="label">RIB</div><div class="value" id="rib">—</div></div>
+          <div class="row"><div class="label">Accepte conditions</div><div class="value" id="accepteConditions">—</div></div>
+          <div class="row"><div class="label">Photo</div><div class="value" id="photoUrl">—</div></div>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:18px;">
+        <div class="card">
+          <h3 class="section-title">Documents</h3>
+          <div class="row"><div class="label">CIN recto</div><div class="value" id="cinRectoUrl">—</div></div>
+          <div class="row"><div class="label">CIN verso</div><div class="value" id="cinVersoUrl">—</div></div>
+          <div class="row"><div class="label">Justificatif domicile</div><div class="value" id="justificatifDomicileUrl">—</div></div>
+          <div class="row"><div class="label">Registre commerce</div><div class="value" id="registreCommerceUrl">—</div></div>
+          <div class="row"><div class="label">Patente</div><div class="value" id="patenteUrl">—</div></div>
+          <div class="row"><div class="label">Matricule fiscal</div><div class="value" id="matriculeFiscalUrl">—</div></div>
+          <div class="row"><div class="label">Carte fiscale</div><div class="value" id="carteFiscaleUrl">—</div></div>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title">Bio & Secteurs</h3>
+          <div class="row"><div class="label">Bio</div><div class="value" id="bio">—</div></div>
+          <div class="row"><div class="label">Secteurs</div><div class="value"><div class="chips" id="secteurs">—</div></div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function withBridge(onReady, onFail){
+      const start = Date.now();
+      const timer = setInterval(() => {
+        if (window.javaBridge) {
+          clearInterval(timer);
+          onReady(window.javaBridge);
+          return;
+        }
+        if (Date.now() - start > 2000) {
+          clearInterval(timer);
+          if (onFail) onFail();
+        }
+      }, 100);
+    }
+
+    function setText(id, value){
+      document.getElementById(id).textContent = value || "—";
+    }
+
+    function setChips(csv){
+      const container = document.getElementById("secteurs");
+      if (!csv) {
+        container.textContent = "—";
+        return;
+      }
+      const items = csv.split(",").map(s => s.trim()).filter(Boolean);
+      container.innerHTML = items.map(s => `<span class="chip">${s}</span>`).join("");
+    }
+
+    function showError(msg){
+      const box = document.getElementById("errorBox");
+      box.textContent = msg || "Erreur.";
+      box.style.display = "block";
+    }
+
+    function loadProfil(){
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      if (!id) return showError("ID profil manquant dans l'URL (?id=...)");
+      withBridge((bridge) => {
+        const json = bridge.getProfilById(id);
+        if (!json || json === "null") return showError("Profil introuvable.");
+        const p = JSON.parse(json);
+        setText("idEntrepreneur", p.idEntrepreneur);
+        setText("idUser", p.idUser);
+        setText("adresse", p.adresse);
+        setText("rib", p.rib);
+        setText("accepteConditions", p.accepteConditions ? "Oui" : "Non");
+        setText("statutCompte", p.statutCompte);
+        setText("statutVerification", p.statutVerification);
+        setText("dateVerification", p.dateVerification);
+        setText("bio", p.bio);
+        setText("photoUrl", p.photoUrl);
+        setText("cinRectoUrl", p.cinRectoUrl);
+        setText("cinVersoUrl", p.cinVersoUrl);
+        setText("justificatifDomicileUrl", p.justificatifDomicileUrl);
+        setText("registreCommerceUrl", p.registreCommerceUrl);
+        setText("patenteUrl", p.patenteUrl);
+        setText("matriculeFiscalUrl", p.matriculeFiscalUrl);
+        setText("carteFiscaleUrl", p.carteFiscaleUrl);
+        setChips(p.secteurs);
+      }, () => showError("Bridge Java indisponible."));
+    }
+
+    loadProfil();
+  </script>
+</body>
+</html>

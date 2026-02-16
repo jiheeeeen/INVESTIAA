@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Investia — Dashboard Admin</title>
+
+    <!-- ✅ CSS external -->
+    <link rel="stylesheet" href="../css/dashboard_admin.css">
+</head>
+
+<body>
+<div class="app">
+    <!-- ===== Sidebar ===== -->
+    <aside class="sidebar" aria-label="Navigation latérale">
+        <div class="brandRow">
+            <div class="logo" aria-hidden="true">
+                <img src="../img/logo.png" alt="Investia" class="brandLogo">
+            </div>
+            <div class="brandText">
+                <div class="brandName">Investia<span class="i-accent"></span></div>
+                <div class="brandSub">Dashboard Admin</div>
+            </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="sectionTitle">Gestion</div>
+        <nav class="nav">
+            <button class="active" data-page="home">Accueil</button>
+            <button data-page="accounts">Comptes</button>
+            <button data-page="users">Users</button>
+            <button data-page="projects">Projets</button>
+            <button data-page="events">Événements</button>
+            <button data-page="history">Historique</button>
+        </nav>
+
+        <div class="sidebarFooter">
+            <div class="badge">
+                <span class="badge__dot" aria-hidden="true"></span>
+                1ère plateforme de crowdlending en Tunisie
+            </div>
+
+            <button class="btnSide" type="button" id="logoutBtn">Logout</button>
+        </div>
+    </aside>
+
+    <!-- ===== Main ===== -->
+    <main class="main">
+        <div class="topbar">
+            <div class="titleBlock" id="pageTitle">
+                <h1>Bienvenue à Investia 👋</h1>
+                <p>Choisissez une section dans la sidebar.</p>
+            </div>
+
+            <div class="topActions">
+                <div class="chip" title="Mode admin">ADMIN</div>
+                <button class="btnPrimary isHidden" type="button" id="addUserBtn">Ajouter un utilisateur</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <section class="grid4" aria-label="Statistiques" id="statsRow">
+            <div class="card">
+                <div class="cardTop">
+                    <div>
+                        <div class="cardLabel">Comptes en attente</div>
+                        <div class="cardValue" id="statPending">0</div>
+                    </div>
+                </div>
+                <div class="cardHint">Demandes à valider</div>
+            </div>
+
+            <div class="card">
+                <div class="cardTop">
+                    <div>
+                        <div class="cardLabel">Users</div>
+                        <div class="cardValue" id="statUsers">0</div>
+                    </div>
+                </div>
+                <div class="cardHint">Comptes actifs</div>
+            </div>
+
+            <div class="card">
+                <div class="cardTop">
+                    <div>
+                        <div class="cardLabel">Projets en attente</div>
+                        <div class="cardValue" id="statProjects">0</div>
+                    </div>
+                </div>
+                <div class="cardHint">À accepter/refuser</div>
+            </div>
+
+            <div class="card">
+                <div class="cardTop">
+                    <div>
+                        <div class="cardLabel">Événements en attente</div>
+                        <div class="cardValue" id="statEvents">0</div>
+                    </div>
+                </div>
+                <div class="cardHint">À accepter/refuser</div>
+            </div>
+        </section>
+
+        <!-- Dynamic Area -->
+        <div id="contentArea"></div>
+    </main>
+</div>
+
+<!-- ✅ JS external -->
+<script src="../js/dashboard_admin.js"></script>
+
+</body>
+</html>

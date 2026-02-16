@@ -1,0 +1,959 @@
+/* ===========================
+   INVEST ADMIN - PREMIUM UI
+   (Dashboard + Login)
+   =========================== */
+
+/* ---------- GLOBAL (dashboard) ---------- */
+.root, .app-root {
+    -fx-font-family: "Segoe UI";
+    -fx-background-color: #0b1220;
+}
+
+/* ====== TYPO (dashboard) ====== */
+.title {
+    -fx-text-fill: #f8fafc;
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
+}
+
+.subtitle {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 13px;
+}
+
+.brand {
+    -fx-text-fill: #f8fafc;
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+    -fx-letter-spacing: 1px;
+}
+
+.userTag {
+    -fx-text-fill: #cbd5e1;
+    -fx-font-size: 12px;
+}
+
+/* ====== LAYOUT (dashboard) ====== */
+.topbar {
+    -fx-padding: 14 18;
+    -fx-background-color: #0f172a;
+    -fx-border-color: rgba(255,255,255,0.06);
+    -fx-border-width: 0 0 1 0;
+}
+
+.sidebar {
+    -fx-padding: 18;
+    -fx-pref-width: 240;
+    -fx-background-color: #0f172a;
+    -fx-border-color: rgba(255,255,255,0.06);
+    -fx-border-width: 0 1 0 0;
+}
+
+.content {
+    -fx-padding: 20;
+}
+
+/* ====== SIDEBAR BUTTONS (dashboard) ====== */
+.sideTitle {
+    -fx-text-fill: #94a3b8;
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+}
+
+.sideBtn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e2e8f0;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10 12;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+}
+.sideBtn:hover {
+    -fx-background-color: rgba(59,130,246,0.14);
+}
+.sideBtn:pressed {
+    -fx-background-color: rgba(59,130,246,0.22);
+}
+
+/* ====== CARDS (dashboard) ====== */
+.card {
+    -fx-padding: 18;
+    -fx-background-color: rgba(15, 23, 42, 0.96);
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: rgba(255,255,255,0.08);
+}
+
+/* ====== FORMS (dashboard) ====== */
+.input {
+    -fx-text-fill: #0f172a;
+    -fx-prompt-text-fill: #94a3b8;
+    -fx-background-color: #f1f5f9;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: transparent;
+    -fx-padding: 14 16;
+    -fx-font-size: 14px;
+}
+.input:focused {
+    -fx-background-color: white;
+    -fx-border-color: #2563eb;
+    -fx-border-width: 2;
+}
+
+/* ====== BUTTONS (dashboard) ====== */
+.btnPrimary {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-padding: 10 14;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+}
+.btnPrimary:hover { -fx-opacity: 0.92; }
+
+.btnSecondary {
+    -fx-background-color: rgba(148,163,184,0.12);
+    -fx-text-fill: #e2e8f0;
+    -fx-font-weight: 700;
+    -fx-padding: 10 14;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+}
+
+.btnDanger {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-padding: 10 14;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+}
+
+.btnGhost {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cbd5e1;
+    -fx-padding: 8 10;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.btnGhost:hover {
+    -fx-background-color: rgba(148,163,184,0.12);
+}
+
+/* ====== LABELS (dashboard) ====== */
+.error {
+    -fx-text-fill: #f87171;
+    -fx-font-size: 12px;
+}
+.info {
+    -fx-text-fill: #a3e635;
+    -fx-font-size: 12px;
+}
+
+/* ====== TABLEVIEW (dashboard) ====== */
+.table-view {
+    -fx-background-color: rgba(15,23,42,0.55);
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-padding: 6;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: transparent;
+}
+.table-view .column-header, .table-view .filler {
+    -fx-background-color: rgba(2,6,23,0.45);
+    -fx-border-color: rgba(255,255,255,0.06);
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #cbd5e1;
+    -fx-font-weight: 800;
+}
+
+.table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,255,255,0.03);
+}
+
+.table-row-cell:selected {
+    -fx-background-color: rgba(59,130,246,0.20);
+}
+
+.table-cell {
+    -fx-text-fill: #e2e8f0;
+}
+
+/* =========================
+   LOGIN (WEB STYLE)
+   ========================= */
+
+/* Base login container (si tu l’utilises encore) */
+.login-bg {
+    -fx-font-family: "Segoe UI";
+}
+
+/* Page login */
+.page {
+    -fx-background-color: #F5F7FB;
+}
+
+/* LEFT (bleu comme avant) */
+.login-left {
+    -fx-background-color: linear-gradient(to bottom right, #0B1B3A, #0A2556);
+}
+
+/* Logo + nom */
+.brandTitle {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: 800;
+}
+
+/* Bienvenue */
+.heroTitle {
+    -fx-text-fill: white;
+    -fx-font-size: 46px;
+    -fx-font-weight: 900;
+}
+
+.heroEmoji {
+    -fx-text-fill: gold;
+    -fx-font-size: 26px;
+}
+
+.heroSub {
+    -fx-text-fill: rgba(255,255,255,0.78);
+    -fx-font-size: 14px;
+}
+
+/* Cartes à gauche */
+.featureCard {
+    -fx-background-color: rgba(255,255,255,0.10);
+    -fx-background-radius: 16;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 18, 0.2, 0, 6);
+}
+.featureCard:hover {
+    -fx-background-color: rgba(255,255,255,0.14);
+    -fx-effect: dropshadow(gaussian, rgba(47,107,255,0.25), 26, 0.25, 0, 10);
+}
+/* Icon style */
+.featureIcon {
+    -fx-fill: rgba(255,255,255,0.92);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+/* Texte petite ligne (slogan long) */
+.featureSubSmall {
+    -fx-text-fill: rgba(255,255,255,0.70);
+    -fx-font-size: 11px;
+}
+.featureTitle {
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-font-size: 14px;
+}
+
+.featureSub {
+    -fx-text-fill: rgba(255,255,255,0.75);
+    -fx-font-size: 12px;
+}
+
+/* Footer gauche */
+.leftFooter {
+    -fx-text-fill: rgba(255,255,255,0.55);
+    -fx-font-size: 11px;
+}
+
+/* RIGHT */
+.login-right {
+    -fx-background-color: #F6F8FC;
+}
+
+/* Carte formulaire */
+.formCard {
+    -fx-background-color: white;
+    -fx-background-radius: 22;
+    -fx-padding: 34;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 24, 0.1, 0, 8);
+}
+
+.formTitle {
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
+}
+
+.formSub {
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 13px;
+}
+
+.fieldLabel {
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+}
+
+/* Inputs LOGIN (texte visible) */
+.inputField {
+    -fx-background-color: #F2F5FB;
+    -fx-background-radius: 12;
+    -fx-padding: 12 14;
+    -fx-border-color: transparent;
+    -fx-border-radius: 12;
+
+    -fx-text-fill: #0B1736;
+    -fx-prompt-text-fill: #94A3B8;
+    -fx-font-size: 13px;
+}
+
+.inputField:focused {
+    -fx-background-color: white;
+    -fx-border-color: #2C6BED;
+    -fx-border-width: 2;
+}
+
+/* Bouton login (même bleu que gauche) */
+.btnPrimarySmall {
+    -fx-background-color: #0b1220;
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-font-size: 13px;
+
+    -fx-padding: 10 18;
+    -fx-background-radius: 14;
+
+    -fx-pref-width: 240;
+    -fx-pref-height: 42;
+}
+
+.btnPrimarySmall:hover {
+    -fx-background-color: #2457D6;
+    -fx-effect: dropshadow(gaussian, rgba(47,107,255,0.35), 18, 0.2, 0, 6);
+}
+
+.link {
+    -fx-text-fill: #2C6BED;
+    -fx-border-color: transparent;
+    -fx-underline: false;
+    -fx-font-weight: 700;
+}
+.link:hover { -fx-underline: true; }
+
+/* Erreur login (séparée de .error dashboard) */
+.loginError {
+    -fx-text-fill: #DC2626;
+    -fx-font-size: 12px;
+}
+
+/* =========================
+   DASHBOARD ADMIN (NO TOPBAR)
+   ========================= */
+
+.admin-sidebar{
+    -fx-background-color: linear-gradient(to bottom right, #0B1B3A, #0A2556);
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-width: 0 1 0 0;
+}
+
+.admin-brand-title{
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: 900;
+}
+
+.admin-brand-sub{
+    -fx-text-fill: rgba(255,255,255,0.70);
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+}
+
+.admin-sep{
+    -fx-opacity: 0.22;
+}
+
+.admin-name{
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+}
+
+.admin-role{
+    -fx-text-fill: rgba(255,255,255,0.70);
+    -fx-font-size: 11px;
+}
+
+.admin-content{
+    -fx-background-color: #F5F7FB;
+    -fx-padding: 24;
+}
+
+.contentTitle{
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+}
+
+/* Active menu highlight */
+.activeSideBtn{
+    -fx-background-color: rgba(255,255,255,0.16);
+    -fx-background-radius: 12;
+}
+
+/* ===== Dashboard Pages ===== */
+.admin-page {
+    -fx-padding: 8;
+}
+
+.pageTitle {
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+}
+
+.statCard {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-padding: 14 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 18, 0.2, 0, 6);
+    -fx-min-width: 170;
+}
+
+.statLabel {
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+}
+
+.statValue {
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+}
+/* =========================================
+   DASHBOARD ADMIN - TEMPLATE LIKE (ADDON)
+   ========================================= */
+
+/* Sidebar + content wrapper (si tu utilises BorderPane / HBox) */
+.admin-root {
+    -fx-background-color: #F5F7FB;
+}
+
+/* ---------- Sidebar items (Buttons) ---------- */
+/* Base button look */
+.admin-sidebtn{
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255,255,255,0.92);
+    -fx-font-weight: 700;
+    -fx-font-size: 13px;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 10 12;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+}
+.admin-sidebtn:hover{
+    -fx-background-color: rgba(255,255,255,0.12);
+}
+
+/* Active state (tu l’appliques déjà via activeSideBtn) */
+.activeSideBtn{
+    -fx-background-color: rgba(255,255,255,0.16);
+    -fx-background-radius: 12;
+}
+
+/* ---------- Sidebar icon style (SVGPath) ---------- */
+.sideIcon{
+    -fx-fill: rgba(255,255,255,0.92);
+}
+.activeSideBtn .sideIcon{
+    -fx-fill: #FFFFFF;
+}
+
+/* ---------- Content area (white template feel) ---------- */
+.admin-content{
+    -fx-background-color: #F5F7FB;
+    -fx-padding: 24;
+}
+
+/* Card container (white) */
+.whiteCard{
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-padding: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 18, 0.2, 0, 6);
+}
+
+/* Table card wrapper */
+.tableCard{
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 18, 0.2, 0, 6);
+}
+
+/* Search boxes (header search + inside table) */
+.searchBox{
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 8 10;
+    -fx-border-color: rgba(15,23,42,0.08);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+.searchField{
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #0B1736;
+    -fx-prompt-text-fill: #94A3B8;
+    -fx-padding: 4 2;
+}
+
+/* ---------- Buttons (clean template) ---------- */
+.btnBlue{
+    -fx-background-color: #2F6BFF;
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-background-radius: 14;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+.btnBlue:hover{
+    -fx-background-color: #2457D6;
+    -fx-effect: dropshadow(gaussian, rgba(47,107,255,0.35), 18, 0.2, 0, 6);
+}
+
+/* ---------- TableView PRO look (override old dark table) ---------- */
+/* IMPORTANT: utilise styleClass="proTable" sur ta TableView */
+.proTable{
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(15,23,42,0.08);
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+}
+
+/* Header */
+.proTable .column-header-background{
+    -fx-background-color: transparent;
+}
+.proTable .column-header{
+    -fx-background-color: #F6F8FC;
+    -fx-border-color: rgba(15,23,42,0.06);
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10 8;
+}
+.proTable .column-header .label{
+    -fx-text-fill: #0B1736;
+    -fx-font-weight: 900;
+    -fx-font-size: 11px;
+}
+
+/* Rows */
+.proTable .table-row-cell{
+    -fx-background-color: white;
+    -fx-border-color: rgba(15,23,42,0.06);
+    -fx-border-width: 0 0 1 0;
+}
+.proTable .table-row-cell:odd{
+    -fx-background-color: #FBFCFF;
+}
+.proTable .table-cell{
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 12px;
+    -fx-padding: 10 8;
+}
+
+/* Selection */
+.proTable .table-row-cell:selected{
+    -fx-background-color: rgba(47,107,255,0.10);
+}
+/* =========================================
+   DASHBOARD ADMIN - TEMPLATE (WHITE SIDEBAR)
+   ========================================= */
+
+.tplSidebar{
+    -fx-background-color:#0b1b3a ;
+    -fx-padding: 18;
+    -fx-pref-width: 260;
+    -fx-border-color: rgba(15,23,42,0.08);
+    -fx-border-width: 0 1 0 0;
+}
+
+.tplBrand{
+    -fx-padding: 8 8 14 8;
+}
+
+.tplBrandTitle{
+    -fx-text-fill: #FBFCFF;
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+}
+
+.tplBrandSub{
+    -fx-text-fill: #64748b;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.tplSep{
+    -fx-opacity: 0.25;
+    -fx-padding: 6 0 6 0;
+}
+
+.tplSideTitle{
+    -fx-text-fill: #94A3B8;
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-padding: 6 8 2 8;
+}
+
+/* Button layout */
+.tplSideBtn{
+    -fx-background-color: transparent;
+    -fx-padding: 0;                  /* important: le padding est géré dans le HBox */
+    -fx-background-radius: 14;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+}
+.tplSideBtn > .graphic{
+    -fx-padding: 10 12;              /* padding uniforme */
+}
+
+/* Text */
+.tplSideText{
+    -fx-text-fill: rgba(255,255,255,0.95);
+    -fx-font-size: 17px;
+    -fx-font-weight: 700;
+}
+
+/* Icon */
+.sideIcon{
+    -fx-fill: rgba(255,255,255,0.90);
+    -fx-scale-x: 0.92;
+    -fx-scale-y: 0.92;
+}
+
+/* Hover: léger, pro */
+.tplSideBtn:hover{
+    -fx-background-color: rgba(255,255,255,0.10);
+}
+.tplSideBtn:hover .sideIcon{
+    -fx-fill: #2F6BFF;
+}
+
+/* Active item (ton controller ajoute activeSideBtn) */
+.activeSideBtn{
+    -fx-background-color: rgba(59,130,246,0.35);
+    -fx-background-radius: 14;
+}
+.activeSideBtn .sideIcon{
+    -fx-fill: #fff;
+}
+.activeSideBtn .tplSideText{
+    -fx-text-fill: #fff;
+}
+
+.tplLogoutBtn {
+    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-text-fill: rgba(255,255,255,0.95);
+    -fx-font-weight: 800;
+    -fx-background-radius: 14;
+    -fx-padding: 12 16;
+}
+
+.tplLogoutBtn:hover {
+    -fx-background-color: rgba(59,130,246,0.35);
+}
+
+
+/* -----------------------------------------
+   ANIMATION HOVER LÉGÈRE (JavaFX trick)
+   - JavaFX CSS ne fait pas de transition réelle,
+     donc on simule via scale + shadow.
+   ----------------------------------------- */
+
+.tplSideBtn:hover{
+    -fx-effect: dropshadow(gaussian, rgba(47,107,255,0.18), 14, 0.25, 0, 4);
+}
+/* =========================
+   DASHBOARD TEMPLATE - MISSING CLASSES
+   ========================= */
+
+/* Root */
+.dash-root{
+    -fx-background-color: #F5F7FB;
+}
+
+/* Center page wrapper */
+.content2{
+    -fx-background-color: #F5F7FB;
+}
+
+/* Header texts */
+.helloTitle{
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+}
+
+.helloSub{
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+/* Search icon */
+.searchIcon{
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+}
+
+/* Table title */
+.tableTitle{
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 14px;
+    -fx-font-weight: 900;
+}
+
+/* Mini search (inside table card) */
+.miniSearch{
+    -fx-background-color: #F6F8FC;
+    -fx-background-radius: 12;
+    -fx-padding: 8 10;
+    -fx-border-color: rgba(15,23,42,0.06);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+.miniSearchIcon{
+    -fx-text-fill: #64748b;
+    -fx-font-size: 12px;
+}
+.miniSearchField{
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #0B1736;
+    -fx-prompt-text-fill: #94A3B8;
+    -fx-padding: 4 2;
+}
+
+/* PRO TABLE: ensure white background */
+.proTable .virtual-flow{
+    -fx-background-color: white;
+}
+.proTable .corner{
+    -fx-background-color: #F6F8FC;
+}
+
+/* =========================
+   USERS PAGE - TEMPLATE WHITE
+   ========================= */
+
+/* Light buttons */
+.btnLight{
+    -fx-background-color: #EEF2FF;
+    -fx-text-fill: #1D4ED8;
+    -fx-font-weight: 900;
+    -fx-background-radius: 14;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+.btnLight:hover{
+    -fx-background-color: #E0E7FF;
+}
+
+/* Red button (delete) */
+.btnRed{
+    -fx-background-color: #EF4444;
+    -fx-text-fill: white;
+    -fx-font-weight: 900;
+    -fx-background-radius: 14;
+    -fx-padding: 10 16;
+    -fx-cursor: hand;
+}
+.btnRed:hover{
+    -fx-background-color: #DC2626;
+}
+
+/* Make sure admin page uses white background */
+.admin-page{
+    -fx-background-color: transparent;
+}
+
+/* Table header title */
+.tableTitle{
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 14px;
+    -fx-font-weight: 900;
+}
+
+/* ===== Sidebar Template White (Perfect) ===== */
+.tplSideBtn{
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-background-radius: 14;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.tplSideBtn > .graphic{
+    -fx-padding: 10 12;
+}
+
+.tplSideBtn:hover{
+    -fx-background-color: rgba(47,107,255,0.10);
+    -fx-effect: dropshadow(gaussian, rgba(47,107,255,0.18), 16, 0.25, 0, 6);
+}
+
+/* Hover smooth simulation */
+.tplSideBtn:hover .sideIcon{
+    -fx-scale-x: 1.06;
+    -fx-scale-y: 1.06;
+    -fx-fill: #2F6BFF;
+}
+
+/* Active highlight */
+.activeSideBtn{
+    -fx-background-color: rgba(47,107,255,0.16);
+    -fx-background-radius: 14;
+}
+.activeSideBtn .sideIcon{
+    -fx-fill: #2F6BFF;
+    -fx-scale-x: 1.06;
+    -fx-scale-y: 1.06;
+}
+
+/* Status badges */
+.statusBadge{
+    -fx-padding: 4 10;
+    -fx-background-radius: 999;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+}
+.statusActive{
+    -fx-background-color: rgba(34,197,94,0.15);
+    -fx-text-fill: #16a34a;
+}
+
+.statusInactive{
+    -fx-background-color: rgba(239,68,68,0.15);
+    -fx-text-fill: #dc2626;
+}
+
+
+.badgeGreen{
+    -fx-background-color: rgba(34,197,94,0.15);
+    -fx-text-fill: #16A34A;
+}
+.statusBadge:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0.2, 0, 2);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+.badgeRed{
+    -fx-background-color: rgba(239,68,68,0.16);
+    -fx-text-fill: #DC2626;
+}
+
+/* Mini profile in sidebar */
+.adminMiniProfile{
+    -fx-padding: 12 10 6 10;
+    -fx-background-color: rgba(15,23,42,0.04);
+    -fx-background-radius: 14;
+}
+.adminMiniName{
+    -fx-text-fill: #0B1736;
+    -fx-font-weight: 900;
+    -fx-font-size: 13px;
+}
+.adminMiniRole{
+    -fx-text-fill: #64748b;
+    -fx-font-weight: 800;
+    -fx-font-size: 11px;
+}
+.welcomeCard{
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-padding: 26 34;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 22, 0.2, 0, 8);
+    -fx-min-width: 520;
+}
+
+.welcomeTitle{
+    -fx-text-fill: #0B1736;
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+}
+
+.welcomeSub{
+    -fx-text-fill: #64748b;
+    -fx-font-size: 13px;
+}
+
+/* Actions icons inside table */
+.actionBtn {
+    -fx-background-color: transparent;
+    -fx-padding: 6;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.actionBtn:hover {
+    -fx-background-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 6, 0.2, 0, 2);
+}
+/* SVG size */
+.actionIconSvg {
+    -fx-scale-x: 1.0;
+    -fx-scale-y: 1.0;
+}
+
+/* Colors */
+.actionAdd .actionIconSvg {
+    -fx-fill: #2F6BFF; /* bleu */
+}
+
+.actionEdit .actionIconSvg {
+    -fx-fill: #00B8D9; /* cyan */
+}
+
+.actionDelete .actionIconSvg {
+    -fx-fill: #FF3B30; /* rouge */
+}
+.toast {
+    -fx-background-color: rgba(20,20,20,0.92);
+    -fx-background-radius: 14;
+    -fx-padding: 10 14;
+    -fx-font-size: 13px;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 12, 0.2, 0, 4);
+    -fx-max-width: 320;
+}
+
+.toastSuccess {
+    -fx-background-color: #16A34A; /* vert */
+}
+
+.toastError {
+    -fx-background-color: #EF4444; /* rouge */
+}
+
+.toastInfo {
+    -fx-background-color: #2563EB; /* bleu */
+}
+
+.actionIcon {
+    -fx-cursor: hand;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-min-width: 28px;
+    -fx-min-height: 28px;
+    -fx-alignment: center;
+    -fx-background-radius: 8px;
+}
+
+.actionApprove { -fx-text-fill: white; -fx-background-color: #22c55e; } /* vert */
+.actionReject  { -fx-text-fill: white; -fx-background-color: #ef4444; } /* rouge */
+.actionDelete  { -fx-text-fill: white; -fx-background-color: #ff3b30; } /* rouge delete */

@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Echeances (Financement)</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Echeances</span>
+        <h1>Echeances d'un financement</h1>
+        <p class="sub">Liste des remboursements pour un financement specifique.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGold" id="addLink" href="remboursement-add.html">+ Ajouter</a>
+        <a class="btnTop btnNavy" id="refreshLink" href="#">Rafraichir</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="crudHead">
+        <div>
+          <h2 class="title" style="margin:0;">Liste</h2>
+          <p class="sub" style="margin-top:8px;">Filtre par statut ou recherche par ID.</p>
+        </div>
+        <div class="crudFilters">
+          <div class="fieldSmall">
+            <label for="search">Recherche</label>
+            <input id="search" placeholder="ID, statut..." />
+          </div>
+          <div class="fieldSmall">
+            <label for="statut">Statut</label>
+            <select id="statut">
+              <option value="ALL" selected>Tous</option>
+              <option value="EN_ATTENTE">EN_ATTENTE</option>
+              <option value="PAYE">PAYE</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="kpiLabel">Total du</div><div class="kpiValue" id="kDue">0 TND</div></div>
+        <div class="kpi"><div class="kpiLabel">Total paye</div><div class="kpiValue" id="kPaid">0 TND</div></div>
+        <div class="kpi"><div class="kpiLabel">Nb echeances</div><div class="kpiValue" id="kCount">0</div></div>
+      </div>
+
+      <table aria-label="Table des remboursements">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Date echeance</th>
+            <th>Montant du</th>
+            <th>Montant paye</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div class="note" id="result" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const source = params.get("source");
+    const projectId = params.get("projectId");
+    const financementIdParam = params.get("financementId");
+    const financementId = financementIdParam ? String(financementIdParam) : "";
+
+    const tbody = document.getElementById("tbody");
+    const search = document.getElementById("search");
+    const statut = document.getElementById("statut");
+    const result = document.getElementById("result");
+    const backLink = document.getElementById("backLink");
+    const addLink = document.getElementById("addLink");
+    const refreshLink = document.getElementById("refreshLink");
+
+    const kDue = document.getElementById("kDue");
+    const kPaid = document.getElementById("kPaid");
+    const kCount = document.getElementById("kCount");
+
+    let data = [];
+
+    function money(n){
+      return new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    }
+
+    function round2(n){
+      return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+    }
+
+    function paidCapped(du, paye){
+      const d = Math.max(0, Number(du) || 0);
+      const p = Math.max(0, Number(paye) || 0);
+      return Math.min(d, p);
+    }
+
+    function remaining(du, paye){
+      return Math.max(0, round2((Number(du) || 0) - paidCapped(du, paye)));
+    }
+
+    function computeKpis(rows){
+      const totalDu = rows.reduce((a,r) => a + (Number(r.montantDu) || 0), 0);
+      const totalPaye = rows.reduce((a,r) => a + paidCapped(r.montantDu, r.montantPaye), 0);
+      kDue.textContent = money(round2(totalDu));
+      kPaid.textContent = money(round2(totalPaye));
+      kCount.textContent = String(rows.length);
+    }
+
+    function resolveDefaultFinancementAndRedirect(){
+      if (!window.javaBridge) return false;
+      if (typeof window.javaBridge.getMyProjectsJson !== "function"
+        || typeof window.javaBridge.getFinancementsByProjectWithRembStatusJson !== "function") {
+        return false;
+      }
+      try {
+        const projects = JSON.parse(String(window.javaBridge.getMyProjectsJson() || "[]"));
+        if (!Array.isArray(projects) || !projects.length) return false;
+        const project = projects[0];
+        const pid = Number(project && project.id ? project.id : 0);
+        if (!pid) return false;
+        const rows = JSON.parse(String(window.javaBridge.getFinancementsByProjectWithRembStatusJson(pid) || "[]"));
+        if (!Array.isArray(rows) || !rows.length) return false;
+        const fid = Number(rows[0] && rows[0].id ? rows[0].id : 0);
+        if (!fid) return false;
+        window.location.href = `remboursements-financement.html?source=entrepreneur&projectId=${encodeURIComponent(String(pid))}&financementId=${encodeURIComponent(String(fid))}`;
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function loadFromDb(){
+      if (!financementId) {
+        if (resolveDefaultFinancementAndRedirect()) return;
+        result.style.display = "block";
+        result.textContent = "financementId manquant.";
+        data = [];
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.getRemboursementsByFinancementJson !== "function") {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        data = [];
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getRemboursementsByFinancementJson(Number(financementId));
+        const rows = JSON.parse(String(raw || "[]"));
+        data = (Array.isArray(rows) ? rows : []).map(r => ({
+          id: String(r.id),
+          financementId: r.financementId,
+          dateEcheance: r.dateEcheance || "",
+          montantDu: Number(r.montantDu || 0),
+          montantPaye: Number(r.montantPaye || 0),
+          statut: ((Number(r.montantPaye || 0) + 1e-9) >= Number(r.montantDu || 0) && Number(r.montantDu || 0) > 0) ? "PAYE" : "EN_ATTENTE"
+        }));
+      } catch (e) {
+        data = [];
+        result.style.display = "block";
+        result.textContent = "Erreur chargement remboursements: " + e;
+      }
+    }
+
+    function applyFilters(){
+      const s = (search.value || "").toLowerCase().trim();
+      const st = statut.value;
+      return data.filter(r => {
+        if (st !== "ALL" && String(r.statut) !== st) return false;
+        if (!s) return true;
+        return (String(r.id).toLowerCase().includes(s) || String(r.statut).toLowerCase().includes(s));
+      });
+    }
+
+    function render(){
+      const rows = applyFilters();
+      computeKpis(rows);
+      tbody.innerHTML = rows.map(r => {
+        const payeAffiche = paidCapped(r.montantDu, r.montantPaye);
+        const tag = r.statut === "PAYE"
+          ? '<span class="tag ok"><span class="tagDot"></span>PAYE</span>'
+          : '<span class="tag pending"><span class="tagDot"></span>EN_ATTENTE</span>';
+        const payDisabled = String(r.statut) === "PAYE";
+        const payStyle = payDisabled ? 'style="opacity:.55; pointer-events:none;"' : "";
+        return `
+          <tr>
+            <td><strong>${r.id}</strong></td>
+            <td>${r.dateEcheance || "-"}</td>
+            <td><strong>${money(r.montantDu)}</strong></td>
+            <td><strong>${money(payeAffiche)}</strong></td>
+            <td>${tag}</td>
+            <td>
+              <div class="rowBtns">
+                <a class="miniBtn edit" ${payStyle} href="remboursement-pay.html?id=${encodeURIComponent(r.id)}">Payer</a>
+                <a class="miniBtn" href="remboursement-detail.html?id=${encodeURIComponent(r.id)}&source=${encodeURIComponent(String(source || ''))}&projectId=${encodeURIComponent(String(projectId || ''))}&financementId=${encodeURIComponent(String(financementId || ''))}&returnUrl=${encodeURIComponent(String(location.pathname + location.search))}">Detail</a>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    let pendingDeleteId = null;
+    let pendingDeleteTimer = null;
+    function confirmDelete(targetId){
+      const key = String(targetId);
+      if (pendingDeleteId !== key) {
+        pendingDeleteId = key;
+        if (pendingDeleteTimer) clearTimeout(pendingDeleteTimer);
+        result.style.display = "block";
+        result.textContent = "Cliquez a nouveau pour confirmer la suppression.";
+        pendingDeleteTimer = setTimeout(function(){ pendingDeleteId = null; }, 3000);
+        return false;
+      }
+      if (pendingDeleteTimer) clearTimeout(pendingDeleteTimer);
+      pendingDeleteId = null;
+      return true;
+    }
+
+    function deleteRemboursement(id){
+      if (!id) return;
+      if (!confirmDelete(id)) return;
+      result.style.display = "block";
+      result.textContent = "Suppression en cours...";
+      if (!window.javaBridge || typeof window.javaBridge.deleteRemboursementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      const payload = new URLSearchParams({ id: String(id) }).toString();
+      const raw = window.javaBridge.deleteRemboursementFromJs(payload);
+      if (raw !== undefined && raw !== null && raw !== "") {
+        const res = JSON.parse(String(raw));
+        result.textContent = res.ok ? "Remboursement supprime." : ("Erreur: " + (res.message || "inconnue"));
+        if (res.ok) {
+          loadFromDb();
+          render();
+        }
+      }
+    }
+
+    function init(){
+      if (refreshLink) refreshLink.href = `remboursements-financement.html?financementId=${encodeURIComponent(financementId)}`;
+      if (addLink) {
+        if (source === "entrepreneur" && projectId) {
+          addLink.href = `remboursement-add.html?source=entrepreneur&projectId=${encodeURIComponent(String(projectId))}&financementId=${encodeURIComponent(financementId)}`;
+        } else {
+          addLink.href = `remboursement-add.html?financementId=${encodeURIComponent(financementId)}`;
+        }
+      }
+      if (backLink) {
+        if (source === "entrepreneur" && projectId) {
+          backLink.href = `remboursements-financement.html?source=entrepreneur&projectId=${encodeURIComponent(String(projectId))}&financementId=${encodeURIComponent(financementId)}`;
+        } else {
+          backLink.href = "remboursements-financement.html";
+        }
+      }
+      loadFromDb();
+      render();
+    }
+
+    window.onJavaBridgeReady = init;
+    function waitForBridge(retries){
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(30);
+
+    [search, statut].forEach(el => {
+      el.addEventListener("input", render);
+      el.addEventListener("change", render);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Modifier remboursement</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Modification</span>
+        <h1>Modifier une echeance</h1>
+        <p class="sub">Edition d'un remboursement existant.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" id="backLink" href="remboursements-list.html">Retour liste</a>
+        <button class="btnTop btnNavy" type="submit" form="editForm">Enregistrer</button>
+        <a class="btnTop btnDanger" id="detailLink" href="remboursement-detail.html">Detail</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2 class="title">Formulaire</h2>
+        <span class="tag pending" id="statusTag"><span class="tagDot"></span>EN_ATTENTE</span>
+      </div>
+
+      <form id="editForm">
+        <div class="formGrid">
+          <div>
+            <label for="rid">ID remboursement</label>
+            <input id="rid" type="text" disabled />
+          </div>
+          <div>
+            <label for="fin">Financement</label>
+            <select id="fin" required></select>
+          </div>
+          <div>
+            <label for="dateEcheance">Date echeance</label>
+            <input id="dateEcheance" type="date" required />
+          </div>
+          <div>
+            <label for="montantDu">Montant du (TND)</label>
+            <input id="montantDu" type="number" min="1" step="0.01" required />
+          </div>
+          <div>
+            <label for="montantPaye">Montant paye (TND)</label>
+            <input id="montantPaye" type="number" min="0" step="0.01" required />
+          </div>
+          <div>
+            <label for="statut">Statut</label>
+            <select id="statut" required>
+              <option value="EN_ATTENTE" selected>EN_ATTENTE</option>
+              <option value="PAYE">PAYE</option>
+            </select>
+          </div>
+        </div>
+        <div class="note" id="result" style="display:none;"></div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = Number(params.get("id") || 0);
+
+    const rid = document.getElementById("rid");
+    const detailLink = document.getElementById("detailLink");
+    const backLink = document.getElementById("backLink");
+    const result = document.getElementById("result");
+    const form = document.getElementById("editForm");
+    const finSelect = document.getElementById("fin");
+    const dateEcheanceEl = document.getElementById("dateEcheance");
+    const montantDuEl = document.getElementById("montantDu");
+    const montantPayeEl = document.getElementById("montantPaye");
+    const statutEl = document.getElementById("statut");
+    const statusTag = document.getElementById("statusTag");
+
+    (function enforceRole(){
+      try {
+        if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function") {
+          const role = String(window.javaBridge.getCurrentUserRole() || "");
+          if (role === "INVESTISSEUR") {
+            window.location.href = "remboursements-investisseur.html";
+          }
+        }
+      } catch (e) {}
+    })();
+
+    rid.value = id ? String(id) : "";
+    detailLink.href = `remboursement-detail.html?id=${encodeURIComponent(id)}`;
+
+    function updateStatusTag(){
+      const v = String(statutEl.value || "EN_ATTENTE");
+      statusTag.className = v === "PAYE" ? "tag ok" : "tag pending";
+      statusTag.innerHTML = v === "PAYE"
+        ? '<span class="tagDot"></span>PAYE'
+        : '<span class="tagDot"></span>EN_ATTENTE';
+    }
+
+    function normalizeStatut(){
+      const du = Number(montantDuEl.value || 0);
+      const paye = Number(montantPayeEl.value || 0);
+      if (du > 0 && paye + 1e-9 >= du) {
+        statutEl.value = "PAYE";
+      } else if (statutEl.value !== "PAYE") {
+        statutEl.value = "EN_ATTENTE";
+      }
+      updateStatusTag();
+    }
+    statutEl.addEventListener("change", updateStatusTag);
+    montantDuEl.addEventListener("input", normalizeStatut);
+    montantPayeEl.addEventListener("input", normalizeStatut);
+
+    function loadFinancementsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getFinancementsJson !== "function") return;
+      try {
+        const rows = JSON.parse(window.javaBridge.getFinancementsJson());
+        finSelect.innerHTML = "";
+        rows.forEach(f => {
+          const opt = document.createElement("option");
+          opt.value = String(f.id);
+          opt.textContent = "Financement #" + f.id;
+          finSelect.appendChild(opt);
+        });
+      } catch (e) {}
+    }
+
+    function loadRemboursement(){
+      if (!id || !window.javaBridge || typeof window.javaBridge.getRemboursementByIdJson !== "function") return;
+      try {
+        const r = JSON.parse(window.javaBridge.getRemboursementByIdJson(id));
+        if (!r || !r.id) return;
+        if (r.financementId) finSelect.value = String(r.financementId);
+        if (backLink && r.financementId) {
+          backLink.href = `remboursements-list.html?financementId=${encodeURIComponent(String(r.financementId))}`;
+        }
+        dateEcheanceEl.value = r.dateEcheance || "";
+        montantDuEl.value = r.montantDu || 0;
+        montantPayeEl.value = r.montantPaye || 0;
+        statutEl.value = (r.statut || "EN_ATTENTE");
+        normalizeStatut();
+      } catch (e) {}
+    }
+
+    window.onJavaBridgeReady = function(){
+      loadFinancementsFromDb();
+      loadRemboursement();
+      updateStatusTag();
+    };
+
+    function waitForBridge(retries){
+      if (window.javaBridge) { window.onJavaBridgeReady(); return; }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(20);
+
+    window.onUpdateResult = function(raw){
+      if (raw === undefined || raw === null || raw === "") {
+        result.textContent = "Erreur: reponse vide du bridge.";
+        return;
+      }
+      const res = JSON.parse(String(raw));
+      result.textContent = res.ok ? "Remboursement modifie." : ("Erreur: " + (res.message || "inconnue"));
+      if (res.ok) {
+        window.location.href = `remboursement-detail.html?id=${encodeURIComponent(id)}`;
+      }
+    };
+
+    form.addEventListener("submit", (e)=>{
+      e.preventDefault();
+      result.style.display = "block";
+      result.textContent = "Enregistrement en cours...";
+
+      if (!window.javaBridge || typeof window.javaBridge.updateRemboursementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+
+      normalizeStatut();
+      const payload = new URLSearchParams({
+        id: String(id),
+        financementId: String(Number(finSelect.value || 0)),
+        dateEcheance: String(dateEcheanceEl.value || ""),
+        montantDu: String(Number(montantDuEl.value || 0)),
+        montantPaye: String(Number(montantPayeEl.value || 0)),
+        statut: String(statutEl.value || "EN_ATTENTE")
+      }).toString();
+
+      try {
+        // Prefer the callback (onUpdateResult) as WebView sometimes fails to return sync values.
+        const raw = window.javaBridge.updateRemboursementFromJs(payload);
+        if (raw !== undefined && raw !== null && raw !== "") {
+          window.onUpdateResult(raw);
+        }
+      } catch (err) {
+        result.textContent = "Erreur JS: " + err;
+      }
+    });
+  </script>
+</body>
+</html>

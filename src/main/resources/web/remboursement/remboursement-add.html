@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Ajouter remboursement</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Ajout</span>
+        <h1>Ajouter une echeance</h1>
+        <p class="sub">Creer un remboursement lie a un financement.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" id="backLink" href="remboursements-list.html">Retour liste</a>
+        <button class="btnTop btnNavy" id="submitBtn" type="button">Enregistrer</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2 class="title">Formulaire</h2>
+      </div>
+
+      <form id="addForm">
+        <div class="formGrid">
+          <div>
+            <label for="fin">Financement</label>
+            <select id="fin" required></select>
+          </div>
+          <div>
+            <label for="dateEcheance">Date echeance</label>
+            <input id="dateEcheance" type="date" required />
+          </div>
+          <div>
+            <label for="montantDu">Montant du (TND)</label>
+            <input id="montantDu" type="number" min="1" step="0.01" value="500" required />
+          </div>
+          <div>
+            <label for="montantPaye">Montant paye (TND)</label>
+            <input id="montantPaye" type="number" min="0" step="0.01" value="0" required />
+          </div>
+          <div>
+            <label for="statut">Statut</label>
+            <select id="statut" required>
+              <option value="EN_ATTENTE" selected>EN_ATTENTE</option>
+              <option value="PAYE">PAYE</option>
+            </select>
+          </div>
+          <div class="note" style="grid-column:1 / -1; margin-top:0;">
+            Astuce: si <strong>montant paye</strong> >= <strong>montant du</strong>, le statut passe automatiquement a <strong>PAYE</strong>.
+          </div>
+        </div>
+        <div class="note" id="result" style="display:none;"></div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const source = params.get("source");
+    const preselectFinancementId = params.get("financementId");
+    const preselectProjectId = params.get("projectId");
+    const prefillAmount = params.get("amount");
+
+    const form = document.getElementById("addForm");
+    const result = document.getElementById("result");
+    const finSelect = document.getElementById("fin");
+    const backLink = document.getElementById("backLink");
+    const submitBtn = document.getElementById("submitBtn");
+    const montantDuEl = document.getElementById("montantDu");
+    const montantPayeEl = document.getElementById("montantPaye");
+    const statutEl = document.getElementById("statut");
+    const dateEcheanceEl = document.getElementById("dateEcheance");
+    let createHandled = false;
+
+    // Convenience: default due date to today if not provided.
+    try {
+      if (dateEcheanceEl && !dateEcheanceEl.value) {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const dd = String(now.getDate()).padStart(2, "0");
+        dateEcheanceEl.value = `${yyyy}-${mm}-${dd}`;
+      }
+    } catch (e) {}
+
+    submitBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    function normalizeStatut(){
+      const du = Number(montantDuEl.value || 0);
+      const paye = Number(montantPayeEl.value || 0);
+      if (du > 0 && paye + 1e-9 >= du) {
+        statutEl.value = "PAYE";
+      } else if (statutEl.value !== "PAYE") {
+        statutEl.value = "EN_ATTENTE";
+      }
+    }
+    montantDuEl.addEventListener("input", normalizeStatut);
+    montantPayeEl.addEventListener("input", normalizeStatut);
+
+    function loadFinancementsFromDb(){
+      if (!window.javaBridge) return;
+      const fn = preselectProjectId ? "getFinancementsByProjectJson" : "getFinancementsJson";
+      const investorFn = "getFinancementsForCurrentInvestorJson";
+      const useInvestorScope = !preselectProjectId && typeof window.javaBridge[investorFn] === "function";
+      if (!useInvestorScope && typeof window.javaBridge[fn] !== "function") return;
+      try {
+        const raw = useInvestorScope
+          ? window.javaBridge.getFinancementsForCurrentInvestorJson()
+          : preselectProjectId
+          ? window.javaBridge.getFinancementsByProjectJson(Number(preselectProjectId))
+          : window.javaBridge.getFinancementsJson();
+        const rows = JSON.parse(String(raw || "[]"));
+        finSelect.innerHTML = "";
+        let hasPreselected = false;
+        rows.forEach(f => {
+          const opt = document.createElement("option");
+          opt.value = String(f.id);
+          opt.textContent = preselectProjectId
+            ? ("Financement #" + f.id + " (Investissement #" + (f.investId || "?") + ")")
+            : ("Financement #" + f.id);
+          finSelect.appendChild(opt);
+          if (preselectFinancementId && String(f.id) === String(preselectFinancementId)) {
+            hasPreselected = true;
+          }
+        });
+        if (preselectFinancementId && !hasPreselected) {
+          const opt = document.createElement("option");
+          opt.value = String(preselectFinancementId);
+          opt.textContent = "Financement #" + String(preselectFinancementId);
+          finSelect.appendChild(opt);
+        }
+        if (preselectFinancementId) {
+          finSelect.value = String(preselectFinancementId);
+          finSelect.disabled = true;
+          if (backLink) {
+            if (source === "investisseur") {
+              backLink.href = `remboursements-investisseur.html?financementId=${encodeURIComponent(String(preselectFinancementId))}`;
+            } else if (source === "entrepreneur" && preselectProjectId) {
+              backLink.href = `remboursements-financement.html?source=entrepreneur&projectId=${encodeURIComponent(String(preselectProjectId))}&financementId=${encodeURIComponent(String(preselectFinancementId))}`;
+            } else {
+              backLink.href = `remboursements-financement.html?financementId=${encodeURIComponent(String(preselectFinancementId))}`;
+            }
+          }
+        }
+        if (preselectProjectId && !preselectFinancementId) {
+          if (backLink) backLink.href = `remboursements-financement.html?source=entrepreneur&projectId=${encodeURIComponent(String(preselectProjectId))}`;
+        }
+        if (prefillAmount) {
+          const v = Number(prefillAmount);
+          if (Number.isFinite(v) && v > 0) {
+            montantDuEl.value = String(v);
+          }
+        }
+        updateSubmitState();
+      } catch (e) {
+        result.style.display = "block";
+        result.textContent = "Erreur chargement financements: " + e;
+        updateSubmitState();
+      }
+    }
+
+    function updateSubmitState(){
+      submitBtn.disabled = !(finSelect.options.length > 0);
+      if (submitBtn.disabled) {
+        result.style.display = "block";
+        result.textContent = "Ajout impossible: verifiez qu'il existe au moins un financement.";
+      }
+    }
+
+    function parseBridgeResult(raw){
+      if (raw === undefined || raw === null || raw === "") return null;
+      if (typeof raw === "object") return raw;
+      try {
+        return JSON.parse(String(raw));
+      } catch (e) {
+        return null;
+      }
+    }
+
+    window.onJavaBridgeReady = function(){
+      loadFinancementsFromDb();
+      normalizeStatut();
+    };
+
+    function waitForBridge(retries){
+      if (window.javaBridge) {
+        window.onJavaBridgeReady();
+        return;
+      }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(20);
+
+    form.addEventListener("submit", (e)=>{
+      e.preventDefault();
+      createHandled = false;
+      result.style.display = "block";
+      result.textContent = "Enregistrement en cours...";
+
+      if (!window.javaBridge || typeof window.javaBridge.createRemboursementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+
+      const financementForSubmit = Number(preselectFinancementId || finSelect.value || 0);
+      if (!Number.isFinite(financementForSubmit) || financementForSubmit <= 0) {
+        result.textContent = "Financement invalide.";
+        return;
+      }
+
+      normalizeStatut();
+
+      const payload = new URLSearchParams({
+        financementId: String(financementForSubmit),
+        dateEcheance: String(dateEcheanceEl.value || ""),
+        montantDu: String(Number(montantDuEl.value || 0)),
+        montantPaye: String(Number(montantPayeEl.value || 0)),
+        statut: String(statutEl.value || "EN_ATTENTE")
+      }).toString();
+
+      try {
+        const raw = window.javaBridge.createRemboursementFromJs(payload);
+        // Fallback for WebView cases where callback is not fired reliably.
+        if (raw !== undefined && raw !== null && raw !== "") {
+          window.onCreateResult(raw);
+        }
+      } catch (err) {
+        result.textContent = "Erreur JS: " + err;
+      }
+    });
+
+    window.onCreateResult = function(raw){
+      if (createHandled) return;
+      createHandled = true;
+      const res = parseBridgeResult(raw);
+      if (!res) {
+        result.textContent = "Erreur: reponse vide du bridge.";
+        return;
+      }
+      result.textContent = res.ok ? "Remboursement ajoute." : ("Erreur: " + (res.message || "inconnue"));
+      if (res.ok) {
+        if (preselectFinancementId) {
+          if (source === "investisseur") {
+            window.location.href = `remboursements-investisseur.html?financementId=${encodeURIComponent(String(preselectFinancementId))}`;
+          } else if (source === "entrepreneur" && preselectProjectId) {
+            window.location.href = `remboursements-financement.html?source=entrepreneur&projectId=${encodeURIComponent(String(preselectProjectId))}&financementId=${encodeURIComponent(String(preselectFinancementId))}`;
+          } else {
+            window.location.href = `remboursements-financement.html?financementId=${encodeURIComponent(String(preselectFinancementId))}`;
+          }
+        } else if (preselectProjectId) {
+          window.location.href = `remboursements-financement.html?source=entrepreneur&projectId=${encodeURIComponent(String(preselectProjectId))}`;
+        } else {
+          window.location.href = "remboursements-investisseur.html";
+        }
+      }
+    };
+  </script>
+</body>
+</html>

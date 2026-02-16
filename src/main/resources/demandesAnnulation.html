@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demandes d'annulation</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.10);
+      --shadow:0 14px 35px rgba(15,23,42,.08);
+      --primary:#1d4ed8;
+      --accent:#06b6d4;
+      --success:#16a34a;
+      --danger:#ef4444;
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    .container{max-width:1120px; margin:28px auto 60px; padding:0 16px;}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:16px;
+    }
+    .breadcrumb{
+      display:flex; gap:10px; align-items:center; color:var(--muted); font-size:14px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+    }
+    th, td{
+      text-align:left;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      font-size:14px;
+    }
+    th{
+      background:rgba(29,78,216,.06);
+      font-size:12px;
+      letter-spacing:.25px;
+      text-transform:uppercase;
+      color:#0b2a55;
+    }
+    tr:last-child td{border-bottom:0}
+    .num{text-align:right; font-variant-numeric: tabular-nums;}
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+    }
+    .tag.wait{border-color: rgba(245,158,11,.30); background: rgba(245,158,11,.10); color:#5a3a07;}
+    .tag.ok{border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); color:#0f3d1b;}
+    .tag.no{border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.08); color:#7f1d1d;}
+    .empty{color:var(--muted); padding:10px 0;}
+      .navbar{
+      position:sticky;
+      top:0;
+      z-index:999;
+      background:#fff;
+      border-bottom:1px solid rgba(15,23,42,.08);
+      box-shadow:0 8px 24px rgba(15,23,42,.06);
+    }
+    .nav-inner{max-width:100%;margin:0;padding:10px 18px 10px 10px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
+     param($m) $m.Value -replace 'color:#0f172a;', 'color:#1e3a8a;' 
+    .nav-links a{padding:6px 0; border-bottom:3px solid transparent; color:#1e3a8a; font-weight:800; letter-spacing:.2px;}
+    .nav-links a.active{color:#d97706; border-bottom-color:#d97706;}
+    .nav-links a:hover{color:#d97706;}
+    .nav-user{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:14px;
+      color:#334155;
+    }
+    .avatar{
+      width:30px;height:30px;border-radius:50%;
+      background:#e2e8f0;display:inline-flex;align-items:center;justify-content:center;
+      font-weight:800;color:#0f172a;
+    }      .brand .ia{color:#d97706;}  </style>
+<script src="navbar.js" defer></script></head>
+<body>  
+  <main class="container">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="projet_view.html">← Retour</a>
+        <span>•</span>
+        <strong class="muted">Demandes d'annulation</strong>
+      </div>
+    </div>
+
+    <section class="card">
+      <h2 style="margin:0 0 10px;">Liste des demandes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Projet</th>
+            <th>Raison</th>
+            <th>Statut</th>
+            <th class="num">Créé le</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty">Aucune demande pour le moment.</div>
+    </section>
+  </main>
+
+  <script>
+    function withBridge(onReady, onFail){
+      const start = Date.now();
+      const timer = setInterval(() => {
+        if (window.javaBridge) {
+          clearInterval(timer);
+          onReady(window.javaBridge);
+          return;
+        }
+        if (Date.now() - start > 2000) {
+          clearInterval(timer);
+          if (onFail) onFail();
+        }
+      }, 100);
+    }
+
+    function mapStatus(statut){
+      if (statut === "EN_ATTENTE") return { label: "En attente", cls: "wait" };
+      if (statut === "VALIDE") return { label: "Valide", cls: "ok" };
+      if (statut === "REFUSE") return { label: "Refuse", cls: "no" };
+      return { label: statut || "—", cls: "wait" };
+    }
+
+    function loadDemandes(){
+      withBridge((bridge) => {
+        const hasMine = typeof bridge.listMyDemandesAnnulation === "function";
+        const hasAll = typeof bridge.listDemandesAnnulation === "function";
+        if (!hasMine && !hasAll) return;
+        const json = hasMine ? bridge.listMyDemandesAnnulation() : bridge.listDemandesAnnulation();
+        const list = JSON.parse(json || "[]");
+        const body = document.getElementById("rows");
+        const empty = document.getElementById("empty");
+        if (!list.length) {
+          body.innerHTML = "";
+          empty.style.display = "block";
+          return;
+        }
+        empty.style.display = "none";
+        body.innerHTML = list.map(d => {
+          const st = mapStatus(d.statut);
+          return `
+            <tr>
+              <td>${d.id}</td>
+              <td>#${d.projetId} ${d.projetTitre ? "(" + d.projetTitre + ")" : ""}</td>
+              <td>${d.raison || ""}</td>
+              <td><span class="tag ${st.cls}">${st.label}</span></td>
+              <td class="num">${d.createdAt || ""}</td>
+            </tr>
+          `;
+        }).join("");
+      });
+    }
+
+    loadDemandes();
+  </script>
+  <script>
+    (function(){
+      const links = Array.from(document.querySelectorAll('.nav-links a'));
+      if (!links.length) return;
+      const file = (window.location.href.split('#')[0].split('?')[0].split('/').pop() || '');
+      let active = null;
+      if (file === 'projet_view.html') {
+        active = links.find(a => a.textContent.toLowerCase().includes('mes projets')) || links[0];
+      } else {
+        active = links.find(a => a.getAttribute('href') === file) || null;
+      }
+      if (active) active.classList.add('active');
+    })();
+  </script></body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia ï¿½ Detail financement</title>
+  <link rel="stylesheet" href="financement.css" />
+  <script src="../../navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Financement ï¿½ Detail</span>
+        <h1>Detail du financement</h1>
+        <p class="sub">Informations completes pour un financement specifique.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="financements-list.html">Retour liste</a>
+        <a class="btnTop btnGold" id="rembLink" href="../remboursement/remboursements-investisseur.html">Remboursements</a>
+        <a class="btnTop btnNavy" id="editLink" href="financement-edit.html">Modifier</a>
+        <button class="btnTop btnDanger" id="deleteBtn" type="button" onclick="deleteFinancement()">Supprimer</button>
+      </div>
+    </div>
+
+    <div class='note' id='result' style='display:none;'></div>
+
+    <section class="gridTop">
+      <div class="card">
+        <div class="rowHead">
+          <h2 class="title">Resume</h2>
+          <span class="tag ok" id="statusTag"><span class="tagDot"></span>CONFIRMED</span>
+        </div>
+        <div class="note" style="margin-top:0;">
+          <div><strong>ID:</strong> <span id="fId">F-001</span></div>
+          <div><strong>Date:</strong> <span id="fDate">2026-02-10</span></div>
+          <div><strong>Projet:</strong> <a id="fProjectLink" class="softLink" href="#">EcoPack</a></div>
+          <div><strong>Investisseur:</strong> <span id="fInvestor">Amira Ben Salah</span></div>
+          <div><strong>Montant:</strong> <span id="fAmount">200 TND</span></div>
+          <div><strong>Paiement:</strong> <span id="fMethod">CARTE</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="rowHead">
+          <h2 class="title">Note et suivi</h2>
+        </div>
+        <div class="note" id="fNote">Premiere contribution pour soutenir le projet.</div>
+        <div class="note">
+          <strong>Historique:</strong>
+          <div>Creation: 2026-02-10</div>
+          <div>Derniere modification: 2026-02-12</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="projTrackCard" style="margin-top:16px; display:none;">
+      <div class="rowHead">
+        <h2 class="title">Suivi du projet</h2>
+        <a class="miniBtn edit" id="projDetailLink" href="../projet/projet-detail.html">Detail projet</a>
+      </div>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="kpiLabel">Objectif</div>
+          <div class="kpiValue" id="pObjective">-</div>
+        </div>
+        <div class="kpi">
+          <div class="kpiLabel">Leves</div>
+          <div class="kpiValue" id="pRaised">-</div>
+        </div>
+        <div class="kpi">
+          <div class="kpiLabel">Reste</div>
+          <div class="kpiValue" id="pRemaining">-</div>
+        </div>
+      </div>
+      <div class="note" style="margin-bottom:0;">
+        <div class="progressRow">
+          <strong>Progression</strong>
+          <span id="pProgressPct">0%</span>
+        </div>
+        <div class="progressBar" aria-hidden="true"><div class="progressFill" id="pProgressFill" style="width:0%"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const idParam = params.get("id");
+    const id = Number(idParam || 0);
+    let editId = idParam ? String(idParam) : "";
+
+    const result = document.getElementById("result");
+    const deleteBtn = document.getElementById("deleteBtn");
+    const statusTag = document.getElementById("statusTag");
+    const fId = document.getElementById("fId");
+    const fDate = document.getElementById("fDate");
+    const fProjectLink = document.getElementById("fProjectLink");
+    const fInvestor = document.getElementById("fInvestor");
+    const fAmount = document.getElementById("fAmount");
+    const fMethod = document.getElementById("fMethod");
+    const fNote = document.getElementById("fNote");
+    const rembLink = document.getElementById("rembLink");
+
+    const projTrackCard = document.getElementById("projTrackCard");
+    const projDetailLink = document.getElementById("projDetailLink");
+    const pObjective = document.getElementById("pObjective");
+    const pRaised = document.getElementById("pRaised");
+    const pRemaining = document.getElementById("pRemaining");
+    const pProgressPct = document.getElementById("pProgressPct");
+    const pProgressFill = document.getElementById("pProgressFill");
+
+    const projectMap = {};
+    const investMap = {};
+    let pendingDeleteId = null;
+    let pendingDeleteTimer = null;
+
+    function money(n){
+      return new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    }
+
+    function loadProjectsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getProjectsJson !== "function") return;
+      try {
+        const projects = JSON.parse(window.javaBridge.getProjectsJson());
+        projects.forEach(p => { projectMap[String(p.id)] = p.name; });
+      } catch (e) {}
+    }
+
+    function loadInvestissementsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getInvestissementsJson !== "function") return;
+      try {
+        const rows = JSON.parse(window.javaBridge.getInvestissementsJson());
+        rows.forEach(r => { investMap[String(r.id)] = r.investorId; });
+      } catch (e) {}
+    }
+
+    function loadFinancement(){
+      if (!id) {
+        if (result) {
+          result.style.display = "block";
+          result.textContent = "ID financement manquant.";
+        }
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.getFinancementByIdJson !== "function") return;
+      try {
+        const f = JSON.parse(window.javaBridge.getFinancementByIdJson(id));
+        if (!f || !f.id) {
+          if (result) {
+            result.style.display = "block";
+            result.textContent = "Aucun financement trouve.";
+          }
+          return;
+        }
+
+        const projectLabel = projectMap[String(f.projectId)] || ("Projet #" + f.projectId);
+        const investorLabel = investMap[String(f.investId)] ? ("INV #" + investMap[String(f.investId)]) : ("INV #" + f.investId);
+
+        fId.textContent = String(f.id);
+        if (!editId && f.id) {
+          editId = String(f.id);
+          const editLink = document.getElementById("editLink");
+          if (editLink) {
+            editLink.href = `financement-edit.html?id=${encodeURIComponent(editId)}`;
+          }
+        }
+        fDate.textContent = f.date || "-";
+        if (fProjectLink) {
+          fProjectLink.textContent = projectLabel;
+          fProjectLink.href = `../projet/projet-detail.html?id=${encodeURIComponent(String(f.projectId))}`;
+        }
+        if (rembLink) {
+          rembLink.href = `../remboursement/remboursements-investisseur.html?financementId=${encodeURIComponent(String(f.id))}`;
+        }
+        fInvestor.textContent = investorLabel;
+        fAmount.textContent = money(f.amount || 0);
+        fMethod.textContent = f.method || "-";
+        fNote.textContent = f.note || "-";
+
+        statusTag.className = (f.status === "CONFIRMED") ? "tag ok" : "tag pending";
+        statusTag.innerHTML = (f.status === "CONFIRMED")
+          ? '<span class="tagDot"></span>CONFIRMED'
+          : '<span class="tagDot"></span>' + (f.status || "EN_ATTENTE");
+
+        loadProjectDashboard(f.projectId, projectLabel);
+      } catch (e) {
+        if (result) {
+          result.style.display = "block";
+          result.textContent = "Erreur chargement financement.";
+        }
+      }
+    }
+
+    function loadProjectDashboard(projectId, fallbackName){
+      if (!projectId || !window.javaBridge || typeof window.javaBridge.getProjectDashboardJson !== "function") {
+        if (projTrackCard) projTrackCard.style.display = "none";
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getProjectDashboardJson(Number(projectId));
+        const p = JSON.parse(String(raw || "{}"));
+        if (!p || !p.id) {
+          if (projTrackCard) projTrackCard.style.display = "none";
+          return;
+        }
+
+        if (projDetailLink) {
+          projDetailLink.href = `../projet/projet-detail.html?id=${encodeURIComponent(String(p.id))}`;
+        }
+
+        const objective = Number(p.objective || 0);
+        const raised = Number(p.raised || 0);
+        const remaining = Number(p.remaining || 0);
+        const pct = Number.isFinite(p.progressPct) ? Number(p.progressPct) : (objective > 0 ? Math.round((raised / objective) * 100) : 0);
+        const safePct = Math.max(0, Math.min(100, pct));
+
+        if (pObjective) pObjective.textContent = money(objective);
+        if (pRaised) pRaised.textContent = money(raised);
+        if (pRemaining) pRemaining.textContent = money(remaining);
+        if (pProgressPct) pProgressPct.textContent = safePct + "%";
+        if (pProgressFill) pProgressFill.style.width = safePct + "%";
+
+        if (projTrackCard) projTrackCard.style.display = "block";
+      } catch (e) {
+        if (projTrackCard) projTrackCard.style.display = "none";
+      }
+    }
+
+    function handleDeleteResult(raw){
+      if (raw === undefined || raw === null || raw === "" ) {
+        result.style.display = "block";
+        result.textContent = "Erreur: reponse vide du bridge.";
+        return;
+      }
+      const res = JSON.parse(String(raw));
+      result.style.display = "block";
+      result.textContent = res.ok ? "Financement supprime." : ("Erreur: " + (res.message || "inconnue"));
+      if (res.ok) {
+        window.location.href = "financements-list.html";
+      }
+    }
+
+    window.onDeleteResult = handleDeleteResult;
+
+    function confirmDelete(targetId){
+      const key = String(targetId);
+      if (pendingDeleteId !== key) {
+        pendingDeleteId = key;
+        if (pendingDeleteTimer) clearTimeout(pendingDeleteTimer);
+        if (result) {
+          result.style.display = "block";
+          result.textContent = "Cliquez a nouveau pour confirmer la suppression.";
+        }
+        pendingDeleteTimer = setTimeout(function(){ pendingDeleteId = null; }, 3000);
+        return false;
+      }
+      if (pendingDeleteTimer) clearTimeout(pendingDeleteTimer);
+      pendingDeleteId = null;
+      return true;
+    }
+
+    function deleteFinancement(){
+      if (!id) {
+        result.style.display = "block";
+        result.textContent = "ID financement manquant.";
+        return;
+      }
+      if (!confirmDelete(id)) {
+        return;
+      }
+      result.style.display = "block";
+      result.textContent = "Suppression en cours...";
+      if (!window.javaBridge) {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      let raw;
+      if (typeof window.javaBridge.deleteFinancementFromJs === "function") {
+        raw = window.javaBridge.deleteFinancementFromJs("id=" + encodeURIComponent(id));
+      } else if (typeof window.javaBridge.deleteFinancement === "function") {
+        raw = window.javaBridge.deleteFinancement(id);
+      } else {
+        result.textContent = "Action suppression indisponible.";
+        return;
+      }
+      if (raw !== undefined && raw !== null && raw !== "") {
+        handleDeleteResult(raw);
+      }
+    }
+
+    const editLinkEl = document.getElementById("editLink");
+    if (editLinkEl && editId) {
+      editLinkEl.href = `financement-edit.html?id=${encodeURIComponent(editId)}`;
+      editLinkEl.addEventListener("click", function(e){
+        e.preventDefault();
+        window.location.href = `financement-edit.html?id=${encodeURIComponent(editId)}`;
+      });
+    }
+
+    window.onJavaBridgeReady = function(){
+      loadProjectsFromDb();
+      loadInvestissementsFromDb();
+      loadFinancement();
+    };
+
+    function waitForBridge(retries){
+      if (window.javaBridge) {
+        window.onJavaBridgeReady();
+        return;
+      }
+      if (retries <= 0) {
+        if (result) {
+          result.style.display = "block";
+          result.textContent = "Bridge Java indisponible.";
+        }
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+
+    waitForBridge(20);</script>
+</body>
+</html>

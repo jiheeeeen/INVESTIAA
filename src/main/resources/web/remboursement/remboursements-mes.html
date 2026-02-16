@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Mes remboursements (Investisseur)</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Investisseur</span>
+        <h1>Mes remboursements</h1>
+        <p class="sub">Liste des financements investis (source: financement2) avec statut EN_ATTENTE, puis action Payer.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnNavy" href="remboursements-mes.html">Rafraichir</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="crudHead">
+        <div>
+          <h2 class="title" style="margin:0;">Liste</h2>
+          <p class="sub" style="margin-top:8px;">Recherche par projet, financement ou statut.</p>
+        </div>
+        <div class="crudFilters">
+          <div class="fieldSmall">
+            <label for="search">Recherche</label>
+            <input id="search" placeholder="projet, financement, statut..." />
+          </div>
+          <div class="fieldSmall">
+            <label for="statut">Statut</label>
+            <select id="statut">
+              <option value="ALL" selected>Tous</option>
+              <option value="EN_ATTENTE">EN_ATTENTE</option>
+              <option value="PAYE">PAYE</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <table aria-label="Table des remboursements">
+        <thead>
+          <tr>
+            <th>Projet</th>
+            <th>Financement</th>
+            <th>Date</th>
+            <th>Montant</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div class="note" id="result" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script>
+    let data = [];
+    const params = new URLSearchParams(location.search);
+    const financementIdParam = params.get("financementId");
+    const onlyFinancementId = financementIdParam ? String(financementIdParam) : "";
+
+    const tbody = document.getElementById("tbody");
+    const search = document.getElementById("search");
+    const statut = document.getElementById("statut");
+    const result = document.getElementById("result");
+
+    function money(n){
+      return new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    }
+
+    function loadFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getFinancementsForCurrentInvestorJson !== "function") {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        data = [];
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getFinancementsForCurrentInvestorJson();
+        const rows = JSON.parse(String(raw || "[]"));
+        data = (Array.isArray(rows) ? rows : []).map(r => ({
+          id: String(r.id), // id_financement
+          financementId: r.id,
+          projectId: r.projectId,
+          projectName: r.projectName || ("Projet #" + r.projectId),
+          date: r.date || "",
+          amount: Number(r.amount || 0),
+          statut: (r.rembStatus || "EN_ATTENTE")
+        }));
+      } catch (e) {
+        data = [];
+        result.style.display = "block";
+        result.textContent = "Erreur chargement financements: " + e;
+      }
+    }
+
+    function applyFilters(){
+      const s = (search.value || "").toLowerCase().trim();
+      const st = statut.value;
+      return data.filter(r => {
+        if (onlyFinancementId && String(r.financementId) !== onlyFinancementId) return false;
+        if (st !== "ALL" && String(r.statut) !== st) return false;
+        if (!s) return true;
+        return (
+          String(r.projectName || "").toLowerCase().includes(s) ||
+          String(r.id).toLowerCase().includes(s) ||
+          String(r.statut).toLowerCase().includes(s)
+        );
+      });
+    }
+
+    function render(){
+      const rows = applyFilters();
+      tbody.innerHTML = rows.map(r => {
+        const tag = r.statut === "PAYE"
+          ? '<span class="tag ok"><span class="tagDot"></span>PAYE</span>'
+          : '<span class="tag pending"><span class="tagDot"></span>EN_ATTENTE</span>';
+        return `
+          <tr>
+            <td><strong>${escapeHtml(r.projectName)}</strong></td>
+            <td><a class="softLink" href="../financement/financement-detail.html?id=${encodeURIComponent(r.id)}">#${r.id}</a></td>
+            <td>${r.date || "-"}</td>
+            <td><strong>${money(r.amount)}</strong></td>
+            <td>${tag}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(s){
+      return String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\"","&quot;");
+    }
+
+    function init(){
+      loadFromDb();
+      render();
+    }
+    window.onJavaBridgeReady = init;
+
+    function waitForBridge(retries){
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(30);
+
+    [search, statut].forEach(el => {
+      el.addEventListener("input", render);
+      el.addEventListener("change", render);
+    });
+  </script>
+</body>
+</html>

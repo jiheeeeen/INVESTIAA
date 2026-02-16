@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Payer un remboursement</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Paiement</span>
+        <h1>Payer une echeance</h1>
+        <p class="sub">Ajoute un montant au paiement d'une echeance.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" id="backLink" href="remboursement-detail.html">Retour</a>
+        <button class="btnTop btnNavy" id="submitBtn" type="button">Payer</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2 class="title">Formulaire</h2>
+      </div>
+      <form id="payForm">
+        <div class="formGrid">
+          <div>
+            <label for="rid">ID remboursement</label>
+            <input id="rid" type="text" disabled />
+          </div>
+          <div>
+            <label for="amount">Montant a payer (TND)</label>
+            <input id="amount" type="number" min="0.01" step="0.01" value="100" required />
+          </div>
+        </div>
+        <div class="note" id="result" style="display:none;"></div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = Number(params.get("id") || 0);
+    const rid = document.getElementById("rid");
+    const amountEl = document.getElementById("amount");
+    const submitBtn = document.getElementById("submitBtn");
+    const backLink = document.getElementById("backLink");
+    const result = document.getElementById("result");
+    const form = document.getElementById("payForm");
+
+    (function enforceRole(){
+      try {
+        if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function") {
+          const role = String(window.javaBridge.getCurrentUserRole() || "");
+          if (role === "INVESTISSEUR") {
+            window.location.href = "remboursements-investisseur.html";
+          }
+        }
+      } catch (e) {}
+    })();
+
+    rid.value = id ? String(id) : "";
+    backLink.href = id ? `remboursement-detail.html?id=${encodeURIComponent(String(id))}` : "remboursements-financement.html";
+
+    submitBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      result.style.display = "block";
+      if (!id) {
+        result.textContent = "ID remboursement manquant.";
+        return;
+      }
+      const amount = Number(amountEl.value || 0);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        result.textContent = "Montant invalide.";
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.payRemboursementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      result.textContent = "Paiement en cours...";
+      const payload = new URLSearchParams({ id: String(id), amount: String(amount) }).toString();
+      const raw = window.javaBridge.payRemboursementFromJs(payload);
+      if (raw !== undefined && raw !== null && raw !== "") {
+        const res = JSON.parse(String(raw));
+        result.textContent = res.ok ? "Paiement enregistre." : ("Erreur: " + (res.message || "inconnue"));
+        if (res.ok) {
+          window.location.href = `remboursement-detail.html?id=${encodeURIComponent(String(id))}`;
+        }
+      }
+    });
+
+    function waitForBridge(retries){
+      if (window.javaBridge) return;
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(30);
+  </script>
+</body>
+</html>

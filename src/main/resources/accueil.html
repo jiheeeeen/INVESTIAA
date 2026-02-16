@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia â€” Accueil</title>
+  <style>
+    :root{
+      --navy:#0b2a55;
+      --navy2:#0a1f3e;
+      --primary:#1d4ed8;
+      --accent:#06b6d4;
+
+      --gold:#f4b400;
+      --gold2:#d89c00;
+
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.10);
+
+      --shadow:0 16px 45px rgba(15,23,42,.10);
+      --shadowHover:0 22px 60px rgba(2,6,23,.12);
+
+      --radius:22px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    img{max-width:100%; display:block}
+
+    .container{max-width:1200px; margin:0 auto; padding:0 20px;}
+    .section{padding:86px 0;}
+    .section.tight{padding:64px 0;}
+    .muted{color:var(--muted)}
+    .btn{
+      border:0; cursor:pointer; user-select:none;
+      padding:14px 22px;
+      border-radius:16px;
+      font-weight:900;
+      font-size:16px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      transition: transform .15s ease, filter .15s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{transform:translateY(-1px); filter:brightness(1.03);}
+    .btn:active{transform:translateY(0);}
+
+    .btn.navy{
+      background: linear-gradient(180deg, #173a70, #0a2348);
+      color:#fff;
+      box-shadow:0 16px 32px rgba(11,42,85,.20);
+    }
+    .btn.gold{
+      background: linear-gradient(180deg, #ffca2c, #e3a800);
+      color:#0b2a55;
+      box-shadow:0 16px 32px rgba(244,180,0,.22);
+    }
+    .btn.ghost{
+      background:#fff;
+      border:1px solid rgba(11,42,85,.14);
+      color:#0b2a55;
+      box-shadow:0 12px 26px rgba(15,23,42,.06);
+    }
+
+    /* ===== HERO (image + overlay) ===== */
+    .hero{
+      position:relative;
+      min-height: 76vh;
+      display:flex;
+      align-items:center;
+      padding: 82px 0;
+      overflow:hidden;
+      background:
+        radial-gradient(1200px 600px at 30% 20%, rgba(255,255,255,.14), transparent 60%),
+        linear-gradient(90deg, rgba(7,17,33,.62), rgba(7,17,33,.28));
+    }
+    .hero::before{
+      content:"";
+      position:absolute; inset:0;
+      background-image:url("1.png");
+      background-size:cover;
+      background-position:center;
+      filter:saturate(.95);
+      transform: scale(1.02);
+      z-index:-2;
+    }
+    .hero::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, rgba(8,25,52,.68), rgba(8,25,52,.32));
+      z-index:-1;
+    }
+
+    .hero-wrap{
+      max-width: 980px;
+      margin:0 auto;
+      padding:0 20px;
+      text-align:center;
+      color:#fff;
+    }
+    .pill-top{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 16px;
+      border-radius:999px;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(10px);
+      font-weight:900;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      font-size:12.5px;
+    }
+    .pill-top .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: #f4b400;
+      box-shadow:0 0 0 5px rgba(244,180,0,.18);
+    }
+    .hero h1{
+      margin:22px 0 12px;
+      font-size: 84px;
+      line-height: .95;
+      letter-spacing:-1px;
+      font-weight: 1000;
+    }
+    .hero h1 .ia{color:#f4b400;}
+    .hero h2{
+      margin:0 0 14px;
+      font-size: 44px;
+      line-height: 1.1;
+      letter-spacing:-.3px;
+      font-weight: 950;
+      opacity: .98;
+    }
+    .hero p{
+      margin:0 auto 26px;
+      max-width: 78ch;
+      font-size: 18px;
+      line-height: 1.7;
+      color: rgba(255,255,255,.90);
+    }
+    .hero-cta{
+      display:flex;
+      justify-content:center;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-top: 12px;
+    }
+
+    /* ===== Split sections ===== */
+    .split{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:34px;
+      align-items:center;
+    }
+    .split.reverse{grid-template-columns: .95fr 1.05fr;}
+    @media (max-width: 980px){
+      .split,.split.reverse{grid-template-columns:1fr;}
+      .hero h1{font-size:58px}
+      .hero h2{font-size:34px}
+    }
+
+    .kicker{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 14px;
+      border-radius:999px;
+      background:#fff;
+      border:1px solid rgba(15,23,42,.10);
+      box-shadow:0 12px 24px rgba(15,23,42,.06);
+      font-weight:900;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      font-size:12px;
+      color:#0b2a55;
+    }
+    .kicker .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:#f4b400;
+      box-shadow:0 0 0 5px rgba(244,180,0,.18);
+    }
+
+    .title{
+      margin:16px 0 12px;
+      font-size: 58px;
+      line-height: 1.02;
+      letter-spacing:-.8px;
+      font-weight: 1000;
+      color:#0b2a55;
+    }
+    .lead{
+      margin:0 0 18px;
+      font-size: 17px;
+      line-height: 1.75;
+      color:#3b4b63;
+    }
+
+    .checks{
+      margin:18px 0 26px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .check{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+    }
+    .check .icon{
+      width:28px;height:28px;border-radius:10px;
+      background: linear-gradient(180deg, #ffca2c, #e3a800);
+      box-shadow: 0 12px 26px rgba(244,180,0,.18);
+      display:flex; align-items:center; justify-content:center;
+      font-weight:1000;
+      color:#0b2a55;
+      flex:0 0 auto;
+      margin-top: 2px;
+    }
+    .check b{display:block; color:#0b2a55; font-weight:1000; margin-bottom:2px}
+    .check span{display:block; color:#51627d; line-height:1.55; font-size:14.5px}
+
+    .media{
+      border-radius: 24px;
+      overflow:hidden;
+      border:1px solid rgba(15,23,42,.08);
+      box-shadow: var(--shadow);
+      background:#fff;
+    }
+    .media.pad{padding:18px}
+    .media img{width:100%; height:auto}
+
+    .cta-row{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-top: 6px;
+    }
+
+    /* ===== Features cards ===== */
+    .center{
+      text-align:center;
+    }
+    .big-head{
+      font-size: 48px;
+      font-weight: 1000;
+      letter-spacing: .28em;
+      color:#0b2a55;
+      margin: 0 0 10px;
+    }
+    .subhead{
+      margin:0 auto 38px;
+      max-width: 70ch;
+      color:#55657d;
+      line-height:1.7;
+      font-weight:700;
+    }
+    .features{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap:20px;
+      align-items:stretch;
+    }
+    @media (max-width: 1050px){ .features{grid-template-columns: repeat(2, minmax(0,1fr));} }
+    @media (max-width: 560px){ .features{grid-template-columns: 1fr;} }
+
+    .fcard{
+      background:#fff;
+      border:1px solid rgba(15,23,42,.10);
+      border-radius: 26px;
+      box-shadow: 0 18px 50px rgba(15,23,42,.08);
+      padding: 26px 22px;
+      min-height: 250px;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .fcard:hover{transform: translateY(-4px); box-shadow: 0 22px 60px rgba(2,6,23,.12);}
+    .ficon{
+      width:64px;height:64px;border-radius:18px;
+      background: linear-gradient(180deg, #ffffff, #f2f6ff);
+      border:1px solid rgba(15,23,42,.10);
+      display:flex;align-items:center;justify-content:center;
+      margin: 2px auto 16px;
+      box-shadow: 0 16px 38px rgba(15,23,42,.08);
+      font-size: 26px;
+    }
+    .fcard h3{
+      margin: 0 0 10px;
+      color:#0b2a55;
+      font-weight: 1000;
+      font-size: 20px;
+      text-align:center;
+      line-height:1.25;
+    }
+    .fcard p{
+      margin:0;
+      color:#586a85;
+      text-align:center;
+      line-height:1.7;
+      font-weight:650;
+    }
+
+    .discover-wrap{
+      display:flex;
+      justify-content:flex-end;
+      margin-top: 26px;
+    }
+
+    /* ===== Stats ===== */
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 18px;
+      align-items:start;
+      padding-top: 6px;
+    }
+    @media (max-width: 900px){ .stats{grid-template-columns: repeat(2, minmax(0,1fr));} }
+    @media (max-width: 520px){ .stats{grid-template-columns: 1fr;} }
+
+    .stat{
+      text-align:center;
+      padding: 14px 10px;
+    }
+    .stat .num{
+      font-size: 58px;
+      font-weight: 1000;
+      color:#0b2a55;
+      letter-spacing:-1px;
+      margin: 0 0 6px;
+    }
+    .stat .lbl{
+      font-weight: 1000;
+      font-size: 18px;
+      color:#0b2a55;
+      margin: 0 0 4px;
+    }
+    .stat .cap{
+      margin:0;
+      color:#6b7b92;
+      font-weight:700;
+      font-size: 13.5px;
+    }
+
+    /* ===== Help banner ===== */
+    .help{
+      border-radius: 30px;
+      border:1px solid rgba(15,23,42,.12);
+      box-shadow: 0 20px 60px rgba(15,23,42,.10);
+      overflow:hidden;
+      background:
+        radial-gradient(900px 400px at 30% 0%, rgba(255,206,70,.20), transparent 60%),
+        radial-gradient(900px 520px at 80% 30%, rgba(29,78,216,.14), transparent 60%),
+        linear-gradient(90deg, rgba(255,255,255,.92), rgba(255,255,255,.75));
+    }
+    .help-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 20px;
+      padding: 28px;
+      flex-wrap:wrap;
+    }
+    .help h3{
+      margin:0 0 8px;
+      color:#0b2a55;
+      font-weight: 1000;
+      font-size: 34px;
+      letter-spacing:-.5px;
+    }
+    .help p{
+      margin:0;
+      color:#4b5d77;
+      line-height:1.7;
+      max-width: 70ch;
+      font-weight:700;
+    }
+    .chips{
+      margin-top: 14px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      background:rgba(255,255,255,.85);
+      border:1px solid rgba(11,42,85,.12);
+      border-radius:999px;
+      padding:8px 12px;
+      font-weight:900;
+      font-size:13px;
+      color:#1e3a8a;
+      box-shadow:0 12px 26px rgba(15,23,42,.06);
+    }
+
+    .help-actions{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      min-width: 260px;
+      margin-left:auto;
+    }
+    @media (max-width: 820px){
+      .help-actions{width:100%; flex-direction:row; min-width:unset}
+      .help-actions .btn{flex:1}
+    }
+
+    /* ===== Footer ===== */
+    footer{
+      padding: 30px 0 46px;
+      color:#6b7b92;
+      text-align:center;
+      font-weight:700;
+    }
+  </style>
+</head>
+<script src="navbar.js" defer></script>
+
+<body>
+  <!-- HERO -->
+  <header class="hero">
+    <div class="hero-wrap">
+      <span class="pill-top"><span class="dot"></span> 1ere plateforme de crowdlending en Tunisie</span>
+
+      <h1>Invest<span class="ia">ia</span></h1>
+      <h2>Donnez vie aux idees, financez en confiance !</h2>
+
+      <p>
+        Investissez dans des projets portes par des entrepreneurs ambitieux.
+        Analysez les opportunites, suivez l'avancement en temps reel et rejoignez
+        une finance plus transparente.
+      </p>
+
+      <div class="hero-cta">
+        <a class="btn navy" href="ajoutProjet.html">Lancer votre projet</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- SECTION 1 -->
+  <section class="section tight" id="opportunites">
+    <div class="container">
+      <div class="split">
+        <div class="media">
+          <img src="3.png" alt="Illustration financement">
+        </div>
+
+        <div>
+          <span class="kicker"><span class="dot"></span> Plateforme de crowdlending</span>
+          <h2 class="title">Financez des projets tunisiens en toute simplicite</h2>
+          <p class="lead">
+            Investia vous permet de financer des projets innovants en quelques clics.
+            Explorez les opportunites, suivez lâ€™evolution des collectes en temps reel et
+            participez concrÃ¨tement Ã  la construction de demain.
+          </p>
+
+          <div class="checks">
+            <div class="check">
+              <div class="icon">âœ“</div>
+              <div>
+                <b>Opportunites selectionnees</b>
+                <span>Des projets structures et presentes clairement.</span>
+              </div>
+            </div>
+            <div class="check">
+              <div class="icon">âœ“</div>
+              <div>
+                <b>Suivi en temps reel</b>
+                <span>Collecte, jalons et indicateurs accessibles.</span>
+              </div>
+            </div>
+            <div class="check">
+              <div class="icon">âœ“</div>
+              <div>
+                <b>Experience securisee</b>
+                <span>Transparence et confiance Ã  chaque etape.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cta-row">
+            <a class="btn gold" href="#opportunites">Decouvrir les opportunites</a>
+            <a class="btn navy" href="#comment">Comment Ã§a marche ?</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section class="section tight" id="comment">
+    <div class="container">
+      <div class="split reverse">
+        <div>
+          <span class="kicker"><span class="dot"></span> Pour financer autrement en Tunisie</span>
+          <h2 class="title">Une plateforme qui relie investisseurs & entrepreneurs</h2>
+          <p class="lead">
+            Investia connecte investisseurs et entrepreneurs autour de projets tunisiens ambitieux.
+            Nous offrons une experience <b>securisee</b> et <b>transparente</b> : validation des projets,
+            suivi des montants leves et visibilite complÃ¨te Ã  chaque etape.
+          </p>
+
+          <div class="checks">
+            <div class="check">
+              <div class="icon">âœ“</div>
+              <div>
+                <b>Projets verifies</b>
+                <span>Selection & validation avant mise en ligne.</span>
+              </div>
+            </div>
+            <div class="check">
+              <div class="icon">âœ“</div>
+              <div>
+                <b>Suivi en temps reel</b>
+                <span>Montants leves, echeances et avancee du projet.</span>
+              </div>
+            </div>
+            <div class="check">
+              <div class="icon">âœ“</div>
+              <div>
+                <b>Transparence totale</b>
+                <span>Documents, infos cles et reporting accessibles.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cta-row">
+            <a class="btn gold" href="#opportunites">Commencez Ã  investir</a>
+            <a class="btn navy" href="#opportunites">Deposer un projet</a>
+          </div>
+        </div>
+
+        <div class="media">
+          <img src="2.png" alt="Illustration investisseurs entrepreneurs">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="fonctionnalites">
+    <div class="container">
+      <div class="center">
+        <h2 class="big-head">NOS FONCTIONNALITÃ‰S</h2>
+        <p class="subhead">
+          Decouvrez comment Investia facilite le financement participatif en Tunisie.
+        </p>
+      </div>
+
+      <div class="features">
+        <article class="fcard">
+          <div class="ficon">ðŸ’³</div>
+          <h3>Financement simple & rapide</h3>
+          <p>Investissez ou prÃªtez en quelques clics, choisissez le montant et suivez votre contribution.</p>
+        </article>
+
+        <article class="fcard">
+          <div class="ficon">ðŸ›¡ï¸</div>
+          <h3>Projets verifies</h3>
+          <p>Publiez ou explorez des projets tunisiens ambitieux avec un processus de validation.</p>
+        </article>
+
+        <article class="fcard">
+          <div class="ficon">ðŸ“ˆ</div>
+          <h3>Suivi en temps reel</h3>
+          <p>Visualisez le total leve, le reste Ã  financer et l'avancement via des indicateurs clairs.</p>
+        </article>
+
+        <article class="fcard">
+          <div class="ficon">ðŸ§¾</div>
+          <h3>Remboursements & transparence</h3>
+          <p>Consultez lâ€™echeancier, suivez les remboursements et gardez une visibilite complÃ¨te.</p>
+        </article>
+      </div>
+
+      <div class="discover-wrap">
+        <a class="btn navy" href="#opportunites">Decouvrir</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="section tight">
+    <div class="container">
+      <div class="stats">
+        <div class="stat">
+          <div class="num">+50</div>
+          <div class="lbl">Projets finances</div>
+          <p class="cap">Projets valides & finances</p>
+        </div>
+        <div class="stat">
+          <div class="num">+200</div>
+          <div class="lbl">Investisseurs</div>
+          <p class="cap">Communaute active</p>
+        </div>
+        <div class="stat">
+          <div class="num">+1M <span style="font-size:.55em; font-weight:1000;">TND</span></div>
+          <div class="lbl">Montant leve</div>
+          <p class="cap">Total des financements</p>
+        </div>
+        <div class="stat">
+          <div class="num">24/7</div>
+          <div class="lbl">Disponibilite</div>
+          <p class="cap">Plateforme accessible</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HELP -->
+  <section class="section tight" id="contact">
+    <div class="container">
+      <div class="help">
+        <div class="help-inner">
+          <div>
+            <h3>Besoin dâ€™aide ou dâ€™informations ?</h3>
+            <p>
+              Si vous avez des questions ou si vous souhaitez en savoir plus sur nos opportunites dâ€™investissement,
+              notre equipe est Ã  votre ecoute.
+            </p>
+
+            <div class="chips">
+              <span class="chip">Reponse rapide</span>
+              <span class="chip">Support 7j/7</span>
+              <span class="chip">Conseils personnalises</span>
+            </div>
+          </div>
+
+          <div class="help-actions">
+            <a class="btn gold" href="#">Nous joindre</a>
+            <a class="btn ghost" href="mailto:support@investia.tn">Envoyer un e-mail</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Â© <span id="y"></span> Investia â€” Plateforme de crowdlending en Tunisie.
+  </footer>
+
+  <script>
+    document.getElementById("y").textContent = new Date().getFullYear();
+
+    const links = Array.from(document.querySelectorAll(".nav-links a"));
+    const sections = links
+      .map(a => document.querySelector(a.getAttribute("href")))
+      .filter(Boolean);
+
+    function setActiveByScroll(){
+      const y = window.scrollY + 120;
+      let current = sections[0];
+      for (const s of sections){
+        if (s.offsetTop <= y) current = s;
+      }
+      links.forEach(a => a.classList.remove("active"));
+      const hit = links.find(a => a.getAttribute("href") === "#" + current.id);
+      if (hit) hit.classList.add("active");
+      else links[0].classList.add("active");
+    }
+    window.addEventListener("scroll", setActiveByScroll, {passive:true});
+    setActiveByScroll();
+  </script>
+</body>
+</html>
+

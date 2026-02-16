@@ -1,0 +1,345 @@
+:root {
+    --gold: #d6a100;
+    --gold2: #ffcc33;
+    --navy: #0b1e3a;
+    --navy2: #173a73;
+
+    --sideBg1: rgba(11, 30, 58, 0.96);
+    --sideBg2: rgba(7, 18, 35, 0.96);
+    --sideStroke: rgba(255, 255, 255, 0.12);
+
+    --mainBg: #f6f8fc;
+    --panelBg: #ffffff;
+    --panelStroke: rgba(15, 23, 42, 0.1);
+    --shadow: 0 18px 60px rgba(2, 8, 23, 0.1);
+    --shadow2: 0 10px 24px rgba(2, 8, 23, 0.08);
+
+    --textDark: #0b1220;
+    --mutedDark: rgba(11, 18, 32, 0.72);
+    --mutedDark2: rgba(11, 18, 32, 0.55);
+
+    --textLight: #ffffff;
+    --mutedLight: rgba(255, 255, 255, 0.86);
+    --mutedLight2: rgba(255, 255, 255, 0.7);
+
+    --good: #16a34a;
+    --bad: #ef4444;
+
+    --r14: 14px;
+    --r18: 18px;
+    --ring: 0 0 0 4px rgba(214, 161, 0, 0.22);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans";
+    color: var(--textDark);
+    background: var(--mainBg);
+    overflow-x: hidden;
+}
+
+button, input, select { font-family: inherit; }
+
+.app { min-height: 100%; display: grid; grid-template-columns: 290px 1fr; }
+
+/* Sidebar */
+.sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 22px 18px;
+    background: linear-gradient(180deg, var(--sideBg1), var(--sideBg2));
+    border-right: 1px solid var(--sideStroke);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    isolation: isolate;
+    color: var(--textLight);
+}
+.sidebar::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    background:
+            radial-gradient(520px 320px at 20% 10%, rgba(255, 204, 51, 0.18), transparent 62%),
+            radial-gradient(540px 320px at 70% 30%, rgba(23, 58, 115, 0.28), transparent 62%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.brandRow { display: flex; align-items: center; gap: 12px; padding: 4px 6px 16px 6px; }
+.logo {
+    width: 48px; height: 48px; border-radius: 16px;
+    background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)),
+            radial-gradient(circle at 30% 30%, rgba(255, 204, 51, 0.6), rgba(214, 161, 0, 0.24));
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    display: grid; place-items: center; flex: 0 0 auto;
+    overflow: hidden;
+}
+.brandLogo {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    display: block;
+}
+.brandText { display: flex; flex-direction: column; line-height: 1.05; }
+.brandName { font-weight: 950; letter-spacing: -0.02em; font-size: 18px; }
+.brandName .i-accent {
+    background: linear-gradient(180deg, var(--gold2), var(--gold));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.brandSub { margin-top: 4px; font-size: 12px; color: var(--mutedLight2); font-weight: 750; }
+
+.sep {
+    height: 1px; margin: 10px 6px 16px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+}
+.sectionTitle {
+    margin: 0 6px 10px;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 12px;
+}
+
+.nav { display: flex; flex-direction: column; gap: 6px; padding: 0 4px; }
+.nav button {
+    appearance: none;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 12px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+    text-align: left;
+    font-weight: 820;
+    font-size: 16px;
+}
+.nav button:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+}
+.nav button.active {
+    background: linear-gradient(180deg, rgba(255, 204, 51, 0.16), rgba(214, 161, 0, 0.08));
+    border-color: rgba(255, 204, 51, 0.28);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+    position: relative;
+}
+.nav button.active::before {
+    content: "";
+    position: absolute;
+    left: -6px;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--gold2), var(--gold));
+    box-shadow: 0 0 0 4px rgba(214, 161, 0, 0.12);
+}
+
+.sidebarFooter {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.92);
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    font-size: 11px;
+    backdrop-filter: blur(8px);
+}
+.badge__dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, var(--gold2), var(--gold));
+    box-shadow: 0 0 0 4px rgba(214, 161, 0, 0.16);
+    flex: 0 0 auto;
+}
+
+.btnSide {
+    appearance: none;
+    cursor: pointer;
+    font-weight: 900;
+    padding: 12px 14px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+    transition: transform 0.14s ease, filter 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+}
+.btnSide:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.06);
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.3);
+}
+
+.main {
+    padding: 22px 22px 32px;
+    background:
+            radial-gradient(1000px 500px at 80% 0%, rgba(255, 204, 51, 0.12), transparent 55%),
+            radial-gradient(900px 520px at 10% 10%, rgba(23, 58, 115, 0.1), transparent 55%),
+            var(--mainBg);
+}
+
+.topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+.titleBlock h1 { margin: 0; font-size: 28px; font-weight: 950; letter-spacing: -0.02em; color: var(--textDark); }
+.titleBlock p { margin: 6px 0 0; color: var(--mutedDark); font-weight: 750; }
+
+.topActions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--panelStroke);
+    color: var(--textDark);
+    font-weight: 900;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: var(--shadow2);
+}
+
+.btnPrimary {
+    appearance: none;
+    cursor: pointer;
+    font-weight: 900;
+    padding: 12px 14px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 204, 51, 0.75);
+    background: linear-gradient(180deg, var(--gold2), var(--gold));
+    color: #1a1405;
+    box-shadow: var(--shadow2);
+    transition: transform 0.14s ease, filter 0.14s ease, box-shadow 0.14s ease;
+    white-space: nowrap;
+}
+.btnPrimary:hover { transform: translateY(-2px); filter: brightness(1.03); box-shadow: var(--shadow); }
+
+.isHidden { display: none !important; }
+
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 12px 0 18px; }
+.card {
+    background: var(--panelBg);
+    border: 1px solid var(--panelStroke);
+    border-radius: var(--r18);
+    box-shadow: var(--shadow2);
+    padding: 16px 16px 14px;
+}
+
+.panel {
+    background: var(--panelBg);
+    border: 1px solid var(--panelStroke);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.panelHeader {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(11, 18, 32, 0.08);
+}
+
+.panelTitle {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    letter-spacing: -0.01em;
+}
+
+.search { position: relative; min-width: 280px; max-width: 480px; width: 40vw; }
+.search input {
+    width: 100%;
+    padding: 12px 14px 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(11, 18, 32, 0.12);
+    background: rgba(11, 18, 32, 0.03);
+    outline: none;
+}
+
+.tableWrap { padding: 14px 16px 18px; overflow: auto; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 760px; }
+thead th {
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(11, 18, 32, 0.6);
+    padding: 12px 12px;
+    border-bottom: 1px solid rgba(11, 18, 32, 0.1);
+}
+tbody td {
+    padding: 14px 12px;
+    border-bottom: 1px solid rgba(11, 18, 32, 0.08);
+}
+
+.actions { display: flex; align-items: center; gap: 10px; }
+
+.btnIcon {
+    width: 40px; height: 40px; border-radius: 14px;
+    display: grid; place-items: center;
+    border: 1px solid rgba(11, 18, 32, 0.12);
+    background: rgba(11, 18, 32, 0.02);
+    cursor: pointer;
+}
+.btnAccept { border-color: rgba(22, 163, 74, 0.2); background: rgba(22, 163, 74, 0.06); }
+.btnReject { border-color: rgba(239, 68, 68, 0.22); background: rgba(239, 68, 68, 0.06); }
+
+.welcomeCard {
+    background: var(--panelBg);
+    border: 1px solid var(--panelStroke);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 22px;
+}
+.enterAnim { animation: enter 0.45s ease-out both; }
+@keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 880px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: relative; height: auto; }
+    .sidebarFooter { position: relative; left: auto; right: auto; bottom: auto; margin-top: 14px; }
+    .main { padding: 16px 14px 28px; }
+    .topbar { flex-direction: column; align-items: flex-start; }
+    .search { width: 100%; max-width: none; min-width: unset; }
+}

@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investra — Details Projet (Investisseur)</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.10);
+      --shadow:0 14px 35px rgba(15,23,42,.08);
+      --primary:#1d4ed8;
+      --accent:#06b6d4;
+      --success:#16a34a;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    .container{max-width:1120px; margin:28px auto 60px; padding:0 16px;}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:16px;
+    }
+    .breadcrumb{
+      display:flex; gap:10px; align-items:center; color:var(--muted); font-size:14px;
+    }
+    .btn{
+      border:0; cursor:pointer; font-weight:800; font-size:14px;
+      padding:10px 14px; border-radius:12px;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn.primary{
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+      color:#fff; box-shadow:0 10px 20px rgba(29,78,216,.18);
+    }
+    .btn.ghost{
+      background:#fff; border:1px solid var(--border); color:var(--text);
+    }
+
+    .hero{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+      display:grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap:18px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(700px 220px at 12% 0%, rgba(29,78,216,.10), transparent 55%),
+        radial-gradient(700px 260px at 98% 20%, rgba(6,182,212,.10), transparent 55%);
+      pointer-events:none;
+    }
+    @media (max-width: 900px){
+      .hero{grid-template-columns: 1fr;}
+    }
+    .hero-left{position:relative; z-index:1;}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 10px; border-radius:999px;
+      font-size:12px; font-weight:800;
+      border:1px solid rgba(29,78,216,.18);
+      background:rgba(29,78,216,.06);
+      color:#0b2a55;
+    }
+    .dot{width:8px;height:8px;border-radius:50%;
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow:0 0 0 3px rgba(6,182,212,.14);
+    }
+    h1{margin:10px 0 6px; font-size:30px; letter-spacing:.2px;}
+    .pitch{margin:0; color:var(--muted); line-height:1.6; max-width:75ch;}
+
+    .summary{
+      background:rgba(255,255,255,.75);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      position:relative;
+      z-index:1;
+    }
+    .kpi-grid{display:grid; grid-template-columns: 1fr 1fr; gap:10px;}
+    .kpi{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:10px;
+    }
+    .kpi .label{font-size:12px; color:var(--muted); font-weight:700;}
+    .kpi .val{font-size:18px; font-weight:900; margin-top:4px;}
+    .progress{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:10px;
+    }
+    .progress .row{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); font-weight:700;}
+    .bar{
+      height:10px; border-radius:999px; background:rgba(15,23,42,.08);
+      overflow:hidden; margin-top:8px;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+    }
+    .actions{display:flex; gap:10px; flex-wrap:wrap;}
+    .small{font-size:12px; color:var(--muted); line-height:1.4;}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr .9fr;
+      gap:18px;
+      margin-top:18px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr;}
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size:18px;
+      letter-spacing:.2px;
+    }
+    .muted{color:var(--muted)}
+    .list{margin:0; padding-left:18px; color:var(--muted); line-height:1.6;}
+    .two-col{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 650px){
+      .two-col{grid-template-columns:1fr;}
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+    }
+    th, td{
+      text-align:left;
+      padding:10px 12px;
+      border-bottom:1px solid var(--border);
+      font-size:14px;
+    }
+    th{
+      background:rgba(29,78,216,.06);
+      font-size:12px;
+      letter-spacing:.25px;
+      text-transform:uppercase;
+      color:#0b2a55;
+    }
+    tr:last-child td{border-bottom:0}
+    .num{text-align:right; font-variant-numeric: tabular-nums;}
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+    }
+    .tag.ok{border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); color:#0f3d1b;}
+    .tag.warn{border-color: rgba(245,158,11,.30); background: rgba(245,158,11,.10); color:#5a3a07;}
+    .note{
+      margin-top:14px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+    .mini{
+      display:flex; gap:10px; align-items:center;
+    }
+    .mini .mbar{
+      flex:1;
+      height:10px;
+      border-radius:999px;
+      background:rgba(15,23,42,.08);
+      overflow:hidden;
+    }
+    .mini .mbar>div{
+      height:100%;
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+      width:0%;
+    }
+    .mini .mval{width:72px; text-align:right; font-variant-numeric: tabular-nums; color:var(--muted); font-size:13px;}
+    .analysis-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+      margin-top:12px;
+    }
+    .analysis-card{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+      padding:12px;
+    }
+    .analysis-title{
+      margin:0 0 8px;
+      font-size:14px;
+      font-weight:900;
+      color:#0b2a55;
+    }
+    .chart{
+      width:100%;
+      height:160px;
+    }
+    .chart svg{width:100%; height:100%;}
+    .chart-legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .legend-dot{
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      display:inline-block;
+      margin-right:6px;
+    }
+  </style>
+<script src="navbar.js" defer></script></head>
+<body>  
+  <main class="container">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="projet_view_investisseur.html">← Retour</a>
+        <span>•</span>
+        <span>Projets</span>
+        <span>•</span>
+        <strong class="muted" id="breadcrumbTitle">Détails</strong>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" onclick="window.print()">Télécharger PDF</button>
+        <button class="btn primary" id="financeBtn">Financer ce projet</button>
+      </div>
+    </div>
+
+    <section class="hero">
+      <div class="hero-left">
+        <span class="badge"><span class="dot"></span><span id="badgeText">Projet</span></span>
+        <h1 id="title">—</h1>
+        <p class="pitch" id="pitch">—</p>
+        <p class="small" style="margin-top:10px;">
+          <b>Secteur :</b> <span id="secteur">—</span> • <b>Durée de la campagne :</b> <span id="duree">—</span> jours
+        </p>
+      </div>
+
+      <aside class="summary">
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="label">Objectif</div>
+            <div class="val" id="goalKpi">0 TND</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Levés</div>
+            <div class="val" id="raisedKpi">0 TND</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Reste</div>
+            <div class="val" id="remainingKpi">0 TND</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Progression</div>
+            <div class="val" id="pctKpi">0%</div>
+          </div>
+        </div>
+
+        <div class="progress">
+          <div class="row">
+            <span>Progression</span>
+            <span id="progressLabel">0%</span>
+          </div>
+          <div class="bar"><div id="progressBar"></div></div>
+          <div class="row" style="margin-top:8px;">
+            <span id="investorsLabel">0 investisseurs</span>
+            <span id="daysLeftLabel">— jours restants</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn ghost" onclick="scrollToSection('finances')">Données financières</button>
+          <button class="btn ghost" onclick="scrollToSection('plan')">Business plan</button>
+        </div>
+
+        <div class="small" id="financingInfo">
+          <b>Mode :</b> — • <b>Taux :</b> — • <b>Durée :</b> —
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <div>
+        <section class="card" id="plan">
+          <h2>Business Plan — Résumé</h2>
+          <p class="muted" style="margin:0 0 12px;" id="planSummary">
+            —
+          </p>
+
+          <div class="two-col">
+            <div>
+              <h3 style="margin:0 0 8px; font-size:15px;">Proposition de valeur</h3>
+              <ul class="list" id="valueList">
+                <li>—</li>
+              </ul>
+            </div>
+            <div>
+              <h3 style="margin:0 0 8px; font-size:15px;">Marché & clients</h3>
+              <ul class="list" id="marketList">
+                <li>—</li>
+              </ul>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;">
+            <h3 style="margin:0 0 8px; font-size:15px;">Utilisation des fonds</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Poste</th>
+                  <th class="num">Montant (TND)</th>
+                  <th class="num">%</th>
+                </tr>
+              </thead>
+              <tbody id="useOfFundsTable"></tbody>
+            </table>
+            <p class="note">*Répartition indicative pour la maquette.</p>
+          </div>
+        </section>
+
+        <section class="card" id="finances" style="margin-top:18px;">
+          <h2>Données financières (prévisionnel)</h2>
+          <p class="muted" style="margin:0 0 12px;">
+            Prévisionnel simple basé sur les données du projet.
+          </p>
+
+          <h3 style="margin:0 0 10px; font-size:15px;">Compte de résultat — Année 1 (TND)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Indicateur</th>
+                <th class="num">Montant</th>
+              </tr>
+            </thead>
+            <tbody id="pnlTable"></tbody>
+          </table>
+
+          <div style="margin-top:14px;">
+            <h3 style="margin:0 0 10px; font-size:15px;">Prévision mensuelle (CA) — Année 1</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Mois</th>
+                  <th class="num">CA (TND)</th>
+                  <th style="width:45%;">Visualisation</th>
+                </tr>
+              </thead>
+              <tbody id="revenueTable"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="card" id="echeancier" style="margin-top:18px;">
+          <h2>Echeancier (apercu)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Echeance</th>
+                <th class="num">Montant</th>
+                <th class="num">Statut</th>
+              </tr>
+            </thead>
+            <tbody id="repaymentTable"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <aside>
+        <section class="card">
+          <h2>Statut & conformité</h2>
+          <table>
+            <tbody>
+              <tr>
+                <td><b>Statut projet</b></td>
+                <td class="num"><span class="tag ok" id="statusTag">—</span></td>
+              </tr>
+              <tr>
+                <td><b>Mode remboursement</b></td>
+                <td class="num" id="repayMode">—</td>
+              </tr>
+              <tr>
+                <td><b>Taux / Durée</b></td>
+                <td class="num" id="rateDuration">—</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card" id="calendrier" style="margin-top:18px;">
+          <h2>Calendrier & objectifs</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Phase</th>
+                <th>Objectif</th>
+                <th class="num">Periode</th>
+              </tr>
+            </thead>
+            <tbody id="calendarTable"></tbody>
+          </table>
+        </section>
+
+        <section class="card" id="analyses" style="margin-top:18px;">
+          <h2>Analyses & graphiques</h2>
+          <div class="analysis-grid">
+            <div class="analysis-card">
+              <div class="analysis-title">CA mensuel (courbe)</div>
+              <div class="chart" id="chartLine"></div>
+              <p class="muted" style="margin:8px 0 0; font-size:12px;">Tendance mensuelle du chiffre d'affaires estime.</p>
+            </div>
+            <div class="analysis-card">
+              <div class="analysis-title">Marge vs Resultat net</div>
+              <div class="chart" id="chartBars"></div>
+              <p class="muted" style="margin:8px 0 0; font-size:12px;">Comparaison entre marge brute et resultat net.</p>
+            </div>
+            <div class="analysis-card">
+              <div class="analysis-title">Repartition de l'objectif</div>
+              <div class="chart" id="chartDonut"></div>
+              <div class="chart-legend">
+                <span><span class="legend-dot" style="background:#1d4ed8;"></span>R&D</span>
+                <span><span class="legend-dot" style="background:#06b6d4;"></span>Production</span>
+                <span><span class="legend-dot" style="background:#f59e0b;"></span>Marketing</span>
+              </div>
+              <p class="muted" style="margin:8px 0 0; font-size:12px;">Distribution indicative des postes de depenses.</p>
+            </div>
+            <div class="analysis-card">
+              <div class="analysis-title">Score de risque</div>
+              <div class="chart" id="chartRisk"></div>
+              <p class="muted" style="margin:8px 0 0; font-size:12px;" id="riskNote">Score calcule a partir du taux, de la duree et de la marge.</p>
+              <p class="muted" style="margin:6px 0 0; font-size:12px;">Formule: score = f(taux, duree, marge). Taux (0-40), duree (0-30), marge (0-30). Plus le score est eleve, plus le risque est grand.</p>
+              <div class="chart-legend">
+                <span><span class="legend-dot" style="background:#16a34a;"></span>Faible (0-34)</span>
+                <span><span class="legend-dot" style="background:#f59e0b;"></span>Modere (35-69)</span>
+                <span><span class="legend-dot" style="background:#ef4444;"></span>Eleve (70-100)</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const fmt = (n) => new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    let currentId = null;
+
+    function scrollToSection(id){
+      document.getElementById(id).scrollIntoView({behavior:"smooth", block:"start"});
+    }
+    window.scrollToSection = scrollToSection;
+
+    function withBridge(onReady, onFail){
+      const start = Date.now();
+      const timer = setInterval(() => {
+        if (window.javaBridge) {
+          clearInterval(timer);
+          onReady(window.javaBridge);
+          return;
+        }
+        if (Date.now() - start > 2000) {
+          clearInterval(timer);
+          if (onFail) onFail();
+        }
+      }, 100);
+    }
+
+    function mapStatusLabel(statut){
+      switch(statut){
+        case "BROUILLON": return "Brouillon";
+        case "EN_ATTENTE": return "En attente";
+        case "VALIDE": return "Valide";
+        case "REFUSE": return "Refuse";
+        default: return statut || "—";
+      }
+    }
+
+    function loadProject(){
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      if (!id) return;
+      currentId = id;
+
+      document.getElementById("financeBtn").addEventListener("click", () => {
+        alert("Financement en cours d'implementation.");
+      });
+
+      withBridge((bridge) => {
+        if (typeof bridge.getProjetById !== "function") return;
+        const json = bridge.getProjetById(id);
+        if (!json || json === "null") return;
+        const p = JSON.parse(json);
+
+        document.getElementById("breadcrumbTitle").textContent = p.titre || "Projet";
+        document.getElementById("title").textContent = p.titre || "Projet";
+        document.getElementById("pitch").textContent = p.descriptionLongue || p.descriptionCourte || "—";
+        document.getElementById("secteur").textContent = p.secteur || "—";
+        document.getElementById("duree").textContent = p.dureeCampagneJours || "—";
+        document.getElementById("badgeText").textContent = (p.secteur || "Projet");
+
+        const goal = Number(p.objectifTnd || 0);
+        const raised = 0;
+        const pct = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
+
+        document.getElementById("goalKpi").textContent = fmt(goal);
+        document.getElementById("raisedKpi").textContent = fmt(raised);
+        document.getElementById("remainingKpi").textContent = fmt(Math.max(0, goal - raised));
+        document.getElementById("pctKpi").textContent = pct + "%";
+        document.getElementById("progressLabel").textContent = pct + "%";
+        document.getElementById("progressBar").style.width = pct + "%";
+        document.getElementById("investorsLabel").textContent = "0 investisseurs";
+        document.getElementById("daysLeftLabel").textContent = "— jours restants";
+
+        const rate = p.tauxInteretPct != null ? (p.tauxInteretPct + " %") : "—";
+        const duration = p.dureeRemboursementMois != null ? (p.dureeRemboursementMois + " mois") : "—";
+        document.getElementById("financingInfo").innerHTML =
+          "<b>Mode :</b> " + (p.modeRemboursement || "—") +
+          " • <b>Taux :</b> " + rate +
+          " • <b>Durée :</b> " + duration;
+
+        document.getElementById("statusTag").textContent = mapStatusLabel(p.statut);
+        document.getElementById("repayMode").textContent = p.modeRemboursement || "—";
+        document.getElementById("rateDuration").textContent = rate + " • " + duration;
+
+        document.getElementById("planSummary").textContent = p.descriptionCourte || "—";
+        document.getElementById("valueList").innerHTML = "<li>" + (p.descriptionCourte || "—") + "</li>";
+        document.getElementById("marketList").innerHTML = "<li>Secteur: " + (p.secteur || "—") + "</li>";
+
+        const uBody = document.getElementById("useOfFundsTable");
+        uBody.innerHTML = `
+          <tr><td>R&D</td><td class="num">${fmt(goal * 0.3)}</td><td class="num">30%</td></tr>
+          <tr><td>Production</td><td class="num">${fmt(goal * 0.4)}</td><td class="num">40%</td></tr>
+          <tr><td>Marketing</td><td class="num">${fmt(goal * 0.3)}</td><td class="num">30%</td></tr>
+        `;
+
+        const marge = Number(p.margeBruteEstimeeTnd || 0);
+        const net = Number(p.resultatNetEstimeTnd || 0);
+        const pnl = [
+          { label: "Objectif", amount: goal },
+          { label: "Marge brute", amount: marge },
+          { label: "Resultat net (estime)", amount: net }
+        ];
+        const pBody = document.getElementById("pnlTable");
+        pBody.innerHTML = pnl.map(row => `
+          <tr>
+            <td>${row.label}</td>
+            <td class="num">${fmt(row.amount)}</td>
+          </tr>
+        `).join("");
+
+        const base = goal > 0 ? Math.round(goal / 12) : 0;
+        const multipliers = [0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.25, 1.25, 1.15, 0.95, 1.05];
+        const monthlyRevenue = multipliers.map(m => Math.round(base * m));
+        const maxRev = Math.max(1, ...monthlyRevenue);
+        const months = ["Jan","Fev","Mar","Avr","Mai","Juin","Juil","Aout","Sep","Oct","Nov","Dec"];
+        const rBody = document.getElementById("revenueTable");
+        rBody.innerHTML = monthlyRevenue.map((val, i) => {
+          const w = Math.round((val / maxRev) * 100);
+          return `
+            <tr>
+              <td>${months[i]}</td>
+              <td class="num">${fmt(val)}</td>
+              <td>
+                <div class="mini">
+                  <div class="mbar"><div style="width:${w}%"></div></div>
+                  <div class="mval">${w}%</div>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+        const lineSvg = buildLineChart(monthlyRevenue, months);
+        const barsSvg = buildBarChart([marge, net], ["Marge", "Net"]);
+        const donutSvg = buildDonut([30, 40, 30], ["#1d4ed8", "#06b6d4", "#f59e0b"]);
+        const risk = buildRiskScore(p.tauxInteretPct, p.dureeRemboursementMois, marge);
+        document.getElementById("chartLine").innerHTML = lineSvg;
+        document.getElementById("chartBars").innerHTML = barsSvg;
+        document.getElementById("chartDonut").innerHTML = donutSvg;
+        document.getElementById("chartRisk").innerHTML = risk.svg;
+        document.getElementById("riskNote").textContent = risk.note;
+
+        renderCalendar(p.dureeCampagneJours);
+        renderRepayments(goal, p.dureeRemboursementMois);
+      });
+    }
+
+    function buildLineChart(values, labels){
+      const w = 420, h = 180, pad = 14;
+      const max = Math.max(1, ...values);
+      const step = (w - pad * 2) / (values.length - 1);
+      const points = values.map((v,i) => {
+        const x = pad + i * step;
+        const y = h - pad - (v / max) * (h - pad * 2);
+        return `${x},${y}`;
+      }).join(" ");
+      const labelY = h - 4;
+      const labelSvg = labels.map((label, i) => {
+        const x = pad + i * step;
+        return `<text x="${x}" y="${labelY}" text-anchor="middle" font-size="10" fill="#64748b">${label}</text>`;
+      }).join("");
+      return `
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#1d4ed8" stroke-width="3" points="${points}" />
+          <polyline fill="none" stroke="rgba(29,78,216,.15)" stroke-width="10" points="${points}" />
+          ${labelSvg}
+        </svg>
+      `;
+    }
+
+    function buildBarChart(values, labels){
+      const w = 420, h = 160, pad = 20;
+      const max = Math.max(1, ...values.map(v => Math.abs(v)));
+      const barW = 80;
+      const gap = 60;
+      const baseY = h - pad;
+      const bars = values.map((v,i) => {
+        const barH = (Math.abs(v) / max) * (h - pad * 2);
+        const x = pad + i * (barW + gap);
+        const y = baseY - barH;
+        const color = i === 0 ? "#06b6d4" : "#f59e0b";
+        return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="8" fill="${color}" />` +
+               `<text x="${x + barW/2}" y="${h - 4}" text-anchor="middle" font-size="11" fill="#64748b">${labels[i]}</text>`;
+      }).join("");
+      return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}</svg>`;
+    }
+
+    function buildDonut(parts, colors){
+      const r = 48;
+      const c = 2 * Math.PI * r;
+      let offset = 0;
+      const circles = parts.map((p,i) => {
+        const dash = (p / 100) * c;
+        const seg = `<circle cx="60" cy="60" r="${r}" fill="transparent" stroke="${colors[i]}" stroke-width="14" stroke-dasharray="${dash} ${c-dash}" stroke-dashoffset="${-offset}" />`;
+        offset += dash;
+        return seg;
+      }).join("");
+      return `<svg viewBox="0 0 120 120">${circles}</svg>`;
+    }
+
+    function buildRiskScore(taux, dureeMois, marge){
+      const rate = Number(taux || 0);
+      const months = Number(dureeMois || 0);
+      const margin = Number(marge || 0);
+      const rateScore = Math.min(40, (rate / 20) * 40);
+      const durScore = Math.min(30, (months / 24) * 30);
+      const marginScore = Math.min(30, margin > 0 ? (1 - Math.min(margin / 100000, 1)) * 30 : 30);
+      const score = Math.min(100, Math.round(rateScore + durScore + marginScore));
+      const w = 420, h = 90, pad = 10;
+      const fill = score < 35 ? "#16a34a" : (score < 70 ? "#f59e0b" : "#ef4444");
+      const note = score < 35
+        ? "Risque faible: taux modere, duree courte ou marge confortable."
+        : (score < 70
+          ? "Risque modere: surveiller la duree et la marge."
+          : "Risque eleve: taux/duree eleves ou marge faible.");
+      const svg = `
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+          <rect x="${pad}" y="18" width="${w - pad*2}" height="14" rx="7" fill="rgba(15,23,42,.10)" />
+          <rect x="${pad}" y="18" width="${(w - pad*2) * (score/100)}" height="14" rx="7" fill="${fill}" />
+          <circle cx="${pad + (w - pad*2) * (score/100)}" cy="25" r="6" fill="${fill}" />
+          <text x="${pad}" y="62" font-size="12" fill="#64748b">0</text>
+          <text x="${w/2}" y="62" text-anchor="middle" font-size="12" fill="#64748b">50</text>
+          <text x="${w - pad}" y="62" text-anchor="end" font-size="12" fill="#64748b">100</text>
+          <text x="${w - pad}" y="82" text-anchor="end" font-size="12" fill="#64748b">${score}/100</text>
+        </svg>
+      `;
+      return { svg, note };
+    }
+
+    function renderCalendar(durationDays){
+      const displayMonths = Math.max(6, Math.round((Number(durationDays || 180) / 30)));
+      const m1 = Math.ceil(displayMonths / 3);
+      const m2 = Math.ceil((displayMonths * 2) / 3);
+      const rows = [
+        { phase: "Phase 1", objectif: "Prototype / MVP", periode: `M1-M${m1}` },
+        { phase: "Phase 2", objectif: "Pilote + retours terrain", periode: `M${m1 + 1}-M${m2}` },
+        { phase: "Phase 3", objectif: "Lancement commercial", periode: `M${m2 + 1}-M${displayMonths}` }
+      ];
+      const body = document.getElementById("calendarTable");
+      body.innerHTML = rows.map(r => `
+        <tr>
+          <td><span class="tag ok">${r.phase}</span></td>
+          <td>${r.objectif}</td>
+          <td class="num">${r.periode}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderRepayments(goal, dureeMois){
+      const months = Math.max(1, Number(dureeMois || 12));
+      const amount = months > 0 ? Math.round(Number(goal || 0) / months) : 0;
+      const now = new Date();
+      const body = document.getElementById("repaymentTable");
+      const rows = Array.from({ length: 5 }, (_, i) => {
+        const due = new Date(now.getFullYear(), now.getMonth() + i + 1, now.getDate());
+        const dueStr = due.toISOString().slice(0, 10);
+        return `
+          <tr>
+            <td>${dueStr}</td>
+            <td class="num">${fmt(amount)}</td>
+            <td class="num"><span class="tag">A venir</span></td>
+          </tr>
+        `;
+      }).join("");
+      body.innerHTML = rows;
+    }
+
+    loadProject();
+  </script>
+  <script>
+    (function(){
+      const links = Array.from(document.querySelectorAll('.nav-links a'));
+      if (!links.length) return;
+      const file = (window.location.href.split('#')[0].split('?')[0].split('/').pop() || '');
+      let active = null;
+      if (file === 'projet_view.html' || file === 'projet_view_investisseur.html') {
+        active = links.find(a => a.textContent.toLowerCase().includes('projets')) || links[0];
+      } else {
+        active = links.find(a => a.getAttribute('href') === file) || null;
+      }
+      if (active) active.classList.add('active');
+    })();
+  </script></body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
