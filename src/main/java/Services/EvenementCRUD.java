@@ -13,6 +13,7 @@ import java.util.List;
 public class EvenementCRUD {
 
     private final Connection conn;
+    private String cachedStatusCol;
 
     public EvenementCRUD() {
         conn = MyBD.getInstance().getConn();
@@ -106,7 +107,11 @@ public class EvenementCRUD {
     }
 
     public List<Evenement> getPendingEvents() throws SQLException {
-        String sql = "SELECT * FROM evenement WHERE statut=? ORDER BY dateDebut DESC";
+        String statusCol = resolveStatusColumn();
+        if (statusCol == null) {
+            return getAll();
+        }
+        String sql = "SELECT * FROM evenement WHERE " + statusCol + "=? ORDER BY dateDebut DESC";
         List<Evenement> list = new ArrayList<>();
         try (PreparedStatement pst = conn.prepareStatement(sql)) {
             pst.setString(1, Statut.EN_ATTENTE.name());
@@ -143,7 +148,11 @@ public class EvenementCRUD {
     }
 
     public void updateStatut(int id, Statut statut) throws SQLException {
-        String sql = "UPDATE evenement SET statut=? WHERE id=?";
+        String statusCol = resolveStatusColumn();
+        if (statusCol == null) {
+            return;
+        }
+        String sql = "UPDATE evenement SET " + statusCol + "=? WHERE id=?";
         try (PreparedStatement pst = conn.prepareStatement(sql)) {
             pst.setString(1, statut.name());
             pst.setInt(2, id);
@@ -167,5 +176,62 @@ public class EvenementCRUD {
 
     public void rejectEvent(int id) throws SQLException {
         updateStatut(id, Statut.REFUSE);
+    }
+
+    private String resolveStatusColumn() throws SQLException {
+        if (cachedStatusCol != null) return cachedStatusCol;
+        if (conn == null) return null;
+        List<String> cols = loadColumns("evenement");
+        cachedStatusCol = firstExisting(cols, "statut", "status", "etat");
+        return cachedStatusCol;
+    }
+
+    private List<String> loadColumns(String table) throws SQLException {
+        List<String> cols = new ArrayList<>();
+        try {
+            DatabaseMetaData meta = conn.getMetaData();
+            try (ResultSet rs = meta.getColumns(conn.getCatalog(), null, table, null)) {
+                while (rs.next()) {
+                    String name = rs.getString("COLUMN_NAME");
+                    if (name != null) cols.add(name);
+                }
+            }
+        } catch (Exception ignore) {
+        }
+        if (!cols.isEmpty()) return cols;
+
+        String sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, table);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String name = rs.getString(1);
+                    if (name != null) cols.add(name);
+                }
+            }
+        }
+        if (!cols.isEmpty()) return cols;
+
+        String fallbackSql = "SELECT * FROM " + table + " LIMIT 1";
+        try (PreparedStatement ps = conn.prepareStatement(fallbackSql);
+             ResultSet rs = ps.executeQuery()) {
+            ResultSetMetaData meta = rs.getMetaData();
+            for (int i = 1; i <= meta.getColumnCount(); i++) {
+                String name = meta.getColumnName(i);
+                if (name != null) cols.add(name);
+            }
+        } catch (Exception ignore) {
+        }
+        return cols;
+    }
+
+    private static String firstExisting(List<String> cols, String... candidates) {
+        if (cols == null || cols.isEmpty()) return null;
+        for (String c : candidates) {
+            for (String col : cols) {
+                if (col.equalsIgnoreCase(c)) return col;
+            }
+        }
+        return null;
     }
 }

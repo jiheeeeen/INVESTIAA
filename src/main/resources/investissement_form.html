@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Investia — Investir</title>
+    <script src="navbar.js" defer></script>
+    <style>
+        :root{
+            --bg:#f6f8fc; --card:#fff; --text:#0f172a; --muted:#64748b;
+            --border:rgba(15,23,42,.10); --shadow:0 14px 35px rgba(15,23,42,.08);
+            --radius:18px; --primary:#1d4ed8; --accent:#06b6d4;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text);}
+        .container{max-width:980px;margin:28px auto 60px;padding:0 16px;}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-top:16px;}
+        h1{margin:0;font-size:28px;font-weight:900;}
+        .subtitle{margin:10px 0 0;color:var(--muted);font-size:14.5px;line-height:1.5}
+        .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;align-items:flex-end;}
+        .field{flex:1;min-width:220px;}
+        label{display:block;font-size:12px;font-weight:900;color:#0b2a55;letter-spacing:.25px;text-transform:uppercase;margin-bottom:6px;}
+        input{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--border);outline:none;font-weight:800;}
+        .btnBar{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px;}
+        .btn{border:0;cursor:pointer;font-weight:900;font-size:14px;padding:10px 14px;border-radius:12px;background:#fff;border:1px solid var(--border);}
+        .btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:0;}
+        .btn.danger{background:#fff;border:1px solid rgba(239,68,68,.35);color:#b91c1c;}
+        .btn.ghost{background:transparent;}
+        .pill{padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;font-weight:900;}
+        table{width:100%;border-collapse:collapse;margin-top:10px;}
+        th,td{padding:10px;border-bottom:1px solid rgba(15,23,42,.08);text-align:left;font-weight:700;}
+        th{font-size:12px;text-transform:uppercase;color:#0b2a55;letter-spacing:.25px;}
+        tr:hover td{background:rgba(15,23,42,.03);cursor:pointer;}
+        tr.active td{background:rgba(29,78,216,.08);}
+        .msg{margin-top:10px;font-weight:900;}
+        .ok{color:#15803d;}
+        .err{color:#b91c1c;}
+    </style>
+</head>
+
+<body>
+<main class="container">
+    <h1>Investir</h1>
+    <p class="subtitle">CRUD investissement (Créer / Modifier / Supprimer) pour le projet sélectionné.</p>
+
+    <section class="card">
+        <div class="row">
+            <div class="pill">Projet ID: <span id="pid">-</span></div>
+            <div class="pill">Utilisateur: <span id="uname">-</span></div>
+            <div class="pill">Mode: <span id="mode">CREATE</span></div>
+            <div class="pill">ID Inv: <span id="invId">-</span></div>
+        </div>
+
+        <div class="row">
+            <div class="field">
+                <label>Montant (TND)</label>
+                <input id="montant" type="number" step="0.01" min="0" placeholder="Ex: 500"/>
+            </div>
+            <div class="field">
+                <label>Date investissement</label>
+                <input id="dateInv" type="date"/>
+            </div>
+        </div>
+
+        <div class="btnBar">
+            <button class="btn ghost" type="button" id="btnNew">Nouveau</button>
+            <button class="btn" type="button" id="btnBack">← Retour</button>
+            <button class="btn danger" type="button" id="btnDelete" disabled>Supprimer</button>
+            <button class="btn" type="button" id="btnUpdate" disabled>Modifier</button>
+            <button class="btn primary" type="button" id="btnCreate">Créer</button>
+        </div>
+
+        <div id="msg" class="msg"></div>
+    </section>
+
+    <section class="card">
+        <h2 style="margin:0;font-size:18px;font-weight:900;">Historique (ce projet)</h2>
+        <div class="subtitle">Clique sur une ligne pour modifier/supprimer.</div>
+        <div style="overflow:auto;">
+            <table>
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Montant</th>
+                    <th>Date</th>
+                    <th>Investisseur</th>
+                </tr>
+                </thead>
+                <tbody id="tbody">
+                <tr><td colspan="4">Chargement…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script>
+    const el = (id)=>document.getElementById(id);
+
+    let __BRIDGE = null;
+    let selectedInvId = null;
+
+    function getSafeBridge(){
+        if (__BRIDGE) return __BRIDGE;
+        try{ if(window.javaBridge){ __BRIDGE = window.javaBridge; return __BRIDGE; } }catch(e){}
+        try{ if(window.javaBridgeInvest){ __BRIDGE = window.javaBridgeInvest; return __BRIDGE; } }catch(e){}
+        try{ if(window.javaBridgeInvestissement){ __BRIDGE = window.javaBridgeInvestissement; return __BRIDGE; } }catch(e){}
+        return null;
+    }
+
+    function withBridge(cb){
+        const start = Date.now();
+        const t = setInterval(()=>{
+            const b = getSafeBridge();
+            if(b){
+                clearInterval(t);
+                cb(b);
+                return;
+            }
+            if(Date.now()-start>7000){
+                clearInterval(t);
+                setMsg("Bridge JavaFX introuvable. Vérifie l’injection dans le controller.", false);
+            }
+        },100);
+    }
+
+    function setMsg(text, ok){
+        const m = el("msg");
+        m.className = "msg " + (ok ? "ok" : "err");
+        m.textContent = text || "";
+    }
+
+    function getIdProjetFromUrl(){
+        try{
+            const qs = new URLSearchParams(location.search);
+            return (qs.get("idProjet") || "").trim();
+        }catch(e){ return ""; }
+    }
+
+    function ensureProjetIdReady(b){
+        let pid = "";
+        try{ pid = (b.getSelectedProjetId ? (b.getSelectedProjetId()||"") : ""); }catch(e){}
+        pid = (pid||"").trim();
+
+        const fromUrl = getIdProjetFromUrl();
+
+        if(!pid && fromUrl && b.setSelectedProjetId){
+            try{ b.setSelectedProjetId(String(fromUrl)); pid = fromUrl; }catch(e){}
+        }
+        return pid || fromUrl || "";
+    }
+
+    function setMode(mode){
+        el("mode").textContent = mode;
+        el("invId").textContent = selectedInvId ? String(selectedInvId) : "-";
+
+        const isEdit = !!selectedInvId;
+
+        el("btnUpdate").disabled = !isEdit;
+        el("btnDelete").disabled = !isEdit;
+        el("btnCreate").disabled = isEdit;
+    }
+
+    function resetForm(){
+        selectedInvId = null;
+        el("montant").value = "";
+        try{ el("dateInv").value = new Date().toISOString().slice(0,10); }catch(e){}
+        setMode("CREATE");
+        setMsg("", true);
+        // remove active row highlight
+        document.querySelectorAll("tbody tr").forEach(tr => tr.classList.remove("active"));
+    }
+
+    function loadHeader(){
+        withBridge((b)=>{
+            try{
+                el("uname").textContent = (b.getCurrentUserName ? (b.getCurrentUserName()||"-") : "-");
+                const pid = ensureProjetIdReady(b);
+                el("pid").textContent = pid || "-";
+            }catch(e){}
+        });
+    }
+
+    function loadTable(){
+        withBridge((b)=>{
+            try{
+                const pid = ensureProjetIdReady(b);
+                const json = (b.listInvestissementsByProjet ? b.listInvestissementsByProjet(String(pid||"")) : "[]");
+                const arr = JSON.parse(json || "[]");
+                const tb = el("tbody");
+
+                if(!arr.length){
+                    tb.innerHTML = `<tr><td colspan="4">Aucun investissement.</td></tr>`;
+                    return;
+                }
+
+                tb.innerHTML = arr.map(x=>`
+          <tr data-id="${x.id_investissement}" data-montant="${x.montant}" data-date="${x.date_investissement||''}">
+            <td>${x.id_investissement}</td>
+            <td>${Number(x.montant||0).toLocaleString("fr-TN")} TND</td>
+            <td>${(x.date_investissement||"")}</td>
+            <td>${x.id_investisseur}</td>
+          </tr>
+        `).join("");
+
+                // click row -> fill form
+                tb.querySelectorAll("tr").forEach(tr=>{
+                    tr.addEventListener("click", ()=>{
+                        tb.querySelectorAll("tr").forEach(r=>r.classList.remove("active"));
+                        tr.classList.add("active");
+
+                        selectedInvId = tr.getAttribute("data-id");
+                        el("montant").value = tr.getAttribute("data-montant") || "";
+                        el("dateInv").value = (tr.getAttribute("data-date") || "").slice(0,10);
+                        setMode("EDIT");
+                        setMsg("Ligne sélectionnée. Tu peux modifier ou supprimer.", true);
+                    });
+                });
+
+            }catch(e){
+                el("tbody").innerHTML = `<tr><td colspan="4">Erreur chargement.</td></tr>`;
+            }
+        });
+    }
+
+    function bindActions(){
+        resetForm();
+
+        el("btnNew").addEventListener("click", resetForm);
+
+        el("btnCreate").addEventListener("click", ()=>{
+            const montant = (el("montant").value || "").trim();
+            const dateInv = (el("dateInv").value || "").trim();
+
+            if(!montant){ setMsg("Montant requis.", false); return; }
+
+            withBridge((b)=>{
+                const pid = ensureProjetIdReady(b);
+                if(!pid){ setMsg("Projet ID manquant. Reviens depuis Détails -> Investir.", false); return; }
+
+                try{
+                    if (!b.createInvestissementSimple) {
+                        setMsg("Méthode createInvestissementSimple introuvable (bridge).", false);
+                        return;
+                    }
+                    const res = b.createInvestissementSimple(String(montant), String(dateInv||""));
+                    if(res && String(res).startsWith("OK")){
+                        setMsg("Investissement créé ✔", true);
+                        resetForm();
+                        loadTable();
+                    } else {
+                        setMsg(String(res || "Erreur"), false);
+                    }
+                }catch(e){
+                    console.error(e);
+                    setMsg("Erreur appel JavaFX (exception JS).", false);
+                }
+            });
+        });
+
+        el("btnUpdate").addEventListener("click", ()=>{
+            if(!selectedInvId){ setMsg("Sélectionne une ligne.", false); return; }
+
+            const montant = (el("montant").value || "").trim();
+            const dateInv = (el("dateInv").value || "").trim();
+
+            if(!montant){ setMsg("Montant requis.", false); return; }
+
+            withBridge((b)=>{
+                try{
+                    if(!b.updateInvestissement){
+                        setMsg("Méthode updateInvestissement introuvable (bridge).", false);
+                        return;
+                    }
+                    const res = b.updateInvestissement(String(selectedInvId), String(montant), String(dateInv||""));
+                    if(res && String(res).startsWith("OK")){
+                        setMsg("Investissement modifié ✔", true);
+                        resetForm();
+                        loadTable();
+                    } else {
+                        setMsg(String(res || "Erreur"), false);
+                    }
+                }catch(e){
+                    console.error(e);
+                    setMsg("Erreur appel JavaFX (exception JS).", false);
+                }
+            });
+        });
+
+        el("btnDelete").addEventListener("click", ()=>{
+            if(!selectedInvId){ setMsg("Sélectionne une ligne.", false); return; }
+            if(!confirm("Supprimer cet investissement ?")) return;
+
+            withBridge((b)=>{
+                try{
+                    if(!b.deleteInvestissement){
+                        setMsg("Méthode deleteInvestissement introuvable (bridge).", false);
+                        return;
+                    }
+                    const res = b.deleteInvestissement(String(selectedInvId));
+                    if(res && String(res).startsWith("OK")){
+                        setMsg("Investissement supprimé ✔", true);
+                        resetForm();
+                        loadTable();
+                    } else {
+                        setMsg(String(res || "Erreur"), false);
+                    }
+                }catch(e){
+                    console.error(e);
+                    setMsg("Erreur appel JavaFX (exception JS).", false);
+                }
+            });
+        });
+
+        el("btnBack").addEventListener("click", ()=>{
+            withBridge((b)=>{
+                if(b && b.backToProjets){
+                    const r = b.backToProjets();
+                    if(r && String(r).startsWith("ERROR")) alert(r);
+                    return;
+                }
+                history.back();
+            });
+        });
+    }
+
+    setTimeout(()=>{
+        loadHeader();
+        loadTable();
+        bindActions();
+    }, 50);
+</script>
+
+</body>
+</html>

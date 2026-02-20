@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Investia — Mon Profil (Investisseur)</title>
+
+    <style>
+        :root{
+            --bg:#f6f8fc;
+            --card:#fff;
+            --text:#0f172a;
+            --muted:#64748b;
+            --border:rgba(15,23,42,.10);
+            --shadow:0 14px 35px rgba(15,23,42,.08);
+            --primary:#1d4ed8;
+            --accent:#06b6d4;
+            --success:#16a34a;
+            --warning:#f59e0b;
+            --danger:#ef4444;
+            --radius:18px;
+        }
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background:var(--bg);
+            color:var(--text);
+        }
+        a{color:inherit; text-decoration:none}
+        .container{max-width:1120px; margin:28px auto 60px; padding:0 16px;}
+        .topbar{
+            display:flex; align-items:center; justify-content:space-between; gap:12px;
+            margin-bottom:16px;
+        }
+        .breadcrumb{
+            display:flex; gap:10px; align-items:center; color:var(--muted); font-size:14px;
+        }
+        .btn{
+            border:0; cursor:pointer; font-weight:800; font-size:14px;
+            padding:10px 14px; border-radius:12px;
+            display:inline-flex; align-items:center; gap:8px;
+        }
+        .btn.primary{
+            background:linear-gradient(135deg, var(--primary), var(--accent));
+            color:#fff; box-shadow:0 10px 20px rgba(29,78,216,.18);
+        }
+        .btn.ghost{
+            background:#fff; border:1px solid var(--border); color:var(--text);
+        }
+
+        .hero{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            box-shadow:var(--shadow);
+            padding:18px;
+            display:grid;
+            grid-template-columns: 1.3fr .7fr;
+            gap:18px;
+            overflow:hidden;
+            position:relative;
+        }
+        .hero::before{
+            content:"";
+            position:absolute; inset:0;
+            background:
+                    radial-gradient(700px 220px at 12% 0%, rgba(29,78,216,.10), transparent 55%),
+                    radial-gradient(700px 260px at 98% 20%, rgba(6,182,212,.10), transparent 55%);
+            pointer-events:none;
+        }
+        @media (max-width: 900px){ .hero{grid-template-columns: 1fr;} }
+        .hero-left{position:relative; z-index:1;}
+
+        .badge{
+            display:inline-flex; align-items:center; gap:8px;
+            padding:7px 10px; border-radius:999px;
+            font-size:12px; font-weight:800;
+            border:1px solid rgba(29,78,216,.18);
+            background:rgba(29,78,216,.06);
+            color:#0b2a55;
+        }
+        .dot{width:8px;height:8px;border-radius:50%;
+            background:linear-gradient(135deg, var(--primary), var(--accent));
+            box-shadow:0 0 0 3px rgba(6,182,212,.14);
+        }
+        h1{margin:10px 0 6px; font-size:30px; letter-spacing:.2px;}
+        .pitch{margin:0; color:var(--muted); line-height:1.6; max-width:75ch;}
+
+        .summary{
+            background:rgba(255,255,255,.75);
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:14px;
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            position:relative;
+            z-index:1;
+        }
+        .kpi-grid{display:grid; grid-template-columns: 1fr 1fr; gap:10px;}
+        .kpi{
+            border:1px solid var(--border);
+            border-radius:14px;
+            background:#fff;
+            padding:10px;
+        }
+        .kpi .label{font-size:12px; color:var(--muted); font-weight:700;}
+        .kpi .val{font-size:18px; font-weight:900; margin-top:4px;}
+
+        .grid{
+            display:grid;
+            grid-template-columns: 1fr .9fr;
+            gap:18px;
+            margin-top:18px;
+            align-items:start;
+        }
+        @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
+        .card{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            box-shadow:var(--shadow);
+            padding:16px;
+        }
+        .card h2{ margin:0 0 10px; font-size:18px; letter-spacing:.2px; }
+        .muted{color:var(--muted)}
+
+        table{
+            width:100%;
+            border-collapse:separate;
+            border-spacing:0;
+            overflow:hidden;
+            border:1px solid var(--border);
+            border-radius:14px;
+            background:#fff;
+        }
+        td{
+            padding:10px 12px;
+            border-bottom:1px solid var(--border);
+            font-size:14px;
+        }
+        tr:last-child td{border-bottom:0}
+        .num{text-align:right; font-variant-numeric: tabular-nums;}
+        .tag{
+            display:inline-flex; align-items:center;
+            padding:6px 10px; border-radius:999px;
+            font-size:12px; font-weight:800;
+            border:1px solid var(--border);
+            background:#fff;
+            color:var(--text);
+        }
+        .tag.ok{border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); color:#0f3d1b;}
+        .avatarBox{
+            display:flex; gap:12px; align-items:center;
+            padding:12px;
+            border:1px solid var(--border);
+            border-radius:16px;
+            background:#fff;
+        }
+        .avatar{
+            width:52px; height:52px; border-radius:14px;
+            background:rgba(29,78,216,.10);
+            border:1px solid rgba(29,78,216,.18);
+            display:flex; align-items:center; justify-content:center;
+            font-weight:900; color:#0b2a55; font-size:20px;
+            overflow:hidden;
+        }
+        .avatar img{width:100%; height:100%; object-fit:cover;}
+        .small{font-size:12px; color:var(--muted); line-height:1.4;}
+    </style>
+
+    <script src="navbar.js" defer></script>
+</head>
+
+<body>
+<main class="container">
+    <div class="topbar">
+        <div class="breadcrumb">
+            <a href="accueil_investisseur.html">← Retour</a>
+            <span>•</span>
+            <strong class="muted">Mon profil</strong>
+        </div>
+        <div class="actions">
+            <button class="btn ghost" onclick="window.print()">Télécharger PDF</button>
+            <button class="btn primary" id="editBtn">Modifier</button>
+        </div>
+    </div>
+
+    <section class="hero">
+        <div class="hero-left">
+            <span class="badge"><span class="dot"></span>Investisseur</span>
+            <h1 id="fullName">—</h1>
+            <p class="pitch" id="bio">—</p>
+
+            <div class="avatarBox" style="margin-top:12px;">
+                <div class="avatar" id="avatarBox">U</div>
+                <div>
+                    <div style="font-weight:900;" id="email">—</div>
+                    <div class="small" id="phoneCin">—</div>
+                    <div class="small" id="secteursLine">—</div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="summary">
+            <div class="kpi-grid">
+                <div class="kpi">
+                    <div class="label">Budget total</div>
+                    <div class="val" id="budgetTotal">—</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Budget mensuel</div>
+                    <div class="val" id="budgetMensuel">—</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Ticket moyen / projet</div>
+                    <div class="val" id="ticket">—</div>
+                </div>
+                <div class="kpi">
+                    <div class="label">Horizon</div>
+                    <div class="val" id="horizon">—</div>
+                </div>
+            </div>
+            <div class="small">
+                <b>Documents :</b>
+                <span id="docsStatus">—</span>
+            </div>
+        </aside>
+    </section>
+
+    <section class="grid">
+        <div>
+            <section class="card">
+                <h2>Informations investisseur</h2>
+                <table>
+                    <tbody>
+                    <tr><td><b>Secteurs</b></td><td class="num" id="secteurs">—</td></tr>
+                    <tr><td><b>Bio</b></td><td class="num" id="bioRow">—</td></tr>
+                    </tbody>
+                </table>
+                <p class="small" style="margin:10px 0 0;">
+                    *Les valeurs proviennent de votre profil investisseur (table profil_investisseur).
+                </p>
+            </section>
+        </div>
+
+        <aside>
+            <section class="card">
+                <h2>Identité</h2>
+                <table>
+                    <tbody>
+                    <tr><td><b>Nom</b></td><td class="num" id="nom">—</td></tr>
+                    <tr><td><b>Prénom</b></td><td class="num" id="prenom">—</td></tr>
+                    <tr><td><b>Email</b></td><td class="num" id="email2">—</td></tr>
+                    <tr><td><b>Téléphone</b></td><td class="num" id="telephone">—</td></tr>
+                    <tr><td><b>CIN</b></td><td class="num" id="cin">—</td></tr>
+                    </tbody>
+                </table>
+                <div style="margin-top:10px;">
+                    <span class="tag ok">Compte actif</span>
+                </div>
+            </section>
+        </aside>
+    </section>
+</main>
+
+<script>
+    const fmt = (n) => {
+        if (n == null || n === "" || n === "null") return "—";
+        const num = Number(n);
+        if (Number.isNaN(num)) return String(n);
+        return new Intl.NumberFormat("fr-TN").format(num) + " TND";
+    };
+
+    function withBridge(onReady){
+        const start = Date.now();
+        const t = setInterval(() => {
+            if (window.javaBridge){
+                clearInterval(t);
+                onReady(window.javaBridge);
+            }
+            if (Date.now() - start > 2500) clearInterval(t);
+        }, 100);
+    }
+
+    function safeJsonParse(s){
+        try { return JSON.parse(s); } catch(e){ return null; }
+    }
+
+    function setText(id, v){
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = (v == null || v === "" || v === "null") ? "—" : v;
+    }
+
+    // Bouton Modifier => renvoie vers compléter infos (via Java)
+    document.getElementById("editBtn").addEventListener("click", () => {
+        withBridge((b) => {
+            if (typeof b.goEditProfil === "function") b.openEditProfilInvestisseur();
+            else alert("openEditProfilInvestisseur() non disponible.");
+        });
+    });
+
+    withBridge((bridge) => {
+        const u = safeJsonParse(bridge.getCurrentUserJson?.() || "null") || {};
+        const p = safeJsonParse(bridge.getProfilInvestisseurJson?.() || "null") || {};
+
+        const fullName = ((u.nom || "") + " " + (u.prenom || "")).trim() || (u.email || "—");
+        setText("fullName", fullName);
+        setText("nom", u.nom);
+        setText("prenom", u.prenom);
+        setText("email", u.email);
+        setText("email2", u.email);
+        setText("telephone", u.telephone);
+        setText("cin", u.cin);
+
+        const phoneCin = [u.telephone ? ("📞 " + u.telephone) : null, u.cin ? ("🪪 CIN: " + u.cin) : null].filter(Boolean).join(" • ");
+        setText("phoneCin", phoneCin || "—");
+
+        const secteurs = p.secteurs || "—";
+        setText("secteurs", secteurs);
+        setText("secteursLine", "🎯 Secteurs: " + secteurs);
+
+        const bio = p.bio || "Profil investisseur.";
+        setText("bio", bio);
+        setText("bioRow", bio);
+
+        setText("budgetTotal", fmt(p.budgetTotal));
+        setText("budgetMensuel", fmt(p.budgetMensuel));
+        setText("ticket", fmt(p.ticketMoyenParProjet));
+        setText("horizon", p.horizonInvestissement || "—");
+
+        const docsOk =
+            !!p.cinRectoUrl && p.cinRectoUrl !== "null" &&
+            !!p.cinVersoUrl && p.cinVersoUrl !== "null" &&
+            !!p.photoUrl && p.photoUrl !== "null";
+
+        setText("docsStatus", docsOk ? "✅ OK" : "⚠️ Manquants");
+
+        // Avatar
+        const avatarBox = document.getElementById("avatarBox");
+        const first = (fullName || "U").trim().charAt(0).toUpperCase() || "U";
+        if (p.photoUrl && p.photoUrl !== "null") {
+            avatarBox.innerHTML = '<img alt="photo" src="' + p.photoUrl + '">';
+        } else {
+            avatarBox.textContent = first;
+        }
+    });
+
+</script>
+</body>
+</html>

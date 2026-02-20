@@ -10,6 +10,7 @@ import Entities.Role;
 import Entities.StatutVerification;
 import Entities.User;
 import Utils.Session;
+import Utils.sceneManager;
 import java.net.URL;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
@@ -171,6 +172,51 @@ public class ProjetWebViewController {
 
         public String logout() {
             return sessionController.logout();
+        }
+
+        // --- Investisseur navigation helpers (for navbar on financement/remboursement pages) ---
+        public String openProjetsInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/investisseur_projets_view.fxml", "Investia - Projets")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String goAccueilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/investisseur_view.fxml", "Investia - Accueil Investisseur")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openProfilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/profil_investisseur_view.fxml", "Investia - Mon Profil (Investisseur)")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openEditProfilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/profil_investisseur_edit_view.fxml", "Investia - Modifier Profil")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
         }
 
         public String listProjets() {

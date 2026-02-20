@@ -1,6 +1,8 @@
 package Controllers;
 
+import Entities.Role;
 import Services.UserCRUD;
+import Utils.Session;
 import Utils.sceneManager;
 
 public class WebAuthBridge {
@@ -43,14 +45,22 @@ public class WebAuthBridge {
                 );
             } else if ("OK_NEED_PROFILE".equals(res)) {
                 // premiere connexion: completer les informations
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/projet_view.fxml", "Investia - Completer vos informations")
-                );
+                javafx.application.Platform.runLater(() -> {
+                    if (Session.getCurrentUser() != null && Session.getCurrentUser().getRole() == Role.INVESTISSEUR) {
+                        sceneManager.switchTo("/investisseur_view.fxml", "Investia - Completer vos informations");
+                    } else {
+                        sceneManager.switchTo("/projet_view.fxml", "Investia - Completer vos informations");
+                    }
+                });
             } else if ("OK_USER".equals(res)) {
                 // navigation utilisateur vers l'accueil
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/projet_view.fxml", "Investia - Accueil")
-                );
+                javafx.application.Platform.runLater(() -> {
+                    if (Session.getCurrentUser() != null && Session.getCurrentUser().getRole() == Role.INVESTISSEUR) {
+                        sceneManager.switchTo("/investisseur_view.fxml", "Investia - Accueil Investisseur");
+                    } else {
+                        sceneManager.switchTo("/projet_view.fxml", "Investia - Accueil");
+                    }
+                });
             }
             return res;
 

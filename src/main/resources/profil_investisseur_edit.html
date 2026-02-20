@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Investia — Modifier profil</title>
+    <script src="navbar.js" defer></script>
+    <style>
+        body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:#f6f8fc;color:#0f172a;}
+        .container{max-width:900px;margin:28px auto 60px;padding:0 16px;}
+        .card{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:16px;box-shadow:0 14px 35px rgba(15,23,42,.08);padding:18px;}
+        h1{margin:0 0 10px;font-size:28px;}
+        .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;}
+        @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+        label{font-size:12px;font-weight:800;color:#0b2a55;text-transform:uppercase;letter-spacing:.2px;}
+        input,textarea{width:100%;padding:10px 12px;border:1px solid rgba(15,23,42,.12);border-radius:12px;font-size:14px;outline:none;box-sizing:border-box;}
+        input{height:44px;}
+        textarea{min-height:120px;resize:vertical;}
+        .row{display:flex;flex-direction:column;gap:6px;min-width:0;}
+        .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+        button{border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;}
+        .primary{background:#1d4ed8;color:#fff;}
+        .danger{background:#ef4444;color:#fff;}
+        .muted{color:#64748b;font-size:13px;margin-top:8px;}
+        .msg{margin-top:10px;font-weight:800;}
+    </style>
+</head>
+<body>
+<main class="container">
+    <div class="card">
+        <h1>Modifier profil</h1>
+        <p class="muted">Ici tu peux modifier les infos <b>User</b> + <b>Profil investisseur</b>, ou supprimer ton compte.</p>
+
+        <div class="grid">
+            <!-- USER -->
+            <div class="row"><label>Nom</label><input id="nom" /></div>
+            <div class="row"><label>Prénom</label><input id="prenom" /></div>
+            <div class="row"><label>Email</label><input id="email" /></div>
+            <div class="row"><label>Téléphone</label><input id="telephone" /></div>
+            <div class="row"><label>CIN</label><input id="cin" /></div>
+
+            <!-- PROFIL INVEST -->
+            <div class="row"><label>Budget total</label><input id="budgetTotal" placeholder="ex: 5000" /></div>
+            <div class="row"><label>Budget mensuel</label><input id="budgetMensuel" placeholder="ex: 800" /></div>
+            <div class="row"><label>Ticket moyen / projet</label><input id="ticketMoyen" placeholder="ex: 300" /></div>
+            <div class="row"><label>Horizon investissement</label><input id="horizon" placeholder="ex: 12 mois" /></div>
+            <div class="row" style="grid-column:1/-1"><label>Secteurs (séparés par virgule)</label><input id="secteurs" placeholder="AgriTech, GreenTech" /></div>
+            <div class="row" style="grid-column:1/-1"><label>Bio</label><textarea id="bio"></textarea></div>
+        </div>
+
+        <div class="actions">
+            <button class="primary" id="saveBtn">Mettre à jour</button>
+            <button class="danger" id="deleteBtn">Supprimer mon compte</button>
+        </div>
+
+        <div class="msg" id="msg"></div>
+    </div>
+</main>
+
+<script>
+    const msg = (t, isErr=false) => {
+        const el = document.getElementById("msg");
+        el.textContent = t;
+        el.style.color = isErr ? "#b91c1c" : "#14532d";
+    };
+
+    function withBridge(onReady){
+        const start = Date.now();
+        const timer = setInterval(() => {
+            const b = window.javaBridge || window.javaBridgeInvest || window.javaBridgeInvestissement;
+            if (b) { clearInterval(timer); onReady(b); return; }
+            if (Date.now() - start > 2500) clearInterval(timer);
+        }, 80);
+    }
+
+    function fill(){
+        withBridge((b) => {
+            try{
+                const u = JSON.parse(b.getCurrentUserJson?.() || "null");
+                const p = JSON.parse(b.getProfilInvestisseurJson?.() || "null");
+
+                if (u){
+                    document.getElementById("nom").value = u.nom || "";
+                    document.getElementById("prenom").value = u.prenom || "";
+                    document.getElementById("email").value = u.email || "";
+                    document.getElementById("telephone").value = u.telephone || "";
+                    document.getElementById("cin").value = u.cin || "";
+                }
+                if (p){
+                    document.getElementById("budgetTotal").value = (p.budgetTotal ?? "") + "";
+                    document.getElementById("budgetMensuel").value = (p.budgetMensuel ?? "") + "";
+                    document.getElementById("ticketMoyen").value = (p.ticketMoyenParProjet ?? "") + "";
+                    document.getElementById("horizon").value = p.horizonInvestissement || "";
+                    document.getElementById("bio").value = p.bio || "";
+                    document.getElementById("secteurs").value = p.secteurs || "";
+                }
+            }catch(e){
+                msg("Erreur chargement données.", true);
+            }
+        });
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", () => {
+        withBridge((b) => {
+            try{
+                const r = b.updateProfil(
+                    document.getElementById("nom").value,
+                    document.getElementById("prenom").value,
+                    document.getElementById("email").value,
+                    document.getElementById("telephone").value,
+                    document.getElementById("cin").value,
+                    document.getElementById("budgetTotal").value,
+                    document.getElementById("budgetMensuel").value,
+                    document.getElementById("ticketMoyen").value,
+                    document.getElementById("horizon").value,
+                    document.getElementById("bio").value,
+                    document.getElementById("secteurs").value
+                );
+
+                if ((r || "").startsWith("OK")) msg("✅ Profil mis à jour.");
+                else msg("❌ " + r, true);
+            }catch(e){
+                msg("❌ Erreur update.", true);
+            }
+        });
+    });
+
+    document.getElementById("deleteBtn").addEventListener("click", () => {
+        if (!confirm("Confirmer la suppression du compte ?")) return;
+        withBridge((b) => {
+            try{
+                const r = b.deleteAccount();
+                if ((r || "").startsWith("OK")) msg("✅ Compte supprimé.");
+                else msg("❌ " + r, true);
+            }catch(e){
+                msg("❌ Erreur suppression.", true);
+            }
+        });
+    });
+
+    fill();
+</script>
+</body>
+</html>

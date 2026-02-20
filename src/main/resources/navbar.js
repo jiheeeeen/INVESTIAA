@@ -33,6 +33,7 @@
   font-weight:900;
   color:#1e3a8a;
   letter-spacing:.2px;
+  text-decoration:none;
 }
 .brand .ia{
   color:#d97706;
@@ -53,6 +54,7 @@
   color:#1e3a8a;
   font-weight:800;
   letter-spacing:.2px;
+  text-decoration:none;
 }
 .nav-links a::before{
   content:none;
@@ -82,12 +84,14 @@
   display:inline-flex;
   align-items:center;
   justify-content:center;
+  padding:0;
   cursor:pointer;
 }
 .icon-btn svg{
   width:18px;
   height:18px;
   stroke:#334155;
+  display:block;
 }
 .icon-btn:hover{
   background: rgba(15,23,42,.04);
@@ -235,6 +239,8 @@
   const projectsLink = nav.querySelector('a[data-key="projets"]');
   const financementsLink = nav.querySelector('a[data-key="financements"]');
   const remboursementsLink = nav.querySelector('a[data-key="remboursements"]');
+  let currentRole = "";
+  const getBridge = () => (window.javaBridge || window.javaBridgeInvest || window.javaBridgeInvestissement || null);
 
   function applyRoleBasedProjectsLink(role) {
     if (!projectsLink) return;
@@ -248,6 +254,7 @@
   }
 
   function applyRoleBasedNavigation(role) {
+    currentRole = role || "";
     applyRoleBasedProjectsLink(role);
     if (role === "INVESTISSEUR") {
       if (brandLink) brandLink.href = path("accueil_investisseur.html");
@@ -256,8 +263,8 @@
       if (financementsLink) financementsLink.style.display = "";
       if (remboursementsLink) remboursementsLink.style.display = "";
       if (remboursementsLink) remboursementsLink.href = path("web/remboursement/remboursements-investisseur.html");
-      if (profileBtn) profileBtn.style.display = "none";
-      if (editProfileBtn) editProfileBtn.style.display = "none";
+      if (profileBtn) profileBtn.style.display = "";
+      if (editProfileBtn) editProfileBtn.style.display = "";
     } else if (role === "ENTREPRENEUR") {
       if (brandLink) brandLink.href = path("projet_view.html");
       if (accueilLink) accueilLink.href = path("accueil.html");
@@ -342,24 +349,63 @@
     });
   }
 
+  function hookInvestorNav(linkEl, fnName, fallbackHref) {
+    if (!linkEl) return;
+    linkEl.addEventListener("click", (e) => {
+      if (currentRole !== "INVESTISSEUR") return;
+      const b = getBridge();
+      if (b && typeof b[fnName] === "function") {
+        e.preventDefault();
+        b[fnName]();
+        return;
+      }
+      if (fallbackHref) {
+        e.preventDefault();
+        window.location.href = fallbackHref;
+      }
+    });
+  }
+
+  hookInvestorNav(brandLink, "goAccueilInvestisseur", path("accueil_investisseur.html"));
+  hookInvestorNav(accueilLink, "goAccueilInvestisseur", path("accueil_investisseur.html"));
+  hookInvestorNav(projectsLink, "openProjetsInvestisseur", path("projet_view_investisseur.html"));
+
   if (profileBtn) {
     profileBtn.addEventListener("click", () => {
-      window.location.href = "monProfil.html";
+      try {
+        if (currentRole === "INVESTISSEUR") {
+          if (window.javaBridge && typeof window.javaBridge.openProfilInvestisseur === "function") {
+            window.javaBridge.openProfilInvestisseur();
+            return;
+          }
+          window.location.href = path("monProfil_investisseur.html");
+          return;
+        }
+      } catch (e) {}
+      window.location.href = path("monProfil.html");
     });
   }
 
   if (editProfileBtn) {
     editProfileBtn.addEventListener("click", () => {
       try {
+        if (currentRole === "INVESTISSEUR") {
+          if (window.javaBridge && typeof window.javaBridge.openEditProfilInvestisseur === "function") {
+            window.javaBridge.openEditProfilInvestisseur();
+            return;
+          }
+          window.location.href = path("profil_investisseur_edit.html");
+          return;
+        }
+      } catch (e) {}
+      try {
         sessionStorage.setItem("openProfileEdit", "1");
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
       if (file === "monProfil.html") {
         const editBtn = document.getElementById("editBtn");
         if (editBtn) editBtn.click();
       } else {
-        window.location.href = "monProfil.html";
+        window.location.href = path("monProfil.html");
       }
     });
   }
