@@ -1,9 +1,13 @@
 package Controllers;
 
+import Entities.Investissement;
 import Entities.ProfilEntrepreneur;
 import Entities.Projet;
 import Entities.Statut;
 import Entities.User;
+import Services.InvestissementCRUD;
+import Services.ProfilInvestisseurCRUD;
+import Services.UserCRUD;
 import Utils.Session;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -11,6 +15,8 @@ import java.util.List;
 
 public class ProjetBridgeController {
     private final ProjetWebContext context;
+    private final InvestissementCRUD investissementCRUD = new InvestissementCRUD();
+    private final ProfilInvestisseurCRUD profilInvestisseurCRUD = new ProfilInvestisseurCRUD();
 
     public ProjetBridgeController(ProjetWebContext context) {
         this.context = context;
@@ -53,7 +59,14 @@ public class ProjetBridgeController {
             sb.append("[");
             for (int i = 0; i < mine.size(); i++) {
                 if (i > 0) sb.append(",");
-                sb.append(ProjetWebUtils.toListJson(mine.get(i)));
+                Projet p = mine.get(i);
+                String status = ProjetWebUtils.mapStatusForUi(p.getStatut());
+                try {
+                    if (investissementCRUD.countParProjet(p.getIdProjet()) > 0) {
+                        status = "EN_COURS";
+                    }
+                } catch (Exception ignored) {}
+                sb.append(ProjetWebUtils.toListJsonWithStatus(p, status));
             }
             sb.append("]");
             return sb.toString();
@@ -166,6 +179,47 @@ public class ProjetBridgeController {
             return "OK";
         } catch (Exception e) {
             return "ERROR:" + e.getMessage();
+        }
+    }
+
+    public String getInvestissementsByProjetJson(String idProjet) {
+        try {
+            int pid = Integer.parseInt(idProjet);
+            List<Investissement> list = investissementCRUD.afficherParProjet(pid);
+            UserCRUD userCRUD = context.getUserCrud();
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            boolean first = true;
+            for (Investissement x : list) {
+                if (!first) sb.append(",");
+                first = false;
+                String investorName = "";
+                try {
+                    int userId = profilInvestisseurCRUD.getUserIdByInvestisseurId(x.getId_investisseur());
+                    if (userId > 0) {
+                        var u = userCRUD.findById(userId);
+                        if (u != null) {
+                            String nom = u.getNom() == null ? "" : u.getNom().trim();
+                            String prenom = u.getPrenom() == null ? "" : u.getPrenom().trim();
+                            String full = (nom + " " + prenom).trim();
+                            investorName = full.isEmpty() ? (u.getEmail() == null ? "" : u.getEmail().trim()) : full;
+                        }
+                    }
+                } catch (Exception ignored) {}
+                if (investorName == null || investorName.isBlank()) {
+                    investorName = "Investisseur #" + x.getId_investisseur();
+                }
+                sb.append("{")
+                        .append("\"id_investisseur\":").append(x.getId_investisseur()).append(",")
+                        .append("\"montant\":").append(x.getMontant()).append(",")
+                        .append("\"date_investissement\":").append(ProjetWebUtils.jsonString(x.getDate_investissement() == null ? "" : x.getDate_investissement().toString())).append(",")
+                        .append("\"investisseur\":").append(ProjetWebUtils.jsonString(investorName))
+                        .append("}");
+            }
+            sb.append("]");
+            return sb.toString();
+        } catch (Exception e) {
+            return "[]";
         }
     }
 }

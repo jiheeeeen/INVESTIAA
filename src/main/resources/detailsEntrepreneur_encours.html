@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Investra — Details Entrepreneur</title>
+  <title>Investra — Details Entrepreneur (En cours)</title>
   <style>
     :root{
       --bg:#f6f8fc;
@@ -129,6 +129,49 @@
       width:0%;
       background:linear-gradient(135deg, var(--primary), var(--accent));
     }
+    .progress-wide{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      margin:0 0 18px;
+    }
+    .progress-wide .row{
+      display:flex;
+      justify-content:space-between;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .progress-wide .kpis{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap:10px;
+      margin-top:10px;
+    }
+    .progress-wide .kpi{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:8px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .progress-wide .kpi .label{
+      font-size:11px;
+      color:var(--muted);
+      font-weight:700;
+    }
+    .progress-wide .kpi .val{
+      font-size:14px;
+      font-weight:800;
+      color:var(--text);
+    }
+    @media (max-width: 900px){
+      .progress-wide .kpis{grid-template-columns:1fr 1fr;}
+    }
     .actions{display:flex; gap:10px; flex-wrap:wrap;}
     .small{font-size:12px; color:var(--muted); line-height:1.4;}
 
@@ -138,6 +181,54 @@
       gap:18px;
       margin-top:18px;
       align-items:start;
+    }
+    .hero{display:none;}
+    .grid{grid-template-columns:1fr;}
+    .grid > aside{display:none;}
+    #plan, #finances, #investissements, #echeancier{display:none;}
+    #editBtn{display:none;}
+    .invest-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px;
+      margin-top:18px;
+    }
+    @media (max-width: 980px){
+      .invest-grid{grid-template-columns:1fr;}
+    }
+    .chart-box{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .top-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .top-item{
+      display:grid;
+      grid-template-columns: 1fr 120px;
+      gap:10px;
+      align-items:center;
+    }
+    .top-item .name{
+      font-size:13px;
+      font-weight:700;
+      color:#0b2a55;
+    }
+    .top-item .bar{
+      height:8px;
+      border-radius:999px;
+      background:rgba(15,23,42,.08);
+      overflow:hidden;
+      margin:0;
+    }
+    .top-item .bar > div{
+      height:100%;
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+      width:0%;
     }
     @media (max-width: 980px){
       .grid{grid-template-columns:1fr;}
@@ -224,6 +315,8 @@
       width:0%;
     }
     .mini .mval{width:72px; text-align:right; font-variant-numeric: tabular-nums; color:var(--muted); font-size:13px;}
+    #investBar svg{width:100%; height:200px; display:block;}
+    #investLine svg{width:100%; height:220px; display:block;}
     .analysis-grid{
       display:grid;
       grid-template-columns: 1fr;
@@ -276,10 +369,38 @@
         <strong class="muted" id="breadcrumbTitle">Détails</strong>
       </div>
       <div class="actions">
-        <button class="btn ghost suivi" id="suiviBtn" style="display:none;">Suivi projet</button>
+        <button class="btn ghost suivi" id="backDetailsBtn">Retour détails</button>
         <button class="btn primary" id="editBtn">Modifier</button>
       </div>
     </div>
+
+    <h1 style="margin:6px 0 8px;">Suivi du projet</h1>
+    <p class="muted" style="margin:0 0 16px;">Visualisation des investissements et de l'avancement.</p>
+    <section class="progress-wide">
+      <div class="row">
+        <span>Progression</span>
+        <span id="progressWideLabel">0%</span>
+      </div>
+      <div class="bar"><div id="progressWideBar"></div></div>
+      <div class="kpis">
+        <div class="kpi">
+          <div class="label">Objectif</div>
+          <div class="val" id="progressWideGoal">0 TND</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Levés</div>
+          <div class="val" id="progressWideRaised">0 TND</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Restant</div>
+          <div class="val" id="progressWideRemaining">0 TND</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Investisseurs</div>
+          <div class="val" id="progressWideInvestors">0</div>
+        </div>
+      </div>
+    </section>
 
     <section class="hero">
       <div class="hero-left">
@@ -404,6 +525,38 @@
             </table>
           </div>
         </section>
+
+        <section class="card" id="investissements" style="margin-top:18px;">
+          <h2>Investissements reçus</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Investisseur</th>
+                <th class="num">Montant</th>
+              </tr>
+            </thead>
+            <tbody id="investissementsBody"></tbody>
+          </table>
+          <p class="note">Liste des investissements enregistrés pour ce projet.</p>
+        </section>
+        <section class="invest-grid" id="investCharts">
+          <div class="card">
+            <h2>Montant restant</h2>
+            <div id="investBar"></div>
+            <p class="note">Comparaison entre le montant leve et le montant restant.</p>
+          </div>
+          <div class="card">
+            <h2>Evolution des investissements</h2>
+            <div id="investLine"></div>
+            <p class="note">Cumul des investissements par date.</p>
+          </div>
+          <div class="card">
+            <h2>Top investisseurs</h2>
+            <div class="top-list" id="investTop"></div>
+            <p class="note">Classement par montant investi.</p>
+          </div>
+        </section>
         <section class="card" id="echeancier" style="margin-top:18px;">
           <h2>Echeancier (apercu)</h2>
           <table>
@@ -523,6 +676,7 @@
         case "BROUILLON": return "Brouillon";
         case "EN_ATTENTE": return "En attente";
         case "VALIDE": return "Valide";
+        case "EN_COURS": return "En cours";
         case "REFUSE": return "Refuse";
         default: return statut || "—";
       }
@@ -537,10 +691,10 @@
       document.getElementById("editBtn").addEventListener("click", () => {
         window.location.href = "modifierProjet.html?id=" + encodeURIComponent(currentId);
       });
-      const suiviBtn = document.getElementById("suiviBtn");
-      if (suiviBtn) {
-        suiviBtn.addEventListener("click", () => {
-          window.location.href = "detailsEntrepreneur_encours.html?id=" + encodeURIComponent(currentId);
+      const backDetailsBtn = document.getElementById("backDetailsBtn");
+      if (backDetailsBtn) {
+        backDetailsBtn.addEventListener("click", () => {
+          window.location.href = "detailsEntrepreneur.html?id=" + encodeURIComponent(currentId);
         });
       }
 
@@ -560,15 +714,18 @@
         const goal = Number(p.objectifTnd || 0);
         let raised = 0;
         let investors = 0;
+        let investments = [];
+
         if (typeof bridge.getInvestissementsByProjetJson === "function") {
           try {
             const invJson = bridge.getInvestissementsByProjetJson(String(id));
-            const investments = JSON.parse(invJson || "[]");
+            investments = JSON.parse(invJson || "[]");
             raised = investments.reduce((sum, it) => sum + Number(it.montant || 0), 0);
             const ids = new Set(investments.map(it => String(it.id_investisseur || "")));
-            investors = Array.from(ids).filter(v => v && v !== "0").length;
+            investors = ids.size;
           } catch (e) {}
         }
+
         const pct = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
 
         document.getElementById("goalKpi").textContent = fmt(goal);
@@ -578,6 +735,19 @@
         document.getElementById("progressLabel").textContent = pct + "%";
         document.getElementById("progressBar").style.width = pct + "%";
         document.getElementById("investorsLabel").textContent = investors + " investisseurs";
+
+        const wideLabel = document.getElementById("progressWideLabel");
+        const wideBar = document.getElementById("progressWideBar");
+        const wideGoal = document.getElementById("progressWideGoal");
+        const wideRaised = document.getElementById("progressWideRaised");
+        const wideRemaining = document.getElementById("progressWideRemaining");
+        const wideInvestors = document.getElementById("progressWideInvestors");
+        if (wideLabel) wideLabel.textContent = pct + "%";
+        if (wideBar) wideBar.style.width = pct + "%";
+        if (wideGoal) wideGoal.textContent = fmt(goal) + " TND";
+        if (wideRaised) wideRaised.textContent = fmt(raised) + " TND";
+        if (wideRemaining) wideRemaining.textContent = fmt(Math.max(0, goal - raised)) + " TND";
+        if (wideInvestors) wideInvestors.textContent = String(investors);
         document.getElementById("daysLeftLabel").textContent = "— jours restants";
 
         const rate = p.tauxInteretPct != null ? (p.tauxInteretPct + " %") : "—";
@@ -587,14 +757,9 @@
           " • <b>Taux :</b> " + rate +
           " • <b>Durée :</b> " + duration;
 
-        document.getElementById("statusTag").textContent = mapStatusLabel(p.statut);
+        document.getElementById("statusTag").textContent = raised > 0 ? "En cours" : mapStatusLabel(p.statut);
         document.getElementById("repayMode").textContent = p.modeRemboursement || "—";
         document.getElementById("rateDuration").textContent = rate + " • " + duration;
-
-        if (suiviBtn) {
-          const isEnCours = (p.statut || "").toUpperCase() === "EN_COURS" || raised > 0;
-          suiviBtn.style.display = isEnCours ? "inline-flex" : "none";
-        }
 
         document.getElementById("planSummary").textContent = p.descriptionCourte || "—";
         document.getElementById("valueList").innerHTML = "<li>" + (p.descriptionCourte || "—") + "</li>";
@@ -654,13 +819,85 @@
         document.getElementById("chartRisk").innerHTML = risk.svg;
         document.getElementById("riskNote").textContent = risk.note;
 
+        renderInvestmentCharts(investments, goal, raised);
         renderCalendar(p.dureeCampagneJours);
         renderRepayments(goal, p.dureeRemboursementMois);
+
+        const invBody = document.getElementById("investissementsBody");
+        if (invBody) {
+          if (!investments.length) {
+            invBody.innerHTML = `<tr><td colspan="3">Aucun investissement.</td></tr>`;
+          } else {
+            invBody.innerHTML = investments.map(it => `
+              <tr>
+                <td>${it.date_investissement || ""}</td>
+                <td>${it.investisseur || ""}</td>
+                <td class="num">${fmt(it.montant)}</td>
+              </tr>
+            `).join("");
+          }
+        }
       });
     }
 
+    function renderInvestmentCharts(investments, goal, raised){
+      const goalNum = Number(goal || 0);
+      const raisedNum = Number(raised || 0);
+      const remaining = Math.max(0, goalNum - raisedNum);
+
+      const barEl = document.getElementById("investBar");
+      if (barEl) {
+        barEl.innerHTML = buildBarChart([raisedNum, remaining], ["Leve", "Restant"]);
+      }
+
+      const lineEl = document.getElementById("investLine");
+      if (lineEl) {
+        if (!investments.length) {
+          lineEl.innerHTML = `<div class="muted" style="font-size:12px;">Aucun investissement.</div>`;
+        } else {
+          const sorted = investments.slice().sort((a,b) => new Date(a.date_investissement || 0) - new Date(b.date_investissement || 0));
+          let cum = 0;
+          const values = [];
+          const labels = [];
+          sorted.forEach(it => {
+            cum += Number(it.montant || 0);
+            values.push(cum);
+            const d = (it.date_investissement || "").toString();
+            labels.push(d.length >= 10 ? d.slice(5) : d);
+          });
+          lineEl.innerHTML = buildLineChart(values, labels);
+        }
+      }
+
+      const topEl = document.getElementById("investTop");
+      if (topEl) {
+        if (!investments.length) {
+          topEl.innerHTML = `<span class="muted" style="font-size:12px;">Aucun investissement.</span>`;
+        } else {
+          const totals = {};
+          investments.forEach(it => {
+            const name = (it.investisseur || "Investisseur").toString();
+            totals[name] = (totals[name] || 0) + Number(it.montant || 0);
+          });
+          const entries = Object.entries(totals).sort((a,b) => b[1] - a[1]).slice(0, 5);
+          const maxVal = Math.max(1, ...entries.map(e => e[1]));
+          topEl.innerHTML = entries.map(([name, val]) => {
+            const w = Math.round((val / maxVal) * 100);
+            return `
+              <div class="top-item">
+                <div>
+                  <div class="name">${name}</div>
+                  <div class="muted" style="font-size:12px;">${fmt(val)} TND</div>
+                </div>
+                <div class="bar"><div style="width:${w}%"></div></div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+    }
     function buildLineChart(values, labels){
-      const w = 420, h = 180, pad = 14;
+      const w = 720, h = 220, pad = 14;
       const max = Math.max(1, ...values);
       const step = (w - pad * 2) / (values.length - 1);
       const points = values.map((v,i) => {
@@ -682,8 +919,8 @@
       `;
     }
 
-    function buildBarChart(values, labels){
-      const w = 420, h = 160, pad = 20;
+        function buildBarChart(values, labels){
+      const w = 720, h = 200, pad = 20;
       const max = Math.max(1, ...values.map(v => Math.abs(v)));
       const barW = 80;
       const gap = 60;
@@ -693,7 +930,9 @@
         const x = pad + i * (barW + gap);
         const y = baseY - barH;
         const color = i === 0 ? "#06b6d4" : "#f59e0b";
+        const valueY = Math.max(pad + 12, y - 6);
         return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="8" fill="${color}" />` +
+               `<text x="${x + barW/2}" y="${valueY}" text-anchor="middle" font-size="12" font-weight="700" fill="#0f172a">${fmt(v)}</text>` +
                `<text x="${x + barW/2}" y="${h - 4}" text-anchor="middle" font-size="11" fill="#64748b">${labels[i]}</text>`;
       }).join("");
       return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${bars}</svg>`;
@@ -796,6 +1035,17 @@
     })();
   </script></body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
 
 
 

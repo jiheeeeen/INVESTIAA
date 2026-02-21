@@ -18,6 +18,10 @@ public final class ProjetWebUtils {
     }
 
     public static String toListJson(Projet p) {
+        return toListJsonWithStatus(p, mapStatusForUi(p.getStatut()));
+    }
+
+    public static String toListJsonWithStatus(Projet p, String statusOverride) {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
         sb.append("\"id\":").append(p.getIdProjet()).append(",");
@@ -26,7 +30,7 @@ public final class ProjetWebUtils {
         sb.append("\"short\":").append(jsonString(p.getDescriptionCourte())).append(",");
         sb.append("\"goal\":").append(p.getObjectifTnd() == null ? "0" : p.getObjectifTnd()).append(",");
         sb.append("\"odd\":").append(jsonString("")).append(",");
-        sb.append("\"status\":").append(jsonString(mapStatusForUi(p.getStatut()))).append(",");
+        sb.append("\"status\":").append(jsonString(statusOverride)).append(",");
         sb.append("\"updatedAt\":").append(jsonString(formatDate(p.getUpdatedAt()))).append(",");
         sb.append("\"url\":").append(jsonString("modifierProjet.html?id=" + p.getIdProjet()));
         sb.append("}");
@@ -197,7 +201,7 @@ public final class ProjetWebUtils {
         return out.isBlank() ? "document" : out;
     }
 
-    private static String mapStatusForUi(String statut) {
+    public static String mapStatusForUi(String statut) {
         if (statut == null) return "DRAFT";
         switch (statut) {
             case "BROUILLON":
@@ -206,6 +210,8 @@ public final class ProjetWebUtils {
                 return "PENDING";
             case "VALIDE":
                 return "VALIDATED";
+            case "EN_COURS":
+                return "EN_COURS";
             case "REFUSE":
                 return "REJECTED";
             default:

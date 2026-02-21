@@ -14,6 +14,7 @@ public class ProfilInvestisseurCRUD {
 
     private final Connection cnx = MyBD.getInstance().getConn();
     private String cachedUserIdCol;
+    private String cachedInvestisseurIdCol;
 
     public ProfilInvestisseur getByUserId(int idUser) throws SQLException {
         String userIdCol = resolveUserIdColumn();
@@ -32,6 +33,20 @@ public class ProfilInvestisseurCRUD {
         ProfilInvestisseur p = getByUserId(idUser);
         if (p == null) throw new SQLException("Profil investisseur introuvable pour id_user=" + idUser);
         return p.getIdInvestisseur();
+    }
+
+    public int getUserIdByInvestisseurId(int idInvestisseur) throws SQLException {
+        String investCol = resolveInvestisseurIdColumn();
+        String userCol = resolveUserIdColumn();
+        if (investCol == null || userCol == null) return 0;
+        String sql = "SELECT " + userCol + " FROM investisseur WHERE " + investCol + " = ?";
+        try (PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setInt(1, idInvestisseur);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return 0;
+                return rs.getInt(1);
+            }
+        }
     }
 
     // ===== upsert (insert si absent, update si existe) =====
@@ -162,6 +177,24 @@ public class ProfilInvestisseurCRUD {
         } catch (Exception e) {
             cachedUserIdCol = fallback;
             return cachedUserIdCol;
+        }
+    }
+
+    private String resolveInvestisseurIdColumn() {
+        if (cachedInvestisseurIdCol != null) return cachedInvestisseurIdCol;
+        String fallback = "id_investisseur";
+        if (cnx == null) {
+            cachedInvestisseurIdCol = fallback;
+            return cachedInvestisseurIdCol;
+        }
+        try {
+            List<String> cols = loadColumns("investisseur");
+            cachedInvestisseurIdCol = firstExisting(cols, "id_investisseur", "investisseur_id", "id", "idInvestisseur");
+            if (cachedInvestisseurIdCol == null || cachedInvestisseurIdCol.isBlank()) cachedInvestisseurIdCol = fallback;
+            return cachedInvestisseurIdCol;
+        } catch (Exception e) {
+            cachedInvestisseurIdCol = fallback;
+            return cachedInvestisseurIdCol;
         }
     }
 

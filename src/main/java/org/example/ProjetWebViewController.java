@@ -276,6 +276,10 @@ public class ProjetWebViewController {
             return projetController.publishProjet(idProjet);
         }
 
+        public String getInvestissementsByProjetJson(String idProjet) {
+            return projetController.getInvestissementsByProjetJson(idProjet);
+        }
+
         public String addDemandeAnnulation(String projetId, String raison) {
             return annulationController.addDemandeAnnulation(projetId, raison);
         }

@@ -241,6 +241,8 @@
     .status.pending .s-dot{background: var(--warn); box-shadow:0 0 0 3px rgba(245,158,11,.16);}
     .status.validated{border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); color:#14532d;}
     .status.validated .s-dot{background: var(--ok); box-shadow:0 0 0 3px rgba(22,163,74,.14);}
+    .status.inprogress{border-color: rgba(6,182,212,.25); background: rgba(6,182,212,.10); color:#0e7490;}
+    .status.inprogress .s-dot{background: var(--accent); box-shadow:0 0 0 3px rgba(6,182,212,.16);}
     .status.draft{border-color: rgba(100,116,139,.25); background: rgba(100,116,139,.10); color:#334155;}
     .status.draft .s-dot{background: #64748b; box-shadow:0 0 0 3px rgba(100,116,139,.12);}
     .status.rejected{border-color: rgba(239,68,68,.25); background: rgba(239,68,68,.08); color:#7f1d1d;}
@@ -470,6 +472,7 @@
               <option value="DRAFT">Brouillon</option>
               <option value="PENDING">En attente</option>
               <option value="VALIDATED">Valide</option>
+              <option value="EN_COURS">En cours</option>
               <option value="REJECTED">Rejete</option>
             </select>
             <span class="selectIcon">▾</span>
@@ -520,13 +523,14 @@
         case "PENDING":   return { label:"En attente", cls:"pending" };
         case "VALIDATED": return { label:"Valide", cls:"validated" };
         case "REJECTED":  return { label:"Rejete", cls:"rejected" };
+        case "EN_COURS":  return { label:"En cours", cls:"inprogress" };
         case "DRAFT":     return { label:"Brouillon", cls:"draft" };
         default:          return { label:s, cls:"draft" };
       }
     }
 
     function canCancel(status){
-      return status === "PENDING" || status === "VALIDATED";
+      return status === "PENDING" || status === "VALIDATED" || status === "EN_COURS";
     }
 
     function onEdit(projectId){
@@ -620,7 +624,8 @@
 
             <div class="footer">
               <span class="muted" style="font-size:12.5px;">
-                ${p.status === "PENDING" ? "En cours de validation admin." :
+                ${p.status === "EN_COURS" ? "Campagne en cours avec investissements." :
+                  p.status === "PENDING" ? "En cours de validation admin." :
                   p.status === "VALIDATED" ? "Visible aux investisseurs." :
                   p.status === "REJECTED" ? "Corrigez et republiez." :
                   "Non publie (brouillon)." }
