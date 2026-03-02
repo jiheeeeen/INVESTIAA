@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Contact investisseurs</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.10);
+      --primary:#1d4ed8;
+      --accent:#06b6d4;
+      --orange:#d97706;
+      --shadow:0 16px 36px rgba(15,23,42,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:
+        radial-gradient(900px 420px at -10% 0%, rgba(29,78,216,.12), transparent 58%),
+        radial-gradient(980px 460px at 120% 2%, rgba(217,119,6,.11), transparent 56%),
+        var(--bg);
+      color:var(--text);
+    }
+    .container{max-width:1140px;margin:24px auto 40px;padding:0 16px;}
+    .topbar{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    h1{margin:0 0 8px;font-size:30px;font-weight:900;letter-spacing:.2px;color:#0b2a55}
+    .subtitle{margin:0;color:var(--muted);font-size:14px}
+    .btnTop{
+      border:0;
+      background:linear-gradient(135deg,#0f172a,#1e3a8a);
+      color:#fff;
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:14px;
+      box-shadow:0 8px 20px rgba(15,23,42,.18);
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .btnTop:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.03);
+    }
+    .project-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      margin-top:16px;
+      overflow:hidden;
+      backdrop-filter:saturate(110%);
+    }
+    .project-header{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      background:linear-gradient(180deg,#ffffff,#f7fbff);
+    }
+    .project-title{margin:0;font-size:18px;font-weight:800}
+    .project-count{
+      font-size:12px;
+      font-weight:800;
+      color:#1e3a8a;
+      background:rgba(29,78,216,.12);
+      border:1px solid rgba(29,78,216,.24);
+      border-radius:999px;
+      padding:6px 10px;
+    }
+    table{width:100%;border-collapse:collapse;background:#fff}
+    th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);font-size:14px}
+    th{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.4px;
+      color:#334155;
+      background:linear-gradient(180deg,#fff,#f8fafc);
+    }
+    tbody tr:hover{
+      background:rgba(29,78,216,.04);
+    }
+    tr:last-child td{border-bottom:none}
+    .muted{color:var(--muted)}
+    .btn{
+      border:0;
+      background:linear-gradient(135deg, #1d4ed8, #06b6d4);
+      color:#fff;
+      border-radius:10px;
+      padding:8px 12px;
+      cursor:pointer;
+      font-weight:800;
+      font-size:13px;
+      box-shadow:0 8px 16px rgba(29,78,216,.20);
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .btn:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.03);
+    }
+    .btnRow{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .btnWhats{
+      border:0;
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      background:#22c55e;
+      color:#fff;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      box-shadow:0 8px 16px rgba(34,197,94,.24);
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .btnWhats:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.03);
+    }
+    .btnWhats svg{
+      width:18px;
+      height:18px;
+      fill:currentColor;
+      display:block;
+    }
+    .btnWhats:disabled{
+      cursor:not-allowed;
+      opacity:.55;
+      box-shadow:none;
+    }
+    .btn:disabled{
+      cursor:not-allowed;
+      opacity:.55;
+    }
+    .empty{
+      margin-top:18px;
+      background:#fff;
+      border:1px dashed var(--border);
+      border-radius:14px;
+      padding:16px;
+      color:var(--muted);
+      box-shadow:var(--shadow);
+    }
+    .filters{
+      margin-top:14px;
+      background:linear-gradient(135deg, rgba(29,78,216,.06), rgba(6,182,212,.04) 45%, rgba(255,255,255,.95));
+      border:1px solid rgba(29,78,216,.18);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:14px;
+      display:grid;
+      grid-template-columns:repeat(2,minmax(220px,1fr));
+      gap:12px;
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .field label{
+      font-size:12px;
+      font-weight:800;
+      color:#0b2a55;
+    }
+    .input-wrap{
+      position:relative;
+    }
+    .input-wrap::before{
+      content:"";
+      position:absolute;
+      left:11px;
+      top:50%;
+      width:14px;
+      height:14px;
+      transform:translateY(-50%);
+      border:2px solid #64748b;
+      border-radius:50%;
+      opacity:.65;
+      pointer-events:none;
+    }
+    .input-wrap::after{
+      content:"";
+      position:absolute;
+      left:23px;
+      top:57%;
+      width:7px;
+      height:2px;
+      background:#64748b;
+      transform:rotate(45deg);
+      opacity:.65;
+      pointer-events:none;
+      border-radius:2px;
+    }
+    .field input{
+      width:100%;
+      border:1px solid rgba(15,23,42,.14);
+      border-radius:12px;
+      padding:10px 12px 10px 34px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+      box-shadow:0 6px 14px rgba(15,23,42,.05);
+      transition:border-color .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .field input:hover{
+      border-color:rgba(29,78,216,.32);
+    }
+    .field input:focus{
+      border-color:rgba(29,78,216,.45);
+      box-shadow:0 0 0 4px rgba(29,78,216,.14), 0 8px 18px rgba(15,23,42,.06);
+      background:#fff;
+    }
+    @media (max-width: 760px){
+      .container{padding:0 12px}
+      h1{font-size:26px}
+      th,td{padding:10px}
+      .filters{grid-template-columns:1fr}
+    }
+  </style>
+  <script src="navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="topbar">
+      <div>
+        <h1>Contact investisseurs</h1>
+      </div>
+      <button class="btnTop" type="button" onclick="openMessaging()">Ma messagerie</button>
+    </div>
+    <section class="filters">
+      <div class="field">
+        <label for="searchProjet">Projet</label>
+        <div class="input-wrap">
+          <input id="searchProjet" type="text" placeholder="Projet..." />
+        </div>
+      </div>
+      <div class="field">
+        <label for="searchInvestor">Investisseur</label>
+        <div class="input-wrap">
+          <input id="searchInvestor" type="text" placeholder="Investisseur..." />
+        </div>
+      </div>
+    </section>
+    <div id="content"></div>
+  </main>
+
+  <script>
+    const contentEl = document.getElementById("content");
+    const searchProjetEl = document.getElementById("searchProjet");
+    const searchInvestorEl = document.getElementById("searchInvestor");
+    let allProjects = [];
+
+    function resolveBridge(requiredFn){
+      const bridges = [
+        window.javaBridge,
+        window.javaBridgeInvest,
+        window.javaBridgeInvestissement,
+        window.invBridge,
+        window.java
+      ].filter(Boolean);
+      if (!requiredFn) return bridges[0] || null;
+      return bridges.find((b) => typeof b[requiredFn] === "function") || null;
+    }
+
+    function withBridge(onReady, requiredFn){
+      const start = Date.now();
+      const timer = setInterval(() => {
+        const bridge = resolveBridge(requiredFn);
+        if (bridge) {
+          clearInterval(timer);
+          onReady(bridge);
+          return;
+        }
+        if (Date.now() - start > 2200) {
+          clearInterval(timer);
+          renderEmpty("Bridge Java indisponible.");
+        }
+      }, 100);
+    }
+
+    function escapeHtml(v){
+      return String(v || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderEmpty(message){
+      contentEl.innerHTML = `<div class="empty">${escapeHtml(message)}</div>`;
+    }
+
+    function onContact(userId, email, telephone){
+      const uid = Number(userId || 0);
+      const bridge = resolveBridge("setSelectedContactUserId");
+      if (uid > 0 && bridge && typeof bridge.setSelectedContactUserId === "function") {
+        const res = bridge.setSelectedContactUserId(String(uid));
+        if (!String(res || "").startsWith("ERROR")) {
+          window.location.href = "messagerie.html";
+          return;
+        }
+      }
+      const mail = (email || "").trim();
+      const tel = (telephone || "").trim();
+      if (mail) window.location.href = "mailto:" + encodeURIComponent(mail);
+      else if (tel) window.location.href = "tel:" + encodeURIComponent(tel);
+      else alert("Aucun contact disponible pour cet investisseur.");
+    }
+
+    function openMessaging(){
+      window.location.href = "messagerie.html";
+    }
+
+    function normalizePhoneForWhatsapp(phone){
+      let p = String(phone || "").replace(/[^\d]/g, "");
+      if (!p) return "";
+      if (p.startsWith("00")) p = p.slice(2);
+      if (p.startsWith("216")) return p;
+      if (p.length === 8) return "216" + p; // TN local format
+      if (p.startsWith("0") && p.length === 9) return "216" + p.slice(1); // TN with leading zero
+      return p;
+    }
+
+    function onWhatsapp(phone){
+      const p = normalizePhoneForWhatsapp(phone);
+      if (!p) {
+        alert("Numero indisponible pour WhatsApp.");
+        return;
+      }
+      const url = "https://wa.me/" + p;
+      const b = resolveBridge("openExternalUrl");
+      if (b && typeof b.openExternalUrl === "function") {
+        const res = b.openExternalUrl(url);
+        if (!String(res || "").startsWith("ERROR")) return;
+      }
+      try {
+        window.open(url, "_blank", "noopener");
+      } catch (e) {}
+      window.location.href = url;
+    }
+
+    function renderProjects(projects){
+      if (!Array.isArray(projects) || !projects.length) {
+        renderEmpty("Aucun investisseur trouve pour vos projets.");
+        return;
+      }
+
+      const cards = projects.map((project) => {
+        const investors = Array.isArray(project.investisseurs) ? project.investisseurs : [];
+        const rows = investors.length
+          ? investors.map(inv => {
+              const nom = escapeHtml(inv.nom || "");
+              const email = escapeHtml(inv.email || "");
+              const tel = escapeHtml(inv.telephone || "");
+              const waPhone = normalizePhoneForWhatsapp(inv.telephone || "");
+              const userId = Number(inv.id_user || 0);
+              const disabled = (userId <= 0 && !inv.email && !inv.telephone) ? "disabled" : "";
+              return `
+                <tr>
+                  <td>${nom || "<span class='muted'>-</span>"}</td>
+                  <td>${email || "<span class='muted'>-</span>"}</td>
+                  <td>${tel || "<span class='muted'>-</span>"}</td>
+                  <td>
+                    <div class="btnRow">
+                      <button class="btn contact-btn" ${disabled}
+                        data-user-id="${userId}"
+                        data-email="${email}"
+                        data-phone="${tel}">
+                        Contacter
+                      </button>
+                      <button class="btnWhats whatsapp-btn" ${!waPhone ? "disabled" : ""}
+                        data-phone="${waPhone}" aria-label="WhatsApp">
+                        <svg viewBox="0 0 32 32" aria-hidden="true">
+                          <path d="M19.11 17.29c-.27-.13-1.6-.79-1.85-.88-.25-.09-.43-.13-.61.13-.18.27-.7.88-.86 1.07-.16.18-.32.2-.59.07-.27-.13-1.14-.42-2.17-1.33-.8-.71-1.34-1.58-1.5-1.85-.16-.27-.02-.42.11-.55.12-.12.27-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.13-.61-1.48-.84-2.03-.22-.53-.45-.46-.61-.47h-.52c-.18 0-.48.07-.73.34-.25.27-.95.93-.95 2.26s.97 2.61 1.1 2.79c.13.18 1.9 2.9 4.6 4.06.64.27 1.14.43 1.53.55.64.2 1.22.17 1.68.1.51-.08 1.6-.65 1.83-1.27.23-.61.23-1.14.16-1.27-.06-.13-.25-.2-.52-.34zM16.03 3.2c-6.94 0-12.56 5.62-12.56 12.56 0 2.2.57 4.35 1.64 6.24L3 29l7.2-2.05c1.82.99 3.87 1.51 5.83 1.51h.01c6.93 0 12.57-5.62 12.57-12.56 0-3.36-1.31-6.52-3.69-8.9-2.38-2.38-5.54-3.7-8.89-3.7zm0 22.96h-.01c-1.86 0-3.69-.5-5.28-1.45l-.38-.23-4.27 1.22 1.24-4.16-.25-.43a10.23 10.23 0 0 1-1.57-5.35c0-5.65 4.6-10.25 10.26-10.25 2.73 0 5.3 1.06 7.23 2.99a10.16 10.16 0 0 1 3.01 7.25c0 5.65-4.6 10.25-10.25 10.25z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            }).join("")
+          : `<tr><td colspan="4" class="muted">Aucun investisseur pour ce projet.</td></tr>`;
+
+        return `
+          <section class="project-card">
+            <div class="project-header">
+              <h2 class="project-title">${escapeHtml(project.titre || "Projet")}</h2>
+              <span class="project-count">${investors.length} investisseur(s)</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Email</th>
+                  <th>Numero</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </section>
+        `;
+      }).join("");
+
+      contentEl.innerHTML = cards;
+      contentEl.querySelectorAll(".contact-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          onContact(btn.dataset.userId || "", btn.dataset.email || "", btn.dataset.phone || "");
+        });
+      });
+      contentEl.querySelectorAll(".whatsapp-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          onWhatsapp(btn.dataset.phone || "");
+        });
+      });
+    }
+
+    function applyFilters(){
+      const qProjet = (searchProjetEl.value || "").trim().toLowerCase();
+      const qInvestor = (searchInvestorEl.value || "").trim().toLowerCase();
+
+      const filtered = (Array.isArray(allProjects) ? allProjects : [])
+        .map((project) => {
+          const title = String(project.titre || "").toLowerCase();
+          if (qProjet && !title.includes(qProjet)) return null;
+
+          const investisseurs = (Array.isArray(project.investisseurs) ? project.investisseurs : [])
+            .filter((inv) => {
+              if (!qInvestor) return true;
+              const nom = String(inv.nom || "").toLowerCase();
+              return nom.includes(qInvestor);
+            });
+
+          if (qInvestor && investisseurs.length === 0) return null;
+          return { ...project, investisseurs };
+        })
+        .filter(Boolean);
+
+      renderProjects(filtered);
+    }
+
+    searchProjetEl.addEventListener("input", applyFilters);
+    searchInvestorEl.addEventListener("input", applyFilters);
+
+    withBridge((bridge) => {
+      try {
+        const json = bridge.getInvestisseursContactParProjetJson();
+        allProjects = JSON.parse(json || "[]");
+        applyFilters();
+      } catch (e) {
+        renderEmpty("Impossible de charger les contacts investisseurs.");
+      }
+    }, "getInvestisseursContactParProjetJson");
+  </script>
+</body>
+</html>

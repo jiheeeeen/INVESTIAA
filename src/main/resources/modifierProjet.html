@@ -1,19 +1,19 @@
-<!doctype html>
+﻿﻿﻿﻿﻿<!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Investra — Modifier un projet</title>
+  <title>Investra - Mise à jour du projet</title>
   <style>
     :root{
-      --bg:#f6f8fc;
+      --bg:#f3f7ff;
       --card:#fff;
-      --text:#0f172a;
-      --muted:#64748b;
-      --border:rgba(15,23,42,.10);
-      --shadow:0 14px 35px rgba(15,23,42,.08);
-      --primary:#1d4ed8;
-      --accent:#06b6d4;
+      --text:#0b1f3a;
+      --muted:#5f708a;
+      --border:rgba(30,58,138,.14);
+      --shadow:0 16px 34px rgba(30,58,138,.10);
+      --primary:#1e40af;
+      --accent:#0284c7;
       --success:#16a34a;
       --danger:#ef4444;
       --radius:18px;
@@ -37,20 +37,57 @@
     }
 
     .btn{
-      border:0; cursor:pointer; font-weight:800; font-size:14px;
-      padding:10px 14px; border-radius:12px;
+      border:1px solid transparent; cursor:pointer; font-weight:800; font-size:14px;
+      padding:10px 16px; border-radius:12px;
       display:inline-flex; align-items:center; gap:8px;
-      transition: transform .15s ease, filter .15s ease;
+      min-height:40px;
+      letter-spacing:.15px;
+      transition: transform .15s ease, filter .15s ease, box-shadow .2s ease, border-color .2s ease, background-color .2s ease;
     }
     .btn.primary{
-      background:linear-gradient(135deg, var(--primary), var(--accent));
-      color:#fff; box-shadow:0 10px 20px rgba(29,78,216,.18);
+      background:linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #0ea5e9 100%);
+      color:#fff;
+      border-color:rgba(29,78,216,.35);
+      box-shadow:0 10px 22px rgba(29,78,216,.22);
     }
     .btn.ghost{
-      background:#fff; border:1px solid var(--border); color:var(--text);
+      background:linear-gradient(135deg, #2563eb 0%, #0ea5e9 100%);
+      border-color:rgba(37,99,235,.45);
+      color:#fff;
+      box-shadow:0 8px 18px rgba(37,99,235,.22);
     }
-    .btn:hover{transform:translateY(-1px); filter:brightness(1.02);}
+    .btn:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.02);
+    }
+    .btn.primary:hover{
+      box-shadow:0 12px 24px rgba(29,78,216,.28);
+    }
+    .btn.ghost:hover{
+      border-color:rgba(14,165,233,.55);
+      color:#fff;
+      box-shadow:0 12px 22px rgba(37,99,235,.3);
+      background:linear-gradient(135deg, #1d4ed8 0%, #0284c7 100%);
+    }
+    .btn.warn{
+      background:linear-gradient(135deg,#facc15,#f59e0b);
+      border-color:rgba(245,158,11,.45);
+      color:#3b2500;
+      box-shadow:0 10px 20px rgba(245,158,11,.24);
+    }
+    .btn.warn:hover{
+      background:linear-gradient(135deg,#fbbf24,#d97706);
+      border-color:rgba(217,119,6,.5);
+      color:#2a1b00;
+      box-shadow:0 12px 24px rgba(217,119,6,.26);
+    }
     .btn:active{transform:translateY(0);}
+    .btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      filter:none;
+      box-shadow:none;
+    }
 
     .card{
       background:var(--card);
@@ -74,8 +111,8 @@
       content:"";
       position:absolute; inset:0;
       background:
-        radial-gradient(700px 220px at 12% 0%, rgba(29,78,216,.10), transparent 55%),
-        radial-gradient(700px 260px at 98% 20%, rgba(6,182,212,.10), transparent 55%);
+        radial-gradient(760px 260px at 10% 0%, rgba(30,64,175,.14), transparent 58%),
+        radial-gradient(760px 280px at 96% 20%, rgba(2,132,199,.12), transparent 58%);
       pointer-events:none;
     }
     .hero-inner{position:relative; z-index:1; display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap;}
@@ -91,23 +128,48 @@
       background:linear-gradient(135deg, var(--primary), var(--accent));
       box-shadow:0 0 0 3px rgba(6,182,212,.14);
     }
-    h1{margin:10px 0 6px; font-size:30px; letter-spacing:.2px;}
+    h1{
+      margin:10px 0 6px;
+      font-size:32px;
+      letter-spacing:.2px;
+      color:#0b2a55;
+      text-shadow:0 1px 0 rgba(255,255,255,.45);
+    }
     .pitch{margin:0; color:var(--muted); line-height:1.6; max-width:80ch; font-size:14.5px;}
     .actions{display:flex; gap:10px; flex-wrap:wrap;}
 
     .grid{
       display:grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap:18px;
       align-items:start;
     }
-    @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
+    .summary{
+      position: static;
+      top: auto;
+      width:100%;
+      max-width:100%;
+      grid-column: 1 / -1;
+      order: -1;
+    }
 
     .section-title{
       margin:0 0 10px;
-      font-size:18px;
-      letter-spacing:.2px;
+      font-size:19px;
+      letter-spacing:.25px;
       font-weight:900;
+      color:#123a75;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .section-title::before{
+      content:"";
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      box-shadow:0 0 0 3px rgba(2,132,199,.15);
     }
     .muted{color:var(--muted)}
     .small{font-size:12px; color:var(--muted); line-height:1.4; margin-top:6px;}
@@ -117,24 +179,25 @@
       font-size:12px;
       text-transform:uppercase;
       letter-spacing:.25px;
-      color:#0b2a55;
+      color:#17457f;
       font-weight:900;
       margin:0 0 6px;
     }
     input, select, textarea{
       width:100%;
       padding:11px 12px;
-      border:1px solid var(--border);
+      border:1px solid rgba(30,58,138,.16);
       border-radius:14px;
-      background:#fff;
+      background:#fbfdff;
       outline:none;
       font-size:14px;
       transition:border-color .15s ease, box-shadow .15s ease;
     }
     textarea{min-height:110px; resize:vertical;}
     input:focus, select:focus, textarea:focus{
-      border-color: rgba(29,78,216,.35);
-      box-shadow: 0 0 0 4px rgba(29,78,216,.10);
+      border-color: rgba(30,64,175,.42);
+      box-shadow: 0 0 0 4px rgba(30,64,175,.12);
+      background:#fff;
     }
 
     .field{margin-bottom:12px;}
@@ -153,19 +216,97 @@
     .alert.error{border:1px solid rgba(239,68,68,.25); background:rgba(239,68,68,.08); color:#7f1d1d;}
     .alert.ok{border:1px solid rgba(22,163,74,.25); background:rgba(22,163,74,.08); color:#14532d;}
 
-    .summary{
-      position: sticky;
-      top: 16px;
-    }
-    .kpi-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+    .kpi-grid{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin-top:10px;}
+    @media (max-width: 900px){ .kpi-grid{grid-template-columns:1fr 1fr;} }
+    @media (max-width: 560px){ .kpi-grid{grid-template-columns:1fr;} }
     .kpi{
       border:1px solid var(--border);
       border-radius:14px;
-      background:#fff;
+      background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
       padding:10px;
     }
     .kpi .label{font-size:12px; color:var(--muted); font-weight:700;}
-    .kpi .val{font-size:18px; font-weight:900; margin-top:4px;}
+    .kpi .val{font-size:18px; font-weight:900; margin-top:4px; color:#0f2f63;}
+    .task-list{display:grid; gap:8px; margin:10px 0;}
+    .task-item{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+      padding:10px;
+      line-height:1.35;
+    }
+    .task-item .title{font-weight:800; font-size:13px; margin-bottom:4px;}
+    .task-item .meta{font-size:12px; color:var(--muted);}
+    .task-item .desc{font-size:13px; color:#334155; margin-top:4px;}
+    .item-actions{display:flex; gap:6px; margin-top:8px; justify-content:flex-end;}
+    .mini-btn{
+      border:1px solid rgba(30,58,138,.22);
+      background:#fff;
+      color:#1e3a8a;
+      border-radius:8px;
+      padding:4px 8px;
+      font-size:12px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .mini-btn.danger{border-color:rgba(239,68,68,.35); color:#b91c1c;}
+    .task-empty{font-size:12px; color:var(--muted);}
+    .flux-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;}
+    @media (max-width: 900px){ .flux-grid{grid-template-columns:1fr;} }
+    .flux-item{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+      padding:10px;
+    }
+    .flux-head{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      font-size:13px;
+      font-weight:800;
+      color:#0f172a;
+    }
+    .flux-date{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:right;
+    }
+    #taskFormWrap{display:none; margin-top:10px;}
+    .date-wrap{position:relative;}
+    .date-pop{
+      position:absolute;
+      top:100%;
+      left:0;
+      margin-top:6px;
+      z-index:20;
+      width:280px;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:0 10px 24px rgba(15,23,42,.14);
+      padding:10px;
+      display:none;
+    }
+    .date-pop.open{display:block;}
+    .date-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;}
+    .date-head button{border:1px solid var(--border); background:#fff; border-radius:8px; padding:4px 8px; cursor:pointer;}
+    .date-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+    .date-grid .dw{font-size:11px; color:var(--muted); text-align:center; padding:3px 0; font-weight:700;}
+    .date-grid .d{
+      border:1px solid var(--border);
+      background:#fff;
+      border-radius:8px;
+      padding:6px 0;
+      font-size:12px;
+      cursor:pointer;
+      text-align:center;
+    }
+    .date-grid .d:hover{background:rgba(29,78,216,.08);}
+    .date-grid .d.sel{background:rgba(29,78,216,.15); border-color:rgba(29,78,216,.35); font-weight:800;}
+    .date-grid .d.off{opacity:.35;}
       .navbar{
       position:sticky;
       top:0;
@@ -175,7 +316,6 @@
       box-shadow:0 8px 24px rgba(15,23,42,.06);
     }
     .nav-inner{max-width:100%;margin:0;padding:10px 18px 10px 10px;display:flex;align-items:center;justify-content:space-between;gap:18px;}
-     param($m) $m.Value -replace 'color:#0f172a;', 'color:#1e3a8a;' 
     .nav-links a{padding:6px 0; border-bottom:3px solid transparent; color:#1e3a8a; font-weight:800; letter-spacing:.2px;}
     .nav-links a.active{color:#d97706; border-bottom-color:#d97706;}
     .nav-links a:hover{color:#d97706;}
@@ -204,13 +344,13 @@
         <strong class="muted">Modifier un projet</strong>
       </div>
       <div class="actions">
-        <button class="btn ghost" type="button" onclick="document.getElementById('projectForm').reset(); refreshKpis();">
+        <button class="btn warn" type="button" onclick="document.getElementById('projectForm').reset(); refreshKpis();">
           Réinitialiser
         </button>
-        <button class="btn ghost" type="button" onclick="setStatusPendingAndSubmit();">
+        <button class="btn ghost publish-btn" type="button" onclick="setStatusPendingAndSubmit();">
           Publier
         </button>
-        <button class="btn primary" type="button" onclick="document.getElementById('projectForm').requestSubmit();">
+        <button class="btn primary update-btn" id="mainUpdateBtn" type="button" onclick="handleMainUpdateAction();">
           Mettre à jour
         </button>
       </div>
@@ -220,10 +360,7 @@
       <div class="hero-inner">
         <div>
           <span class="badge"><span class="dot"></span>Projet • Statut : <span id="heroStatut">—</span></span>
-          <h1>Modifier un projet</h1>
-          <p class="pitch">
-            Formulaire aligné avec la table projet. Le champ ID est requis pour identifier le projet.
-          </p>
+          <h1>Mise à jour du projet</h1>
         </div>
       </div>
     </section>
@@ -232,8 +369,8 @@
       <section class="grid">
 
         <div>
-          <section class="card">
-            <h2 class="section-title">1) Identification</h2>
+          <section class="card" id="identificationSection">
+            <h2 class="section-title">Identification</h2>
 
             <div class="row2">
               <div class="field">
@@ -256,7 +393,7 @@
               <div class="field">
                 <label for="secteur">Secteur *</label>
                 <select id="secteur" name="secteur" required>
-                  <option value="">Choisir…</option>
+                  <option value="">Choisir...</option>
                   <option>AgriTech</option>
                   <option>GreenTech</option>
                   <option>Énergie / Rural</option>
@@ -282,8 +419,8 @@
             </div>
           </section>
 
-          <section class="card" style="margin-top:18px;">
-            <h2 class="section-title">2) Campagne</h2>
+          <section class="card" id="campagneSection" style="margin-top:18px;">
+            <h2 class="section-title">Campagne</h2>
 
             <div class="row2">
               <div class="field">
@@ -300,7 +437,7 @@
               <div class="field">
                 <label for="modeRemboursement">Mode remboursement *</label>
                 <select id="modeRemboursement" name="modeRemboursement" required>
-                  <option value="">Choisir…</option>
+                  <option value="">Choisir...</option>
                   <option>MENSUEL</option>
                   <option>TRIMESTRIEL</option>
                   <option>SEMESTRIEL</option>
@@ -343,22 +480,79 @@
             </div>
           </section>
 
-          <div class="alert error" id="errorBox"></div>
-          <div class="alert ok" id="okBox">✅ Projet prêt à être mis à jour.</div>
+          <section class="card" id="suiviSection" style="margin-top:18px; display:none;">
+            <h2 class="section-title">Suivi d'exécution</h2>
+            <div id="taskList" class="task-list">
+              <div class="task-empty">Aucune tâche pour le moment.</div>
+            </div>
+            <div class="actions">
+              <button class="btn ghost" type="button" id="openTaskFormBtn">Ajouter autre tâche</button>
+            </div>
+            <div id="taskFormWrap">
+            <div class="row2">
+              <div class="field">
+                <label for="tacheTitre">Tâche réalisée *</label>
+                <input id="tacheTitre" type="text" maxlength="180" placeholder="Ex: Installation ligne pilote">
+              </div>
+              <div class="field">
+                <label for="tacheDateDebut">Date début *</label>
+                <div class="date-wrap">
+                  <input id="tacheDateDebut" type="text" readonly placeholder="yyyy-MM-dd" autocomplete="off">
+                  <div id="datePickerPopStart" class="date-pop">
+                    <div class="date-head">
+                      <button type="button" id="dpPrevStart">◀</button>
+                      <strong id="dpTitleStart">-</strong>
+                      <button type="button" id="dpNextStart">▶</button>
+                    </div>
+                    <div id="dpGridStart" class="date-grid"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <label for="tacheDateFin">Date fin *</label>
+                <div class="date-wrap">
+                  <input id="tacheDateFin" type="text" readonly placeholder="yyyy-MM-dd" autocomplete="off">
+                  <div id="datePickerPopEnd" class="date-pop">
+                    <div class="date-head">
+                      <button type="button" id="dpPrevEnd">◀</button>
+                      <strong id="dpTitleEnd">-</strong>
+                      <button type="button" id="dpNextEnd">▶</button>
+                    </div>
+                    <div id="dpGridEnd" class="date-grid"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label for="tacheDesc">Description</label>
+              <textarea id="tacheDesc" placeholder="Détails de la tâche effectuée"></textarea>
+            </div>
+            <div class="row2">
+              <div class="field">
+                <label for="tacheProgressDelta">Progression ajoutée (%)</label>
+                <input id="tacheProgressDelta" type="number" step="0.01" min="-100" max="100" value="0">
+              </div>
+              <div class="field">
+                <label for="tacheCout">Coût de la tâche (TND)</label>
+                <input id="tacheCout" type="number" step="0.01" min="0" value="0">
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn ghost" type="button" id="addTaskBtn">Ajouter tâche réalisée</button>
+              <button class="btn ghost" type="button" id="closeTaskFormBtn">Fermer</button>
+            </div>
+            </div>
 
-          <div class="actions" style="margin-top:18px;">
-            <button class="btn ghost" type="button" onclick="document.getElementById('projectForm').reset(); refreshKpis();">
-              Réinitialiser
-            </button>
-            <button class="btn ghost" type="button" onclick="setStatusPendingAndSubmit();">Publier</button>
-            <button class="btn primary" type="submit">Mettre à jour</button>
-          </div>
+          </section>
+
+          <div class="alert error" id="errorBox"></div>
+          <div class="alert ok" id="okBox">Projet prêt à être mis à jour.</div>
         </div>
 
         <aside class="summary">
           <section class="card">
             <h2 class="section-title">Aperçu rapide</h2>
-            <p class="muted" style="margin:0 0 10px;">Ce résumé suit les champs clés.</p>
+            <p class="muted" style="margin:0 0 10px;"><b>Projet:</b> <span id="kProjectTitle">—</span></p>
 
             <div class="kpi-grid">
               <div class="kpi">
@@ -379,6 +573,68 @@
               </div>
             </div>
           </section>
+          <section class="card" id="fluxAsideSection" style="margin-top:12px; display:none;">
+            <div class="flux-grid">
+              <div class="card" style="box-shadow:none;">
+                <h2 class="section-title">Charges</h2>
+                <div id="chargesList" class="task-list"><div class="task-empty">Aucune charge.</div></div>
+                <div class="row2">
+                  <div class="field">
+                    <label for="chargeDesc">Description *</label>
+                    <input id="chargeDesc" type="text" maxlength="240" placeholder="Ex: Achat materiel">
+                  </div>
+                  <div class="field">
+                    <label for="chargeMontant">Montant (TND) *</label>
+                    <input id="chargeMontant" type="number" min="0" step="0.01" value="0">
+                  </div>
+                </div>
+              <div class="field">
+                <label for="chargeDate">Date *</label>
+                <div class="date-wrap">
+                  <input id="chargeDate" type="text" readonly placeholder="yyyy-MM-dd" autocomplete="off">
+                  <div id="datePickerPopCharge" class="date-pop">
+                    <div class="date-head">
+                      <button type="button" id="dpPrevCharge">◀</button>
+                      <strong id="dpTitleCharge">-</strong>
+                      <button type="button" id="dpNextCharge">▶</button>
+                    </div>
+                    <div id="dpGridCharge" class="date-grid"></div>
+                  </div>
+                </div>
+              </div>
+                <div class="actions"><button class="btn ghost" type="button" id="addChargeBtn">Ajouter charge</button></div>
+              </div>
+              <div class="card" style="box-shadow:none;">
+                <h2 class="section-title">Gains</h2>
+                <div id="gainsList" class="task-list"><div class="task-empty">Aucun gain.</div></div>
+                <div class="row2">
+                  <div class="field">
+                    <label for="gainDesc">Description *</label>
+                    <input id="gainDesc" type="text" maxlength="240" placeholder="Ex: Vente lot pilote">
+                  </div>
+                  <div class="field">
+                    <label for="gainMontant">Montant (TND) *</label>
+                    <input id="gainMontant" type="number" min="0" step="0.01" value="0">
+                  </div>
+                </div>
+              <div class="field">
+                <label for="gainDate">Date *</label>
+                <div class="date-wrap">
+                  <input id="gainDate" type="text" readonly placeholder="yyyy-MM-dd" autocomplete="off">
+                  <div id="datePickerPopGain" class="date-pop">
+                    <div class="date-head">
+                      <button type="button" id="dpPrevGain">◀</button>
+                      <strong id="dpTitleGain">-</strong>
+                      <button type="button" id="dpNextGain">▶</button>
+                    </div>
+                    <div id="dpGridGain" class="date-grid"></div>
+                  </div>
+                </div>
+              </div>
+                <div class="actions"><button class="btn ghost" type="button" id="addGainBtn">Ajouter gain</button></div>
+              </div>
+            </div>
+          </section>
         </aside>
 
       </section>
@@ -389,6 +645,9 @@
     const fmt = (n) => new Intl.NumberFormat("fr-TN").format(Math.round(n || 0)) + " TND";
     const errorBox = document.getElementById("errorBox");
     const okBox = document.getElementById("okBox");
+    let editingTaskId = null;
+    let editingChargeId = null;
+    let editingGainId = null;
 
     function withBridge(onReady, onFail){
       const start = Date.now();
@@ -409,7 +668,77 @@
       document.getElementById("statut").value = "EN_ATTENTE";
       document.getElementById("kStatut").textContent = "EN_ATTENTE";
       document.getElementById("heroStatut").textContent = "EN_ATTENTE";
+      updatePublishButtonsVisibility();
       document.getElementById("projectForm").requestSubmit();
+    }
+
+    function updatePublishButtonsVisibility(){
+      const raw = (document.getElementById("statut").value || "").trim().toUpperCase();
+      const visible = raw === "EN_ATTENTE";
+      document.querySelectorAll(".publish-btn").forEach((btn) => {
+        btn.style.display = visible ? "inline-flex" : "none";
+      });
+      const mainBtn = document.getElementById("mainUpdateBtn");
+      if (mainBtn) mainBtn.textContent = raw === "PROJET_EN_COURS" ? "Suivi projet" : "Mettre à jour";
+    }
+
+    function handleMainUpdateAction(){
+      const raw = (document.getElementById("statut").value || "").trim().toUpperCase();
+      if (raw === "PROJET_EN_COURS") {
+        const idp = encodeURIComponent(document.getElementById("idProjet").value || "");
+        window.location.href = idp ? ("suivi_projet.html?id=" + idp) : "suivi_projet.html";
+        return;
+      }
+      document.getElementById("projectForm").requestSubmit();
+    }
+
+    function updateSuiviSectionVisibility(){
+      const raw = (document.getElementById("statut").value || "").trim().toUpperCase();
+      const section = document.getElementById("suiviSection");
+      const fluxAside = document.getElementById("fluxAsideSection");
+      const identificationSection = document.getElementById("identificationSection");
+      if (section) section.style.display = raw === "PROJET_EN_COURS" ? "block" : "none";
+      if (fluxAside) fluxAside.style.display = raw === "PROJET_EN_COURS" ? "block" : "none";
+      if (identificationSection) identificationSection.style.display = raw === "PROJET_EN_COURS" ? "none" : "block";
+      if (raw === "PROJET_EN_COURS" && section && fluxAside) {
+        section.insertAdjacentElement("afterend", fluxAside);
+      }
+      if (raw !== "PROJET_EN_COURS") {
+        const wrap = document.getElementById("taskFormWrap");
+        if (wrap) wrap.style.display = "none";
+      }
+    }
+
+    function setSectionInputsEnabled(section, enabled){
+      if (!section) return;
+      section.querySelectorAll("input, select, textarea, button").forEach((el) => {
+        if (el.type === "hidden") return;
+        if (!enabled) {
+          if (el.hasAttribute("required")) el.dataset.requiredOriginal = "1";
+          el.removeAttribute("required");
+          el.disabled = true;
+        } else {
+          el.disabled = false;
+          if (el.dataset.requiredOriginal === "1") el.setAttribute("required", "required");
+        }
+      });
+    }
+
+    function updateCampagneSectionVisibility(){
+      const raw = (document.getElementById("statut").value || "").trim().toUpperCase();
+      const section = document.getElementById("campagneSection");
+      const hidden = raw === "PROJET_EN_COURS";
+      if (section) section.style.display = hidden ? "none" : "block";
+      setSectionInputsEnabled(section, !hidden);
+    }
+
+    function normalizeDateForBackend(input){
+      const v = (input || "").trim();
+      if (!v) return "";
+      if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; // yyyy-MM-dd
+      const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); // dd/MM/yyyy
+      if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+      return v;
     }
 
     function calcNetResult(){
@@ -420,16 +749,84 @@
       document.getElementById("resultatNetEstimeTnd").value = isNaN(net) ? "" : net;
     }
 
+    function escapeHtml(s){
+      return String(s == null ? "" : s)
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#39;");
+    }
+
+    function renderTaskList(tasks){
+      const host = document.getElementById("taskList");
+      if (!host) return;
+      if (!Array.isArray(tasks) || !tasks.length){
+        host.innerHTML = `<div class="task-empty">Aucune tâche pour le moment.</div>`;
+        return;
+      }
+      host.innerHTML = tasks.map(t => `
+        <div class="task-item">
+          <div class="title">${escapeHtml(t.title || "Tâche")}</div>
+          <div class="meta">Du ${escapeHtml(t.dateStart || "")} au ${escapeHtml(t.dateEnd || "")} • +${Number(t.progressDelta || 0)}% • ${fmt(Number(t.cost || 0))}</div>
+          <div class="desc">${escapeHtml(t.description || "Sans description.")}</div>
+          <div class="item-actions">
+            <button class="mini-btn" type="button" onclick="editTask(${Number(t.id || 0)})">Modifier</button>
+            <button class="mini-btn danger" type="button" onclick="deleteTask(${Number(t.id || 0)})">Supprimer</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function reloadTaskList(){
+      const idProjet = document.getElementById("idProjet").value.trim();
+      if (!idProjet) return;
+      withBridge((bridge) => {
+        if (typeof bridge.getSuiviProjetJson !== "function") return;
+        try {
+          const json = bridge.getSuiviProjetJson(idProjet);
+          const data = JSON.parse(json || "{}");
+          renderTaskList(data.tasks || []);
+          renderFluxList("chargesList", data.charges || [], "charge");
+          renderFluxList("gainsList", data.gains || [], "gain");
+        } catch (e) {}
+      }, () => {});
+    }
+
+    function renderFluxList(containerId, list, typeLabel){
+      const host = document.getElementById(containerId);
+      if (!host) return;
+      if (!Array.isArray(list) || !list.length){
+        host.innerHTML = `<div class="task-empty">Aucun ${typeLabel}.</div>`;
+        return;
+      }
+      host.innerHTML = list.map((x) => `
+        <div class="flux-item">
+          <div class="flux-head">
+            <span>${escapeHtml(x.description || "-")}</span>
+            <span>${fmt(Number(x.amount || 0))}</span>
+          </div>
+          <div class="flux-date">${escapeHtml(x.date || "")}</div>
+          <div class="item-actions">
+            <button class="mini-btn" type="button" onclick="${containerId==='chargesList' ? 'editCharge' : 'editGain'}(${Number(x.id || 0)})">Modifier</button>
+            <button class="mini-btn danger" type="button" onclick="${containerId==='chargesList' ? 'deleteCharge' : 'deleteGain'}(${Number(x.id || 0)})">Supprimer</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
     function refreshKpis(){
       const objectif = Number(document.getElementById("objectifTnd").value || 0);
       const statut = document.getElementById("statut").value || "—";
       const taux = document.getElementById("tauxInteretPct").value || "—";
       const mois = document.getElementById("dureeRemboursementMois").value || "—";
+      const titre = (document.getElementById("titre").value || "—").trim() || "—";
 
       document.getElementById("kGoal").textContent = objectif ? fmt(objectif) : "—";
       document.getElementById("kStatut").textContent = statut;
       document.getElementById("kRate").textContent = taux === "—" ? "—" : taux + " %";
       document.getElementById("kMonths").textContent = mois;
+      document.getElementById("kProjectTitle").textContent = titre;
       document.getElementById("heroStatut").textContent = statut;
     }
 
@@ -461,6 +858,10 @@
               document.getElementById("resultatNetEstimeTnd").value = p.resultatNetEstimeTnd || "";
               document.getElementById("chargesOpTnd").value = "";
               document.getElementById("chargesFixesTnd").value = "";
+              updatePublishButtonsVisibility();
+              updateSuiviSectionVisibility();
+              updateCampagneSectionVisibility();
+              refreshKpis();
             }
           } catch (e) {
           }
@@ -472,6 +873,234 @@
       if (e.target.matches("#objectifTnd, #tauxInteretPct, #dureeRemboursementMois, #margeBruteEstimeeTnd, #chargesOpTnd, #chargesFixesTnd")) {
         refreshKpis();
         calcNetResult();
+      }
+    });
+
+    document.getElementById("addTaskBtn").addEventListener("click", () => {
+      const idProjet = document.getElementById("idProjet").value.trim();
+      const titre = document.getElementById("tacheTitre").value.trim();
+      const description = document.getElementById("tacheDesc").value.trim();
+      const dateDebut = normalizeDateForBackend(document.getElementById("tacheDateDebut").value);
+      const dateFin = normalizeDateForBackend(document.getElementById("tacheDateFin").value);
+      const progressionDelta = document.getElementById("tacheProgressDelta").value.trim();
+      const cout = document.getElementById("tacheCout").value.trim();
+
+      if (!idProjet) {
+        errorBox.textContent = "ID projet requis pour ajouter une tâche.";
+        errorBox.style.display = "block";
+        return;
+      }
+      if (!titre) {
+        errorBox.textContent = "Le titre de la tâche est obligatoire.";
+        errorBox.style.display = "block";
+        return;
+      }
+      if (!dateDebut) {
+        errorBox.textContent = "La date debut est obligatoire.";
+        errorBox.style.display = "block";
+        return;
+      }
+      if (!dateFin) {
+        errorBox.textContent = "La date fin est obligatoire.";
+        errorBox.style.display = "block";
+        return;
+      }
+      if (dateFin < dateDebut) {
+        errorBox.textContent = "La date fin doit etre superieure ou egale a la date debut.";
+        errorBox.style.display = "block";
+        return;
+      }
+
+      withBridge((bridge) => {
+        if (typeof bridge.addSuiviTache !== "function") {
+          errorBox.textContent = "Fonction suivi indisponible.";
+          errorBox.style.display = "block";
+          return;
+        }
+        const result = editingTaskId
+          ? bridge.updateSuiviTache(String(editingTaskId), titre, description, dateDebut, dateFin, progressionDelta, cout)
+          : bridge.addSuiviTache(idProjet, titre, description, dateDebut, dateFin, progressionDelta, cout);
+        if (result && result.startsWith("OK")) {
+          okBox.textContent = editingTaskId ? "Tâche modifiée avec succès." : "Tâche enregistrée avec succès.";
+          okBox.style.display = "block";
+          errorBox.style.display = "none";
+          reloadTaskList();
+          document.getElementById("tacheTitre").value = "";
+          document.getElementById("tacheDesc").value = "";
+          document.getElementById("tacheProgressDelta").value = "0";
+          document.getElementById("tacheCout").value = "0";
+          document.getElementById("taskFormWrap").style.display = "none";
+          editingTaskId = null;
+          document.getElementById("addTaskBtn").textContent = "Ajouter tâche réalisée";
+          return;
+        }
+        const msg = result ? result.replace("ERROR:", "") : "Erreur ajout tache.";
+          errorBox.textContent = (msg && msg.trim()) ? msg : "Erreur ajout tâche: vérifier les dates (format yyyy-MM-dd).";
+          errorBox.style.display = "block";
+      }, () => {
+        errorBox.textContent = "Bridge Java indisponible.";
+        errorBox.style.display = "block";
+      });
+    });
+
+    document.getElementById("openTaskFormBtn").addEventListener("click", () => {
+      document.getElementById("taskFormWrap").style.display = "block";
+      const d1 = document.getElementById("tacheDateDebut");
+      const d2 = document.getElementById("tacheDateFin");
+      const today = new Date().toISOString().slice(0, 10);
+      if (d1 && !d1.value) d1.value = today;
+      if (d2 && !d2.value) d2.value = today;
+      document.getElementById("tacheTitre").focus();
+    });
+    document.getElementById("closeTaskFormBtn").addEventListener("click", () => {
+      document.getElementById("taskFormWrap").style.display = "none";
+    });
+
+    document.getElementById("addChargeBtn").addEventListener("click", () => {
+      const idProjet = document.getElementById("idProjet").value.trim();
+      const description = (document.getElementById("chargeDesc").value || "").trim();
+      const montant = (document.getElementById("chargeMontant").value || "").trim();
+      const dateFlux = normalizeDateForBackend(document.getElementById("chargeDate").value);
+      if (!idProjet || !description || !montant || !dateFlux) {
+        errorBox.textContent = "Charge: description, montant et date sont obligatoires.";
+        errorBox.style.display = "block";
+        return;
+      }
+      withBridge((bridge) => {
+        if (typeof bridge.addSuiviCharge !== "function") return;
+        const result = editingChargeId
+          ? bridge.updateSuiviCharge(String(editingChargeId), description, montant, dateFlux)
+          : bridge.addSuiviCharge(idProjet, description, montant, dateFlux);
+        if (result && result.startsWith("OK")) {
+          document.getElementById("chargeDesc").value = "";
+          document.getElementById("chargeMontant").value = "0";
+          editingChargeId = null;
+          document.getElementById("addChargeBtn").textContent = "Ajouter charge";
+          reloadTaskList();
+          return;
+        }
+        errorBox.textContent = (result || "Erreur ajout charge.").replace("ERROR:", "");
+        errorBox.style.display = "block";
+      }, () => {});
+    });
+
+    document.getElementById("addGainBtn").addEventListener("click", () => {
+      const idProjet = document.getElementById("idProjet").value.trim();
+      const description = (document.getElementById("gainDesc").value || "").trim();
+      const montant = (document.getElementById("gainMontant").value || "").trim();
+      const dateFlux = normalizeDateForBackend(document.getElementById("gainDate").value);
+      if (!idProjet || !description || !montant || !dateFlux) {
+        errorBox.textContent = "Gain: description, montant et date sont obligatoires.";
+        errorBox.style.display = "block";
+        return;
+      }
+      withBridge((bridge) => {
+        if (typeof bridge.addSuiviGain !== "function") return;
+        const result = editingGainId
+          ? bridge.updateSuiviGain(String(editingGainId), description, montant, dateFlux)
+          : bridge.addSuiviGain(idProjet, description, montant, dateFlux);
+        if (result && result.startsWith("OK")) {
+          document.getElementById("gainDesc").value = "";
+          document.getElementById("gainMontant").value = "0";
+          editingGainId = null;
+          document.getElementById("addGainBtn").textContent = "Ajouter gain";
+          reloadTaskList();
+          return;
+        }
+        errorBox.textContent = (result || "Erreur ajout gain.").replace("ERROR:", "");
+        errorBox.style.display = "block";
+      }, () => {});
+    });
+
+    function initDatePicker(inputId, popId, titleId, gridId, prevId, nextId){
+      const input = document.getElementById(inputId);
+      const pop = document.getElementById(popId);
+      const grid = document.getElementById(gridId);
+      const title = document.getElementById(titleId);
+      const prev = document.getElementById(prevId);
+      const next = document.getElementById(nextId);
+      if (!input || !pop || !grid || !title || !prev || !next) return;
+
+      const monthNames = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+      const dayNames = ["Lu","Ma","Me","Je","Ve","Sa","Di"];
+      let view = new Date();
+
+      function fmtDate(y,m,d){
+        const mm = String(m + 1).padStart(2,"0");
+        const dd = String(d).padStart(2,"0");
+        return `${y}-${mm}-${dd}`;
+      }
+
+      function parseSelected(){
+        const v = (input.value || "").trim();
+        const m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!m) return null;
+        return { y:Number(m[1]), m:Number(m[2]) - 1, d:Number(m[3]) };
+      }
+
+      function render(){
+        const y = view.getFullYear();
+        const m = view.getMonth();
+        title.textContent = `${monthNames[m]} ${y}`;
+        grid.innerHTML = dayNames.map(n => `<div class="dw">${n}</div>`).join("");
+
+        const first = new Date(y, m, 1);
+        const firstIdx = (first.getDay() + 6) % 7;
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+        const prevDays = new Date(y, m, 0).getDate();
+        const sel = parseSelected();
+        let cells = "";
+
+        for (let i = firstIdx - 1; i >= 0; i--) {
+          const d = prevDays - i;
+          cells += `<button type="button" class="d off" data-y="${y}" data-m="${m-1}" data-d="${d}">${d}</button>`;
+        }
+        for (let d = 1; d <= daysInMonth; d++) {
+          const isSel = sel && sel.y === y && sel.m === m && sel.d === d;
+          cells += `<button type="button" class="d${isSel ? " sel" : ""}" data-y="${y}" data-m="${m}" data-d="${d}">${d}</button>`;
+        }
+        const totalButtons = (cells.match(/class="d/g) || []).length;
+        const need = (7 - (totalButtons % 7)) % 7;
+        for (let d = 1; d <= need; d++) {
+          cells += `<button type="button" class="d off" data-y="${y}" data-m="${m+1}" data-d="${d}">${d}</button>`;
+        }
+        grid.innerHTML += cells;
+
+        grid.querySelectorAll(".d").forEach(btn => {
+          btn.addEventListener("click", () => {
+            let yy = Number(btn.getAttribute("data-y"));
+            let mm = Number(btn.getAttribute("data-m"));
+            const dd = Number(btn.getAttribute("data-d"));
+            if (mm < 0) { yy -= 1; mm = 11; }
+            if (mm > 11) { yy += 1; mm = 0; }
+            input.value = fmtDate(yy, mm, dd);
+            pop.classList.remove("open");
+          });
+        });
+      }
+
+      function open(){
+        document.querySelectorAll(".date-pop.open").forEach((p) => p.classList.remove("open"));
+        const s = parseSelected();
+        if (s) view = new Date(s.y, s.m, 1);
+        render();
+        pop.classList.add("open");
+      }
+
+      input.addEventListener("click", open);
+      input.addEventListener("focus", open);
+      prev.addEventListener("click", () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); render(); });
+      next.addEventListener("click", () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); render(); });
+    }
+
+    initDatePicker("tacheDateDebut", "datePickerPopStart", "dpTitleStart", "dpGridStart", "dpPrevStart", "dpNextStart");
+    initDatePicker("tacheDateFin", "datePickerPopEnd", "dpTitleEnd", "dpGridEnd", "dpPrevEnd", "dpNextEnd");
+    initDatePicker("chargeDate", "datePickerPopCharge", "dpTitleCharge", "dpGridCharge", "dpPrevCharge", "dpNextCharge");
+    initDatePicker("gainDate", "datePickerPopGain", "dpTitleGain", "dpGridGain", "dpPrevGain", "dpNextGain");
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".date-wrap")) {
+        document.querySelectorAll(".date-pop.open").forEach((p) => p.classList.remove("open"));
       }
     });
 
@@ -519,7 +1148,8 @@
 
         if (result && result.startsWith("OK")) {
           okBox.style.display = "block";
-          window.location.href = "projet_view.html";
+          const idp = encodeURIComponent(document.getElementById("idProjet").value || "");
+          window.location.href = "detailsEntrepreneur.html?id=" + idp;
           return;
         }
 
@@ -532,8 +1162,78 @@
     });
 
     fillFromQuery();
+    const __today = new Date().toISOString().slice(0, 10);
+    if (document.getElementById("chargeDate")) document.getElementById("chargeDate").value = __today;
+    if (document.getElementById("gainDate")) document.getElementById("gainDate").value = __today;
     calcNetResult();
     refreshKpis();
+    updatePublishButtonsVisibility();
+    updateSuiviSectionVisibility();
+    updateCampagneSectionVisibility();
+    reloadTaskList();
+  </script>
+  <script>
+    function editTask(id){
+      const idProjet = document.getElementById("idProjet").value.trim();
+      if (!idProjet || !window.javaBridge?.getSuiviProjetJson) return;
+      try{
+        const data = JSON.parse(window.javaBridge.getSuiviProjetJson(idProjet) || "{}");
+        const t = (data.tasks || []).find(x => Number(x.id) === Number(id));
+        if (!t) return;
+        editingTaskId = Number(id);
+        document.getElementById("tacheTitre").value = t.title || "";
+        document.getElementById("tacheDesc").value = t.description || "";
+        document.getElementById("tacheDateDebut").value = t.dateStart || "";
+        document.getElementById("tacheDateFin").value = t.dateEnd || "";
+        document.getElementById("tacheProgressDelta").value = String(t.progressDelta ?? 0);
+        document.getElementById("tacheCout").value = String(t.cost ?? 0);
+        document.getElementById("taskFormWrap").style.display = "block";
+        document.getElementById("addTaskBtn").textContent = "Enregistrer modification";
+      }catch(e){}
+    }
+    function deleteTask(id){
+      if (!window.javaBridge?.deleteSuiviTache) return;
+      const r = window.javaBridge.deleteSuiviTache(String(id));
+      if (r && r.startsWith("OK")) reloadTaskList();
+    }
+    function editCharge(id){
+      const idProjet = document.getElementById("idProjet").value.trim();
+      if (!idProjet || !window.javaBridge?.getSuiviProjetJson) return;
+      try{
+        const data = JSON.parse(window.javaBridge.getSuiviProjetJson(idProjet) || "{}");
+        const x = (data.charges || []).find(v => Number(v.id) === Number(id));
+        if (!x) return;
+        editingChargeId = Number(id);
+        document.getElementById("chargeDesc").value = x.description || "";
+        document.getElementById("chargeMontant").value = String(x.amount ?? 0);
+        document.getElementById("chargeDate").value = x.date || "";
+        document.getElementById("addChargeBtn").textContent = "Enregistrer modification";
+      }catch(e){}
+    }
+    function deleteCharge(id){
+      if (!window.javaBridge?.deleteSuiviCharge) return;
+      const r = window.javaBridge.deleteSuiviCharge(String(id));
+      if (r && r.startsWith("OK")) reloadTaskList();
+    }
+    function editGain(id){
+      const idProjet = document.getElementById("idProjet").value.trim();
+      if (!idProjet || !window.javaBridge?.getSuiviProjetJson) return;
+      try{
+        const data = JSON.parse(window.javaBridge.getSuiviProjetJson(idProjet) || "{}");
+        const x = (data.gains || []).find(v => Number(v.id) === Number(id));
+        if (!x) return;
+        editingGainId = Number(id);
+        document.getElementById("gainDesc").value = x.description || "";
+        document.getElementById("gainMontant").value = String(x.amount ?? 0);
+        document.getElementById("gainDate").value = x.date || "";
+        document.getElementById("addGainBtn").textContent = "Enregistrer modification";
+      }catch(e){}
+    }
+    function deleteGain(id){
+      if (!window.javaBridge?.deleteSuiviGain) return;
+      const r = window.javaBridge.deleteSuiviGain(String(id));
+      if (r && r.startsWith("OK")) reloadTaskList();
+    }
   </script>
   <script>
     (function(){
@@ -550,18 +1250,4 @@
     })();
   </script></body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

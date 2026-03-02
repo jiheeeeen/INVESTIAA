@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia â€” Modifier financement</title>
+  <link rel="stylesheet" href="financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Financement â€¢ Modification</span>
+        <h1>Modifier un financement</h1>
+        <p class="sub">Edition d'une contribution existante.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="financements-list.html">Retour liste</a>
+        <button class="btnTop btnNavy" type="submit" form="editForm">Enregistrer</button>
+        <a class="btnTop btnDanger" id="detailLink" href="financement-detail.html">Detail</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2 class="title">Formulaire</h2>
+        <span class="tag pending" id="statusTag"><span class="tagDot"></span>PENDING</span>
+      </div>
+
+      <form id="editForm">
+        <div class="formGrid">
+          <div>
+            <label for="finId">ID financement</label>
+            <input id="finId" type="text" value="F-001" disabled />
+          </div>
+          <div>
+            <label for="project">Projet</label>
+            <select id="project" required></select>
+          </div>
+          <div>
+            <label for="investor">Investisseur</label>
+            <input id="investorName" type="text" value="" readonly />
+            <input id="investIdField" type="hidden" value="" />
+          </div>
+          <div>
+            <label for="amount">Montant (TND)</label>
+            <input id="amount" type="number" min="0" step="0.01" value="0" required readonly />
+          </div>
+          <div>
+            <label for="method">Paiement</label>
+            <select id="method" required>
+              <option value="CARTE_BANCAIRE">Carte bancaire</option>
+              <option value="VIREMENT">Virement</option>
+              <option value="WALLET">Wallet</option>
+            </select>
+          </div>
+          <div>
+            <label for="status">Statut</label>
+            <select id="status" required>
+              <option value="CONFIRMED">CONFIRMED</option>
+              <option value="EN_ATTENTE" selected>EN_ATTENTE</option>
+            </select>
+          </div>
+          <div>
+            <label for="rate">Taux estime (%)</label>
+            <input id="rate" type="number" min="0" max="30" step="0.5" value="10" />
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label for="note">Note</label>
+            <textarea id="note">Contribution a confirmer.</textarea>
+          </div>
+        </div>
+        <div class="note" id="result" style="display:none;"></div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = Number(params.get("id") || 0);
+    const finId = document.getElementById("finId");
+    const detailLink = document.getElementById("detailLink");
+    const result = document.getElementById("result");
+    const form = document.getElementById("editForm");
+    const projectSelect = document.getElementById("project");
+    const investorNameInput = document.getElementById("investorName");
+    const investIdField = document.getElementById("investIdField");
+    const statusSelect = document.getElementById("status");
+    const statusTag = document.getElementById("statusTag");
+    const amountInput = document.getElementById("amount");
+
+    let feesPct = 1.00;
+    let duration = 12;
+    let byProject = {};
+    let loadedFinancement = null;
+
+    finId.value = id ? String(id) : "";
+    detailLink.href = `financement-detail.html?id=${encodeURIComponent(id)}`;
+
+    function normalizeStatus(v){
+      return v === "PENDING" ? "EN_ATTENTE" : (v || "EN_ATTENTE");
+    }
+
+    function updateStatusTag(){
+      const v = normalizeStatus(statusSelect.value);
+      statusTag.className = v === "CONFIRMED" ? "tag ok" : "tag pending";
+      statusTag.innerHTML = v === "CONFIRMED"
+        ? '<span class="tagDot"></span>CONFIRMED'
+        : '<span class="tagDot"></span>' + v;
+    }
+
+    statusSelect.addEventListener("change", updateStatusTag);
+
+    function setProjectSelection(projectId){
+      const item = byProject[String(projectId)];
+      if (!item) {
+        amountInput.value = "0";
+        investIdField.value = "";
+        return;
+      }
+      investIdField.value = String(item.investId || "");
+      amountInput.value = String(item.amount || 0);
+    }
+
+    function loadCurrentInvestorName(){
+      if (!window.javaBridge || typeof window.javaBridge.getCurrentUserName !== "function") return;
+      try {
+        investorNameInput.value = window.javaBridge.getCurrentUserName() || "Investisseur";
+      } catch (e) {
+        investorNameInput.value = "Investisseur";
+      }
+    }
+
+    function loadCurrentInvestorProjectsFromDb(retries = 0){
+      if (!window.javaBridge || typeof window.javaBridge.getCurrentInvestorInvestissementsByProjectJson !== "function") {
+        if (retries > 0) {
+          setTimeout(function(){ loadCurrentInvestorProjectsFromDb(retries - 1); }, 200);
+        }
+        return;
+      }
+      try {
+        const rows = JSON.parse(window.javaBridge.getCurrentInvestorInvestissementsByProjectJson());
+        byProject = {};
+        (Array.isArray(rows) ? rows : []).forEach(r => {
+          const pid = String(r.projectId || 0);
+          if (!pid || pid === "0") return;
+          if (!byProject[pid]) {
+            byProject[pid] = {
+              projectId: Number(r.projectId || 0),
+              projectName: r.projectName || ("Projet #" + r.projectId),
+              investId: Number(r.investId || 0),
+              amount: 0
+            };
+          }
+          byProject[pid].amount += Number(r.amount || 0);
+          if (!byProject[pid].investId && Number(r.investId || 0) > 0) {
+            byProject[pid].investId = Number(r.investId || 0);
+          }
+        });
+
+        projectSelect.innerHTML = "";
+        Object.values(byProject).forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = String(p.projectId);
+          opt.textContent = p.projectName;
+          projectSelect.appendChild(opt);
+        });
+      } catch (e) {
+        if (retries > 0) {
+          setTimeout(function(){ loadCurrentInvestorProjectsFromDb(retries - 1); }, 200);
+        }
+      }
+    }
+
+    function loadFinancement(){
+      if (!id || !window.javaBridge || typeof window.javaBridge.getFinancementByIdJson !== "function") return;
+      try {
+        const f = JSON.parse(window.javaBridge.getFinancementByIdJson(id));
+        if (!f || !f.id) return;
+        loadedFinancement = f;
+        document.getElementById("method").value = f.method || "CARTE_BANCAIRE";
+        statusSelect.value = normalizeStatus(f.status);
+        document.getElementById("rate").value = f.rate || 0;
+        document.getElementById("note").value = f.note || "";
+        feesPct = (typeof f.feesPct === "number") ? f.feesPct : feesPct;
+        duration = (typeof f.duration === "number") ? f.duration : duration;
+        const pid = String(f.projectId || 0);
+        if (pid && pid !== "0" && !byProject[pid]) {
+          byProject[pid] = {
+            projectId: Number(f.projectId || 0),
+            projectName: "Projet #" + f.projectId,
+            investId: Number(f.investId || 0),
+            amount: Number(f.amount || 0)
+          };
+          const opt = document.createElement("option");
+          opt.value = String(byProject[pid].projectId);
+          opt.textContent = byProject[pid].projectName;
+          projectSelect.appendChild(opt);
+        }
+        if (f.projectId) {
+          projectSelect.value = String(f.projectId);
+          setProjectSelection(f.projectId);
+        } else {
+          amountInput.value = String(f.amount || 0);
+          if (f.investId) {
+            investIdField.value = String(f.investId);
+          }
+        }
+        updateStatusTag();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    function handleUpdateResult(raw){
+      if (raw === undefined || raw === null || raw === "") {
+        result.textContent = "Erreur: reponse vide du bridge.";
+        return;
+      }
+      const res = JSON.parse(String(raw));
+      result.textContent = res.ok ? "Financement modifie." : ("Erreur: " + (res.message || "inconnue"));
+      if (res.ok) {
+        window.location.href = `financement-detail.html?id=${encodeURIComponent(id)}`;
+      }
+    }
+
+    window.onUpdateResult = handleUpdateResult;
+
+    window.onJavaBridgeReady = function(){
+      loadCurrentInvestorName();
+      loadCurrentInvestorProjectsFromDb(8);
+      setTimeout(loadFinancement, 250);
+    };
+
+    projectSelect.addEventListener("change", function(){
+      setProjectSelection(projectSelect.value);
+    });
+
+    function waitForBridge(retries){
+      if (window.javaBridge) {
+        window.onJavaBridgeReady();
+        return;
+      }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+
+    waitForBridge(30);
+
+    form.addEventListener("submit", (e)=>{
+      e.preventDefault();
+      result.style.display = "block";
+      result.textContent = "Enregistrement en cours...";
+
+      if (!window.javaBridge || typeof window.javaBridge.updateFinancementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+
+      const selected = byProject[String(projectSelect.value || "")];
+      const projectId = Number(selected ? selected.projectId : (loadedFinancement ? loadedFinancement.projectId : 0));
+      const investId = Number(selected ? selected.investId : (loadedFinancement ? loadedFinancement.investId : 0));
+      const amount = Number(selected ? selected.amount : (loadedFinancement ? loadedFinancement.amount : 0));
+      const method = document.getElementById("method").value;
+      const status = normalizeStatus(document.getElementById("status").value);
+      const rate = Number(document.getElementById("rate").value || 0);
+      const note = document.getElementById("note").value || "";
+
+      if (!projectId || !investId || amount <= 0) {
+        result.textContent = "Donnees invalides: projet/investissement/montant introuvables.";
+        return;
+      }
+
+      const payload = new URLSearchParams({
+        id: String(id),
+        projectId: String(projectId),
+        investId: String(investId),
+        amount: String(amount),
+        feesPct: String(feesPct),
+        method: method,
+        status: status,
+        rate: String(rate),
+        duration: String(duration),
+        note: note
+      }).toString();
+
+      const raw = window.javaBridge.updateFinancementFromJs(payload);
+      if (raw !== undefined && raw !== null && raw !== "") {
+        handleUpdateResult(raw);
+      } else {
+        result.textContent = "Aucune reponse du bridge.";
+      }
+    });</script>
+</body>
+</html>

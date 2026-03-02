@@ -28,6 +28,9 @@
     --r14: 14px;
     --r18: 18px;
     --ring: 0 0 0 4px rgba(214, 161, 0, 0.22);
+
+    --sb-collapsed: 78px;
+    --sb-expanded: 290px;
 }
 
 * { box-sizing: border-box; }
@@ -43,9 +46,11 @@ body {
 
 button, input, select { font-family: inherit; }
 
-.app { min-height: 100%; display: grid; grid-template-columns: 290px 1fr; }
+.app { min-height: 100%; display: grid; grid-template-columns: auto 1fr; }
 
-/* Sidebar */
+/* =========================
+   Sidebar
+========================= */
 .sidebar {
     position: sticky;
     top: 0;
@@ -57,7 +62,11 @@ button, input, select { font-family: inherit; }
     overflow: hidden;
     isolation: isolate;
     color: var(--textLight);
+
+    width: var(--sb-collapsed);
+    transition: width .22s ease, box-shadow .22s ease;
 }
+
 .sidebar::before {
     content: "";
     position: absolute;
@@ -69,23 +78,29 @@ button, input, select { font-family: inherit; }
     z-index: -1;
 }
 
-.brandRow { display: flex; align-items: center; gap: 12px; padding: 4px 6px 16px 6px; }
-.logo {
-    width: 48px; height: 48px; border-radius: 16px;
-    background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)),
-            radial-gradient(circle at 30% 30%, rgba(255, 204, 51, 0.6), rgba(214, 161, 0, 0.24));
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-    display: grid; place-items: center; flex: 0 0 auto;
-    overflow: hidden;
+.app.sb-open .sidebar{
+    width: var(--sb-expanded);
+    box-shadow: 12px 0 30px rgba(0,0,0,.12);
 }
-.brandLogo {
-    width: 30px;
-    height: 30px;
+
+.brandRow { display: flex; align-items: center; gap: 12px; padding: 4px 6px 16px 6px; }
+.logo{
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.10);
+}
+.brandLogo{
+    width: 100%;
+    height: 100%;
     object-fit: contain;
     display: block;
 }
+
 .brandText { display: flex; flex-direction: column; line-height: 1.05; }
 .brandName { font-weight: 950; letter-spacing: -0.02em; font-size: 18px; }
 .brandName .i-accent {
@@ -206,6 +221,55 @@ button, input, select { font-family: inherit; }
     box-shadow: 0 18px 60px rgba(0, 0, 0, 0.3);
 }
 
+/* Collapse text */
+.brandText, .sectionTitle, .badge .navT, .btnSide .navT, .nav .navT{
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity .18s ease, transform .18s ease;
+    pointer-events: none;
+}
+.app.sb-open .brandText,
+.app.sb-open .sectionTitle,
+.app.sb-open .badge .navT,
+.app.sb-open .btnSide .navT,
+.app.sb-open .nav .navT{
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* nav icon base */
+.navI{
+    width: 26px;
+    display: inline-flex;
+    justify-content: center;
+}
+
+/* en mode réduit : centrer l’icône */
+.nav button{ justify-content: center; }
+.app.sb-open .nav button{ justify-content: flex-start; }
+
+/* FIX Align + logo bigger (mode rétréci) */
+.app:not(.sb-open) .brandRow{ justify-content: center; padding: 6px 0 14px; }
+.app:not(.sb-open) .logo{ width: 62px; height: 62px; border-radius: 16px; }
+.app:not(.sb-open) .nav{ padding: 0; align-items: center; }
+.app:not(.sb-open) .nav button{ justify-content: center; padding: 12px 0; gap: 0; }
+.app:not(.sb-open) .navI{
+    width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    line-height: 1;
+}
+.app:not(.sb-open) .nav button.active::before{ left: 6px; top: 8px; bottom: 8px; }
+.app:not(.sb-open) .sidebarFooter{ left: 12px; right: 12px; }
+.app:not(.sb-open) .badge{ justify-content: center; padding: 10px 0; }
+.app:not(.sb-open) .btnSide{ justify-content: center; padding: 12px 0; }
+
+/* =========================
+   Main
+========================= */
 .main {
     padding: 22px 22px 32px;
     background:
@@ -251,6 +315,24 @@ button, input, select { font-family: inherit; }
     white-space: nowrap;
 }
 .btnPrimary:hover { transform: translateY(-2px); filter: brightness(1.03); box-shadow: var(--shadow); }
+
+.btnGhost{
+    appearance: none;
+    cursor: pointer;
+    font-weight: 900;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(11,18,32,.12);
+    background: rgba(255,255,255,.78);
+    color: var(--textDark);
+    box-shadow: var(--shadow2);
+    transition: transform .14s ease, box-shadow .14s ease, filter .14s ease;
+}
+.btnGhost:hover{
+    transform: translateY(-2px);
+    filter: brightness(1.02);
+    box-shadow: var(--shadow);
+}
 
 .isHidden { display: none !important; }
 
@@ -332,14 +414,388 @@ tbody td {
     box-shadow: var(--shadow);
     padding: 22px;
 }
+
 .enterAnim { animation: enter 0.45s ease-out both; }
 @keyframes enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 880px) {
     .app { grid-template-columns: 1fr; }
-    .sidebar { position: relative; height: auto; }
+    .sidebar { position: relative; height: auto; width: 100% !important; }
     .sidebarFooter { position: relative; left: auto; right: auto; bottom: auto; margin-top: 14px; }
     .main { padding: 16px 14px 28px; }
     .topbar { flex-direction: column; align-items: flex-start; }
     .search { width: 100%; max-width: none; min-width: unset; }
+}
+
+.cellInput{
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid rgba(0,0,0,.12);
+    border-radius: 10px;
+    outline: none;
+    font: inherit;
+}
+.cellInput:focus{
+    border-color: rgba(214,161,0,.7);
+    box-shadow: 0 0 0 3px rgba(214,161,0,.15);
+}
+
+/* Analyse BI */
+.btnAnalyze{ border:1px solid rgba(214,161,0,.45); }
+.btnAnalyze:hover{
+    box-shadow:0 10px 22px rgba(214,161,0,.18);
+    transform: translateY(-1px);
+}
+.analysisGridTop{
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:14px;
+}
+.analysisGridBottom{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:14px;
+    margin-top:14px;
+}
+.chartCard{
+    background:#fff;
+    border-radius:18px;
+    padding:14px 14px 10px 14px;
+    box-shadow:0 10px 26px rgba(0,0,0,.08);
+}
+.chartTitle{ font-weight:700; margin-bottom:10px; }
+.decisionText .bigLine{ font-size:18px; margin-top:6px; }
+.decisionText .smallLine{ opacity:.85; margin-top:6px; }
+.miniExplain{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+.pill{
+    background: rgba(11,30,58,.06);
+    border:1px solid rgba(11,30,58,.10);
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:12px;
+}
+.warnBox{
+    background: rgba(255, 204, 51, .16);
+    border: 1px solid rgba(214,161,0,.35);
+    padding: 14px;
+    border-radius: 14px;
+}
+.panelSub{ opacity:.75; font-size:13px; margin-top:4px; }
+
+/* Accueil */
+.welcomeTop{
+    display:flex;
+    justify-content:space-between;
+    gap:14px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+}
+.welcomeBadge{
+    display:inline-flex;
+    padding:6px 10px;
+    border-radius:999px;
+    border:1px solid rgba(214,161,0,.35);
+    background: rgba(255,255,255,.85);
+    font-weight:900;
+    font-size:12px;
+}
+.welcomeTitle{ margin:10px 0 4px; font-size:22px; font-weight:950; }
+.welcomeSub{ margin:0; opacity:.75; font-weight:700; }
+
+.welcomeActions{
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items:center;
+}
+
+/* =========================
+   Home widgets: Weather + Calendar
+========================= */
+.homeWidgets{
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 14px;
+}
+
+.widgetCard{
+    background: var(--panelBg);
+    border: 1px solid var(--panelStroke);
+    border-radius: 20px;
+    box-shadow: var(--shadow2);
+    padding: 14px;
+    overflow: hidden;
+}
+
+.widgetHeader{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.widgetHeader h3{
+    margin: 0;
+    font-size: 14px;
+    font-weight: 950;
+    letter-spacing: -0.01em;
+}
+
+.weatherSearch{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.weatherSearch input{
+    width: 170px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(11, 18, 32, 0.12);
+    background: rgba(11, 18, 32, 0.03);
+    outline: none;
+    font-weight: 800;
+}
+
+.weatherBody{
+    display: grid;
+    gap: 12px;
+}
+
+.weatherNow{
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.weatherTemp{
+    font-size: 42px;
+    font-weight: 950;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.weatherDesc{
+    margin-top: 6px;
+    font-weight: 850;
+    color: var(--mutedDark);
+}
+
+.weatherMeta{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.miniStat{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(11, 18, 32, 0.10);
+    background: rgba(11, 18, 32, 0.03);
+    font-weight: 850;
+    font-size: 12px;
+    color: rgba(11, 18, 32, 0.82);
+}
+
+.calControls{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.calLabel{
+    font-weight: 950;
+    font-size: 12px;
+    color: rgba(11, 18, 32, 0.78);
+    min-width: 140px;
+    text-align: center;
+}
+
+.calWeekdays{
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 950;
+    color: rgba(11, 18, 32, 0.55);
+}
+
+.calGrid{
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.calCell{
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(11, 18, 32, 0.08);
+    background: rgba(11, 18, 32, 0.02);
+    display: grid;
+    place-items: center;
+    font-weight: 900;
+    position: relative;
+    user-select: none;
+    cursor: pointer;
+}
+.calCell.muted{ opacity: .45; cursor: default; pointer-events:none; }
+.calCell.today{ box-shadow: var(--ring); border-color: rgba(214,161,0,.45); }
+.calCell.hasEvent::after{
+    content: "";
+    position: absolute;
+    bottom: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, var(--gold2), var(--gold));
+}
+.calCell.selected{
+    outline: 2px solid rgba(214,161,0,.35);
+    box-shadow: 0 0 0 4px rgba(214,161,0,.12);
+}
+
+.upNext{
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(11, 18, 32, 0.08);
+}
+.upTitle{
+    font-weight: 950;
+    font-size: 12px;
+    color: rgba(11, 18, 32, 0.75);
+    margin-bottom: 10px;
+}
+
+.upList{
+    display: grid;
+    gap: 8px;
+}
+
+.upItem{
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(11, 18, 32, 0.08);
+    background: rgba(11, 18, 32, 0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.upItem strong{
+    font-weight: 950;
+    font-size: 12px;
+}
+.upItem span{
+    font-weight: 850;
+    font-size: 12px;
+    color: rgba(11, 18, 32, 0.65);
+    white-space: nowrap;
+}
+
+.weatherDayCard{
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    border: 1px solid rgba(11,18,32,.10);
+    background: rgba(255,255,255,.85);
+}
+.weatherDayTitle{
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+.weatherDayTemp{
+    font-size: 18px;
+    font-weight: 950;
+}
+.weatherDayDesc{
+    opacity: .8;
+    font-weight: 700;
+    margin-top: 4px;
+}
+
+@media (max-width: 980px){
+    .homeWidgets{ grid-template-columns: 1fr; }
+    .weatherSearch input{ width: 100%; }
+}
+/* =========================================================
+   Buttons missing safety (btnGhost)
+========================================================= */
+.btnGhost{
+    appearance: none;
+    cursor: pointer;
+    font-weight: 900;
+    padding: 12px 14px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(11, 18, 32, 0.12);
+    background: rgba(255,255,255,0.75);
+    color: rgba(11,18,32,0.88);
+    box-shadow: var(--shadow2);
+    transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+    white-space: nowrap;
+}
+.btnGhost:hover{
+    transform: translateY(-2px);
+    filter: brightness(1.03);
+    box-shadow: var(--shadow);
+}
+
+/* =========================================================
+   Sidebar — FIX centré en mode réduit (icônes alignées)
+   IMPORTANT: les .navT ne doivent PAS prendre de place
+========================================================= */
+.nav button{ min-height: 52px; }
+
+/* en mode réduit : supprimer le layout des textes */
+.app:not(.sb-open) .brandText,
+.app:not(.sb-open) .sectionTitle,
+.app:not(.sb-open) .nav .navT,
+.app:not(.sb-open) .badge .navT,
+.app:not(.sb-open) .btnSide .navT{
+    display: none !important;
+}
+
+/* nav layout */
+.app:not(.sb-open) .nav{
+    padding: 0;
+    align-items: center;
+    gap: 10px;
+}
+
+.app:not(.sb-open) .nav button{
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border-radius: 16px;
+    justify-content: center;
+}
+
+.app:not(.sb-open) .navI{
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    line-height: 1;
+}
+
+/* barre active */
+.app:not(.sb-open) .nav button.active::before{
+    left: 4px;
+    top: 8px;
+    bottom: 8px;
 }

@@ -2,6 +2,7 @@ package Controllers;
 
 import Entities.*;
 import Services.*;
+import Controllers.ProjectAnalysisService;
 import Utils.Session;
 import Utils.sceneManager;
 
@@ -10,6 +11,8 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import Services.EmailServiceBrevoSMTP;
+
 public class AdminDashboardBridge {
 
     private final UserCRUD userCRUD = new UserCRUD();
@@ -17,6 +20,9 @@ public class AdminDashboardBridge {
     private final EvenementCRUD evenementCRUD = new EvenementCRUD();
     private final ModerationActionCRUD historyCRUD = new ModerationActionCRUD();
     private final ProfilEntrepreneurCRUD profilCRUD = new ProfilEntrepreneurCRUD();
+
+    // ✅ Annulation
+    private final DemandeAnnulationCRUD annulationCRUD = new DemandeAnnulationCRUD();
 
     public String ping() {
         return "OK_PING";
@@ -39,16 +45,34 @@ public class AdminDashboardBridge {
     public String acceptAccount(int userId) {
         return wrapOk(() -> {
             userCRUD.acceptAccount(userId);
+
             try { profilCRUD.updateVerificationByUserId(userId, StatutVerification.VERIFIE); } catch (Exception ignored) {}
+
             safeLog(TargetType.COMPTE, userId, Decision.VALIDER, "ACCEPT_ACCOUNT");
+
+            try {
+                User u = userCRUD.findById(userId);
+                EmailServiceBrevoSMTP.sendVerificationDecisionAsync(u, StatutVerification.VERIFIE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 
     public String rejectAccount(int userId) {
         return wrapOk(() -> {
             userCRUD.setVerificationStatus(userId, StatutVerification.NON_VERIFIE, false);
+
             try { profilCRUD.updateVerificationByUserId(userId, StatutVerification.NON_VERIFIE); } catch (Exception ignored) {}
+
             safeLog(TargetType.COMPTE, userId, Decision.REFUSER, "REJECT_ACCOUNT_TO_NON_VERIFIE");
+
+            try {
+                User u = userCRUD.findById(userId);
+                EmailServiceBrevoSMTP.sendVerificationDecisionAsync(u, StatutVerification.NON_VERIFIE);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 
@@ -58,7 +82,6 @@ public class AdminDashboardBridge {
     public String createUser(String nom, String prenom, String email, String telephone,
                              String cin, String role, String statut_verification, String mot_de_passe) {
         return wrapOk(() -> {
-            // ✅ selon ta table: est_actif existe et default=1, mais on le force à 1 proprement
             userCRUD.createUserAdmin(nom, prenom, email, telephone, cin, role, statut_verification, mot_de_passe, 1);
             safeLog(TargetType.USER, 0, Decision.VALIDER, "CREATE_USER");
         });
@@ -74,8 +97,24 @@ public class AdminDashboardBridge {
     public String updateUser(int id, String nom, String prenom, String email, String telephone,
                              String cin, String role, String statutVerification) {
         return wrapOk(() -> {
+            User before = null;
+            try { before = userCRUD.findById(id); } catch (Exception ignored) {}
+
             userCRUD.updateUserAdminFields(id, nom, prenom, email, telephone, cin, role, statutVerification);
             safeLog(TargetType.USER, id, Decision.VALIDER, "UPDATE_USER");
+
+            try {
+                User after = userCRUD.findById(id);
+                if (before != null && after != null
+                        && before.getStatutVerification() != null
+                        && after.getStatutVerification() != null
+                        && !before.getStatutVerification().name().equals(after.getStatutVerification().name())) {
+
+                    EmailServiceBrevoSMTP.sendVerificationDecisionAsync(after, after.getStatutVerification());
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         });
     }
 
@@ -103,6 +142,17 @@ public class AdminDashboardBridge {
         });
     }
 
+    public String getProjectAnalysisJson(int projectId) {
+        return wrapJson(() -> {
+            Projet target = null;
+            for (Projet p : projetCRUD.afficher()) {
+                if (p != null && p.getIdProjet() == projectId) { target = p; break; }
+            }
+            if (target == null) return "{}";
+            return new ProjectAnalysisService().analyseAsJson(target);
+        });
+    }
+
     // =========================
     // Events
     // =========================
@@ -125,6 +175,68 @@ public class AdminDashboardBridge {
             evenementCRUD.deleteEvent(idEvent);
             safeLog(TargetType.EVENEMENT, idEvent, Decision.REFUSER, "DELETE_EVENT");
         });
+    }
+
+    // =========================
+    // ✅ Demandes d'annulation (NOUVEAU)
+    // =========================
+
+    public String getDemandesAnnulationEnAttente() {
+        try {
+            List<DemandeAnnulation> list = annulationCRUD.afficherEnAttente();
+            return "{\"ok\":true,\"data\":" + toDemandesAnnulationJson(list) + "}";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "{\"ok\":false,\"data\":[]}";
+        }
+    }
+
+    public String accepterDemandeAnnulation(int demandeId) {
+        try {
+            boolean ok = annulationCRUD.accepterDemandeEtSupprimerProjet(demandeId);
+
+            if (ok) {
+                // log (on ne connait pas forcément id_projet ici, mais on garde une trace)
+                safeLog(TargetType.PROJET, 0, Decision.REFUSER, "ACCEPT_CANCEL_REQUEST_DELETE_PROJECT demandeId=" + demandeId);
+                return "{\"ok\":true}";
+            }
+            return "{\"ok\":false,\"error\":\"ACCEPT_FAILED\"}";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "{\"ok\":false,\"error\":\"EXCEPTION\"}";
+        }
+    }
+
+    public String refuserDemandeAnnulation(int demandeId) {
+        try {
+            boolean ok = annulationCRUD.refuserDemande(demandeId);
+
+            if (ok) {
+                safeLog(TargetType.PROJET, 0, Decision.REFUSER, "REFUSE_CANCEL_REQUEST demandeId=" + demandeId);
+                return "{\"ok\":true}";
+            }
+            return "{\"ok\":false,\"error\":\"REFUSE_FAILED\"}";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "{\"ok\":false,\"error\":\"EXCEPTION\"}";
+        }
+    }
+
+    private String toDemandesAnnulationJson(List<DemandeAnnulation> list) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < list.size(); i++) {
+            DemandeAnnulation d = list.get(i);
+            sb.append("{")
+                    .append("\"id\":").append(d.getId()).append(",")
+                    .append("\"projetId\":").append(d.getProjetId()).append(",")
+                    .append("\"titre\":\"").append(j(d.getProjetTitre())).append("\",")
+                    .append("\"raison\":\"").append(j(d.getRaison())).append("\",")
+                    .append("\"statut\":\"").append(j(d.getStatut())).append("\",")
+                    .append("\"createdAt\":\"").append(ts(d.getCreatedAt())).append("\"")
+                    .append("}");
+            if (i < list.size() - 1) sb.append(",");
+        }
+        return sb.append("]").toString();
     }
 
     // =========================
@@ -204,18 +316,31 @@ public class AdminDashboardBridge {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < list.size(); i++) {
             Evenement e = list.get(i);
+
             sb.append("{")
                     .append("\"id\":").append(e.getId()).append(",")
                     .append("\"titre\":\"").append(escape(e.getTitre())).append("\",")
-                    .append("\"mode\":\"").append(e.getMode() != null ? e.getMode().name() : "").append("\",")
+
+                    // ✅ mode est String maintenant
+                    .append("\"mode\":\"").append(escape(e.getMode())).append("\",")
+
                     .append("\"dateDebut\":\"").append(ldt(e.getDateDebut())).append("\",")
-                    .append("\"statut\":\"").append(e.getStatut() != null ? e.getStatut().name() : "").append("\"")
+
+                    // ✅ statut n'existe pas dans l'entité -> on le lit depuis la DB (helper)
+                    .append("\"statut\":\"").append(escape(getEventStatutSafe(e.getId()))).append("\"")
                     .append("}");
+
             if (i < list.size() - 1) sb.append(",");
         }
         return sb.append("]").toString();
     }
-
+    private String getEventStatutSafe(int eventId) {
+        try {
+            return evenementCRUD.getStatutById(eventId);
+        } catch (Exception e) {
+            return "";
+        }
+    }
     private String toHistoryJson(List<ModerationAction> list) {
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < list.size(); i++) {
@@ -252,6 +377,11 @@ public class AdminDashboardBridge {
     private String escape(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"");
+    }
+
+    private static String j(String s){
+        if (s == null) return "";
+        return s.replace("\\","\\\\").replace("\"","\\\"").replace("\n","\\n").replace("\r","");
     }
 
     private String ts(Timestamp t) { return (t == null) ? "" : t.toString(); }

@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mes investissements</title>
+
+    <script src="../navbar.js" defer></script>
+
+    <!-- âœ… Chart.js (graphiques) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root{
+            --navy:#0b2a55;
+            --navy2:#0a1f3e;
+            --gold:#f4b400;
+            --gold2:#d89c00;
+
+            --bg:#f6f8fc;
+            --card:#ffffff;
+            --text:#0f172a;
+            --muted:#64748b;
+            --border:rgba(15,23,42,.10);
+            --shadow:0 16px 45px rgba(15,23,42,.10);
+            --radius:22px;
+        }
+
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background: radial-gradient(1200px 500px at 20% -10%, rgba(29,78,216,.10), transparent 60%),
+            radial-gradient(900px 450px at 90% 0%, rgba(244,180,0,.12), transparent 55%),
+            var(--bg);
+            color:var(--text);
+        }
+
+        .wrap{max-width:1100px;margin:26px auto;padding:0 16px;}
+        .page-head{
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap:16px;
+            margin:14px 0 18px;
+            flex-wrap:wrap;
+        }
+        h2{
+            margin:0;
+            font-size:34px;
+            letter-spacing:.2px;
+            line-height:1.1;
+        }
+        .sub{
+            margin-top:6px;
+            color:var(--muted);
+            font-weight:800;
+            font-size:13px;
+        }
+
+        .chip{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:6px 12px;
+            border-radius:999px;
+            border:1px solid rgba(244,180,0,.35);
+            background:rgba(244,180,0,.14);
+            color:#7a5200;
+            font-weight:1000;
+            font-size:12px;
+            white-space:nowrap;
+        }
+
+        /* âœ… Top stats + tools */
+        .topbar{
+            display:grid;
+            grid-template-columns: 1fr;
+            gap:14px;
+            margin: 12px 0 18px;
+        }
+        @media (min-width: 900px){
+            .topbar{ grid-template-columns: 1fr 1.2fr; }
+        }
+
+        .stats{
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            gap:12px;
+        }
+        .stat{
+            background:linear-gradient(180deg, #fff, #fbfcff);
+            border:1px solid var(--border);
+            border-radius:18px;
+            padding:14px 16px;
+            box-shadow:0 12px 30px rgba(15,23,42,.07);
+            position:relative;
+            overflow:hidden;
+        }
+        .stat:before{
+            content:"";
+            position:absolute; inset:-2px -2px auto auto;
+            width:120px; height:120px;
+            background: radial-gradient(circle at 30% 30%, rgba(244,180,0,.20), transparent 60%);
+            border-radius:999px;
+            transform: translate(35px, -35px);
+            pointer-events:none;
+        }
+        .stat .k{
+            font-size:12px;
+            color:var(--muted);
+            font-weight:900;
+            text-transform:uppercase;
+            letter-spacing:.5px;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+        .stat .v{
+            margin-top:8px;
+            font-size:22px;
+            font-weight:1000;
+            color:var(--navy);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tools{
+            background:linear-gradient(180deg, #fff, #fbfcff);
+            border:1px solid var(--border);
+            border-radius:18px;
+            padding:14px 16px;
+            box-shadow:0 12px 30px rgba(15,23,42,.07);
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            align-items:center;
+            justify-content:space-between;
+        }
+        .tools .left{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            align-items:center;
+            width:100%;
+        }
+        @media (min-width: 900px){
+            .tools .left{ width:auto; }
+        }
+
+        .search{
+            flex:1;
+            min-width:240px;
+            height:44px;
+            border-radius:14px;
+            border:1px solid var(--border);
+            padding:0 14px;
+            font-size:14px;
+            font-weight:800;
+            outline:none;
+            background:#fff;
+        }
+        .search:focus{
+            border-color: rgba(29,78,216,.35);
+            box-shadow: 0 0 0 4px rgba(29,78,216,.10);
+        }
+        .select{
+            height:44px;
+            border-radius:14px;
+            border:1px solid var(--border);
+            padding:0 12px;
+            font-size:14px;
+            font-weight:900;
+            background:#fff;
+            cursor:pointer;
+        }
+        .btn{
+            height:44px;
+            border:none;
+            border-radius:14px;
+            padding:0 14px;
+            font-weight:1000;
+            cursor:pointer;
+            background:linear-gradient(180deg, #173a70, #0a2348);
+            color:#fff;
+            white-space:nowrap;
+        }
+        .btn:hover{ opacity:.95; }
+
+        .muted{color:var(--muted); font-weight:800;}
+        .err{color:#b91c1c;font-weight:900}
+
+        /* âœ… Dashboard charts (NE PAS CHANGER) */
+        .dash{
+            margin: 6px 0 18px;
+            display:grid;
+            grid-template-columns: 1fr;
+            gap:14px;
+        }
+        @media (min-width: 900px){
+            .dash{ grid-template-columns: 1fr 1fr; }
+            .dash .wide{ grid-column: 1 / -1; }
+        }
+        .panel{
+            background:linear-gradient(180deg, #fff, #fbfcff);
+            border:1px solid var(--border);
+            border-radius:22px;
+            padding:14px 16px;
+            box-shadow:0 14px 36px rgba(15,23,42,.08);
+        }
+        .panel h3{
+            margin:0 0 10px;
+            font-size:15px;
+            font-weight:1000;
+            color:var(--navy);
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+        }
+        .panel small{
+            color:var(--muted);
+            font-weight:900;
+        }
+        .canvas-wrap{
+            width:100%;
+            height:280px;
+        }
+        .canvas-wrap.tall{ height:320px; }
+        canvas{ width:100% !important; height:100% !important; }
+
+        /* âœ… LISTE (amÃ©liorÃ©e) */
+        .grid{display:grid;gap:14px}
+
+        .card{
+            background:linear-gradient(180deg, #fff, #fbfcff);
+            border:1px solid var(--border);
+            border-radius:22px;
+            padding:16px 18px;
+            box-shadow:0 14px 36px rgba(15,23,42,.08);
+            transition: transform .12s ease, box-shadow .12s ease;
+            position:relative;
+            overflow:hidden;
+        }
+        .card:hover{
+            transform: translateY(-2px);
+            box-shadow:0 18px 48px rgba(15,23,42,.12);
+        }
+
+        .top{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:14px;
+        }
+
+        .title{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            font-weight:1000;
+            font-size:18px;
+            color:#0f172a;
+            line-height:1.25;
+            min-width:0;
+        }
+        .dotIcon{
+            width:34px;height:34px;border-radius:14px;
+            display:flex;align-items:center;justify-content:center;
+            border:1px solid rgba(29,78,216,.18);
+            background: rgba(29,78,216,.08);
+            color:#1d4ed8;
+            font-weight:1000;
+            flex:0 0 auto;
+        }
+        .title .txt{
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+
+        .meta{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            align-items:center;
+            color:var(--muted);
+            font-size:12px;
+            font-weight:900;
+            margin-top:6px;
+        }
+        .pill{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:7px 10px;
+            border-radius:999px;
+            border:1px solid rgba(15,23,42,.10);
+            background:#fff;
+            color:#334155;
+            font-weight:900;
+            font-size:12px;
+        }
+
+        /* âœ… Montant mis en valeur Ã  droite */
+        .amountBox{
+            flex:0 0 auto;
+            min-width: 170px;
+            padding:10px 12px;
+            border-radius:16px;
+            border:1px solid rgba(244,180,0,.28);
+            background: linear-gradient(180deg, rgba(244,180,0,.14), rgba(244,180,0,.07));
+            box-shadow: 0 10px 24px rgba(15,23,42,.06);
+            text-align:right;
+        }
+        .amountBox .k{
+            font-size:12px;
+            color:#7a5200;
+            font-weight:1000;
+            text-transform:uppercase;
+            letter-spacing:.45px;
+            display:flex;
+            gap:8px;
+            justify-content:flex-end;
+            align-items:center;
+        }
+        .amountBox .k .mini{
+            width:8px;height:8px;border-radius:50%;
+            background: rgba(244,180,0,.95);
+            display:inline-block;
+        }
+        .amountBox .v{
+            margin-top:6px;
+            font-size:20px;
+            font-weight:1000;
+            color:var(--navy);
+            font-variant-numeric: tabular-nums;
+            white-space:nowrap;
+        }
+
+        .divider{
+            height:1px;
+            background: rgba(15,23,42,.07);
+            margin:12px 0 0;
+        }
+
+        .skeleton{
+            border:1px solid var(--border);
+            border-radius:22px;
+            background:linear-gradient(90deg, rgba(15,23,42,.04), rgba(15,23,42,.07), rgba(15,23,42,.04));
+            background-size: 200% 100%;
+            animation: sk 1.2s infinite linear;
+            height:110px;
+        }
+        @keyframes sk{
+            0%{ background-position: 200% 0;}
+            100%{ background-position: -200% 0;}
+        }
+
+        .footerNote{
+            margin:18px 0 10px;
+            color:var(--muted);
+            font-weight:800;
+            font-size:12px;
+            text-align:center;
+        }
+
+        @media (max-width: 520px){
+            .amountBox{ min-width: 0; width:100%; text-align:left; }
+            .amountBox .k{ justify-content:flex-start; }
+            .top{ flex-direction:column; }
+        }
+    </style>
+</head>
+
+<body>
+<div class="wrap">
+
+    <div class="page-head">
+        <div>
+            <h2>Mes investissements</h2>
+            <div class="sub">Dashboard + liste. Recherche, tri, et statistiques graphiques.</div>
+        </div>
+        <span class="chip">ðŸ“Š Stats + Graphiques</span>
+    </div>
+
+    <!-- âœ… Top stats + outils -->
+    <div class="topbar">
+        <div class="stats">
+            <div class="stat">
+                <div class="k">Nombre dâ€™investissements</div>
+                <div class="v" id="statCount">â€”</div>
+            </div>
+            <div class="stat">
+                <div class="k">Total investi (TND)</div>
+                <div class="v" id="statTotal">â€”</div>
+            </div>
+        </div>
+
+        <div class="tools">
+            <div class="left">
+                <input id="q" class="search" placeholder="Rechercher: titre, id projet, montant..." />
+                <select id="sort" class="select" title="Trier">
+                    <option value="date_desc">Date â†“</option>
+                    <option value="date_asc">Date â†‘</option>
+                    <option value="montant_desc">Montant â†“</option>
+                    <option value="montant_asc">Montant â†‘</option>
+                </select>
+            </div>
+            <button class="btn" id="btnReset" type="button">RÃ©initialiser</button>
+        </div>
+    </div>
+
+    <!-- âœ… DASHBOARD GRAPHIQUES (NE PAS CHANGER) -->
+    <div class="dash">
+        <div class="panel">
+            <h3>
+                RÃ©partition par projet
+                <small>(Total investi)</small>
+            </h3>
+            <div class="canvas-wrap">
+                <canvas id="chartDoughnut"></canvas>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>
+                Top projets
+                <small>(Montant)</small>
+            </h3>
+            <div class="canvas-wrap">
+                <canvas id="chartBar"></canvas>
+            </div>
+        </div>
+
+        <div class="panel wide">
+            <h3>
+                Ã‰volution dans le temps
+                <small>(Somme par date)</small>
+            </h3>
+            <div class="canvas-wrap tall">
+                <canvas id="chartLine"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- âœ… LISTE -->
+    <div id="invList" class="muted">
+        <div class="grid">
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+            <div class="skeleton"></div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    function formatMoney(n){
+        const x = Number(n||0);
+        return x.toLocaleString("fr-FR") + " TND";
+    }
+
+    let __items = [];
+
+    function parseDateSafe(s){
+        if (!s) return 0;
+        const t = Date.parse(String(s));
+        return isNaN(t) ? 0 : t;
+    }
+
+    function computeStats(items){
+        const countEl = document.getElementById("statCount");
+        const totalEl = document.getElementById("statTotal");
+        const count = (items || []).length;
+        const total = (items || []).reduce((sum, it) => sum + Number(it?.montant || 0), 0);
+        if (countEl) countEl.textContent = String(count);
+        if (totalEl) totalEl.textContent = total.toLocaleString("fr-FR");
+    }
+
+    function getTitre(i){
+        const titre = (i.projetTitre && String(i.projetTitre).trim())
+            ? i.projetTitre
+            : ("Projet #" + i.projetId);
+        return String(titre || "");
+    }
+
+    function applyFilterSort(items){
+        const qEl = document.getElementById("q");
+        const sortEl = document.getElementById("sort");
+        const q = String(qEl?.value || "").trim().toLowerCase();
+        const sort = String(sortEl?.value || "date_desc");
+
+        let out = Array.isArray(items) ? items.slice() : [];
+
+        if (q){
+            out = out.filter(i => {
+                const titre = getTitre(i).toLowerCase();
+                const pid = String(i?.projetId ?? "").toLowerCase();
+                const montant = String(i?.montant ?? "").toLowerCase();
+                const date = String(i?.date ?? "").toLowerCase();
+                return (titre.includes(q) || pid.includes(q) || montant.includes(q) || date.includes(q));
+            });
+        }
+
+        out.sort((a,b)=>{
+            if (sort === "date_desc") return parseDateSafe(b?.date) - parseDateSafe(a?.date);
+            if (sort === "date_asc")  return parseDateSafe(a?.date) - parseDateSafe(b?.date);
+            if (sort === "montant_desc") return Number(b?.montant||0) - Number(a?.montant||0);
+            if (sort === "montant_asc")  return Number(a?.montant||0) - Number(b?.montant||0);
+            return 0;
+        });
+
+        return out;
+    }
+
+    function render(items){
+        const el = document.getElementById("invList");
+        if (!items || items.length === 0) {
+            el.innerHTML = `
+        <div class="card">
+          <div class="title"><span class="dotIcon">i</span><span class="txt">Aucun investissement trouvÃ©</span></div>
+          <div class="meta">
+            <span class="pill">Essayez une autre recherche</span>
+            <span class="pill">ou rÃ©initialisez les filtres</span>
+          </div>
+        </div>
+      `;
+            computeStats([]);
+            updateCharts([]);
+            return;
+        }
+
+        computeStats(items);
+        updateCharts(items);
+
+        el.innerHTML = `<div class="grid">${
+            items.map(i => {
+                const titre = getTitre(i);
+                const projetId = (i.projetId ?? "-");
+                const date = (i.date || "-");
+                const montant = formatMoney(i.montant);
+
+                return `
+          <div class="card">
+            <div class="top">
+              <div style="min-width:0; flex:1">
+                <div class="title">
+                  <span class="dotIcon">ðŸ’¼</span>
+                  <span class="txt">${titre}</span>
+                </div>
+                <div class="meta">
+                  <span class="pill">ðŸ“Œ Projet: <b>${projetId}</b></span>
+                  <span class="pill">ðŸ“… ${date}</span>
+                </div>
+              </div>
+
+              <div class="amountBox">
+                <div class="k"><span class="mini"></span> Montant</div>
+                <div class="v">${montant}</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+          </div>
+        `;
+            }).join("")
+        }</div>`;
+    }
+
+    function renderFromState(){
+        const out = applyFilterSort(__items);
+        render(out);
+    }
+
+    function getInvestBridge(){
+        return window.investBridge
+            || window.javaBridge
+            || window.javaBridgeInvest
+            || window.javaBridgeInvestissement
+            || window.java
+            || null;
+    }
+
+    function tryLoad(retry=0){
+        try{
+            const b = getInvestBridge();
+
+            if (b && typeof b.getMesInvestissementsJson === "function") {
+                const data = b.getMesInvestissementsJson();
+                const items = (typeof data === "string") ? JSON.parse(data) : data;
+
+                __items = Array.isArray(items) ? items : [];
+                renderFromState();
+                return;
+            }
+        }catch(e){
+            console.error(e);
+            document.getElementById("invList").innerHTML =
+                "<p class='err'>Erreur JSON/Bridge. Voir console.</p>";
+            return;
+        }
+
+        if(retry<40) return setTimeout(()=>tryLoad(retry+1),120);
+
+        document.getElementById("invList").innerHTML =
+            "<p class='err'>Bridge introuvable: getMesInvestissementsJson()</p>";
+    }
+
+    // âœ… Charts
+    let __chartDoughnut = null;
+    let __chartBar = null;
+    let __chartLine = null;
+
+    function groupByProject(items){
+        const map = new Map();
+        for (const it of (items||[])){
+            const pid = String(it?.projetId ?? "â€”");
+            const amt = Number(it?.montant || 0);
+            const title = getTitre(it);
+
+            if (!map.has(pid)){
+                map.set(pid, { pid, title, total: 0 });
+            }
+            const obj = map.get(pid);
+
+            if ((!obj.title || obj.title.startsWith("Projet #")) && title && !title.startsWith("Projet #")){
+                obj.title = title;
+            }
+            obj.total += amt;
+        }
+        const arr = Array.from(map.values());
+        arr.sort((a,b)=> b.total - a.total);
+        return arr;
+    }
+
+    function groupByDate(items){
+        const map = new Map();
+        for (const it of (items||[])){
+            const d = String(it?.date || "");
+            if (!d) continue;
+            const amt = Number(it?.montant || 0);
+            map.set(d, (map.get(d) || 0) + amt);
+        }
+        const arr = Array.from(map.entries()).map(([date,total])=>({ date, total }));
+        arr.sort((a,b)=> parseDateSafe(a.date) - parseDateSafe(b.date));
+        return arr;
+    }
+
+    function ensureChartJs(){
+        return typeof Chart !== "undefined";
+    }
+
+    const PercentLabelsPlugin = {
+        id: "percentLabels",
+        afterDatasetsDraw(chart, args, pluginOptions) {
+            const { ctx } = chart;
+            const dataset = chart.data.datasets?.[0];
+            if (!dataset) return;
+
+            const meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data) return;
+
+            const data = dataset.data || [];
+            const total = data.reduce((s, v) => s + Number(v || 0), 0);
+            if (total <= 0) return;
+
+            const minPct = Number(pluginOptions?.minPct ?? 1);
+            const color = pluginOptions?.color || "#0f172a";
+            const fontWeight = pluginOptions?.fontWeight || 1000;
+
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            meta.data.forEach((arc, i) => {
+                const v = Number(data[i] || 0);
+                if (v <= 0) return;
+
+                const pct = (v * 100) / total;
+                if (pct < minPct) return;
+
+                const pos = arc.tooltipPosition();
+                const txt = pct.toFixed(1).replace(".", ",") + "%";
+
+                const fs = Math.max(11, Math.min(16, chart.width / 40));
+                ctx.font = `${fontWeight} ${fs}px ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial`;
+
+                ctx.shadowColor = "rgba(255,255,255,.85)";
+                ctx.shadowBlur = 6;
+
+                ctx.fillText(txt, pos.x, pos.y);
+            });
+
+            ctx.restore();
+        }
+    };
+
+    function updateCharts(items){
+        if (!ensureChartJs()) return;
+
+        const byProject = groupByProject(items);
+        const byDate = groupByDate(items);
+
+        const totalAll = byProject.reduce((s,x)=> s + Number(x.total||0), 0);
+
+        const dLabels = byProject.map(x => x.title || ("Projet #" + x.pid));
+        const dData = byProject.map(x => x.total);
+
+        const top = byProject.slice(0, 8);
+        const bLabels = top.map(x => {
+            const t = String(x.title || ("Projet #" + x.pid));
+            return t.length > 14 ? (t.slice(0, 14) + "â€¦") : t;
+        });
+        const bData = top.map(x => x.total);
+
+        const lLabels = byDate.map(x => x.date);
+        const lData = byDate.map(x => x.total);
+
+        const ctxD = document.getElementById("chartDoughnut");
+        const ctxB = document.getElementById("chartBar");
+        const ctxL = document.getElementById("chartLine");
+
+        if (__chartDoughnut) __chartDoughnut.destroy();
+        if (__chartBar) __chartBar.destroy();
+        if (__chartLine) __chartLine.destroy();
+
+        __chartDoughnut = new Chart(ctxD, {
+            type: "doughnut",
+            data: {
+                labels: dLabels.length ? dLabels : ["Aucun projet"],
+                datasets: [{
+                    data: dData.length ? dData : [1],
+                    borderWidth: 1
+                }]
+            },
+            plugins: [PercentLabelsPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: "bottom" },
+                    percentLabels: {
+                        minPct: 1,
+                        color: "#0f172a",
+                        fontWeight: 1000
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (c) => {
+                                const v = Number(c.raw || 0);
+                                const pct = totalAll > 0 ? (v * 100 / totalAll) : 0;
+                                const pctTxt = pct.toFixed(1).replace(".", ",") + "%";
+                                return `${c.label}: ${v.toLocaleString("fr-FR")} TND (${pctTxt})`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        __chartBar = new Chart(ctxB, {
+            type: "bar",
+            data: {
+                labels: bLabels.length ? bLabels : ["â€”"],
+                datasets: [{
+                    label: "Total (TND)",
+                    data: bData.length ? bData : [0],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (c) => `${Number(c.raw||0).toLocaleString("fr-FR")} TND`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (v) => Number(v).toLocaleString("fr-FR")
+                        }
+                    }
+                }
+            }
+        });
+
+        __chartLine = new Chart(ctxL, {
+            type: "line",
+            data: {
+                labels: lLabels.length ? lLabels : ["â€”"],
+                datasets: [{
+                    label: "Somme investie par date (TND)",
+                    data: lData.length ? lData : [0],
+                    tension: 0.25,
+                    pointRadius: 3,
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: "bottom" } },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (v) => Number(v).toLocaleString("fr-FR")
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const q = document.getElementById("q");
+        const sort = document.getElementById("sort");
+        const reset = document.getElementById("btnReset");
+
+        if (q) q.addEventListener("input", () => renderFromState());
+        if (sort) sort.addEventListener("change", () => renderFromState());
+        if (reset) reset.addEventListener("click", () => {
+            if (q) q.value = "";
+            if (sort) sort.value = "date_desc";
+            renderFromState();
+        });
+
+        setTimeout(()=>tryLoad(0), 150);
+    });
+
+    window.__onJavaBridgeReady = function () { tryLoad(0); };
+    window.loadMesInvestissements = function () { tryLoad(0); };
+</script>
+
+</body>
+</html>
+

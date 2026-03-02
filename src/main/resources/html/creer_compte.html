@@ -17,12 +17,12 @@
         <div>
             <div class="brand">
                 <div class="logo">
-                    <span class="mark" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M4 14.5c4.5-6 9.5-6 16-9.5" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
-                        <path d="M6 19c2.5-4.5 7-6 13-8" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>
-                      </svg>
-                    </span>
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 14.5c4.5-6 9.5-6 16-9.5" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+              <path d="M6 19c2.5-4.5 7-6 13-8" stroke="white" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>
+            </svg>
+          </span>
                     Investia
                 </div>
                 <span class="badge"><span class="dot"></span>Inscription</span>
@@ -130,19 +130,51 @@
             <div class="alert error" id="errorBox"></div>
             <div class="alert ok" id="okBox"></div>
 
-            <div class="row">
+            <!-- ✅ BOUTONS SUR LA MÊME LIGNE -->
+            <div class="actions">
                 <button type="submit" id="signupBtn" class="btn primary">Créer mon compte</button>
+
+                <button type="button" class="btn secondary" onclick="captureFaceForSignup()">
+                    <span class="face-icon" aria-hidden="true"></span>
+                    Capturer visage (optionnel)
+                </button>
             </div>
 
             <div class="divider">
                 <span>Déjà un compte ?</span>
                 <a href="#" id="goLoginLink" class="link">Se connecter →</a>
             </div>
+
+            <input type="hidden" id="faceTemplate" value="">
         </form>
     </section>
+
 </div>
 
-<!-- ✅ WebView: pas de /js/... => chemin relatif -->
 <script src="../js/signup.js"></script>
+
+<script>
+    function captureFaceForSignup() {
+        if (!window.face || !window.face.captureForSignup) {
+            alert("Face bridge non disponible.");
+            return;
+        }
+
+        const tpl = window.face.captureForSignup();
+
+        if (!tpl) {
+            alert("Capture annulée.");
+            return;
+        }
+        if (String(tpl).startsWith("ERROR:")) {
+            alert("Erreur capture visage: " + tpl);
+            return;
+        }
+
+        document.getElementById("faceTemplate").value = tpl;
+        alert("✅ Visage capturé. Vous pouvez créer le compte.");
+    }
+</script>
+
 </body>
 </html>

@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Signature paiement</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <style>
+    .signatureWrap { border:1px solid #d8deea; border-radius:10px; background:#fff; padding:8px; }
+    .signatureCanvas { width:100%; height:220px; display:block; border-radius:8px; background:#ffffff; }
+    .signStatus { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; }
+    .stPending { background:#fff5de; color:#8a6200; border:1px solid #f0dfad; }
+    .stOk { background:#e8f8ef; color:#0d7a3d; border:1px solid #bfe8cf; }
+    .stDone { background:#eaf2ff; color:#17408b; border:1px solid #c9d9ff; }
+  </style>
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Paiement - Signature</span>
+        <h1>Validation finale du paiement</h1>
+        <p class="sub">Signe numeriquement puis telecharge le rapport de paiement.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" id="backLink" href="remboursement-detail.html">Retour</a>
+        <a class="btnTop btnGold" href="remboursement-documents.html">Historique reçus</a>
+      </div>
+    </div>
+
+    <section class="gridTop">
+      <div class="card">
+        <div class="rowHead">
+          <h2 class="title">Paiement confirme</h2>
+        </div>
+        <div class="note">
+          <div><strong>ID remboursement:</strong> <span id="rid">-</span></div>
+          <div><strong>Session Stripe:</strong> <span id="sid">-</span></div>
+          <div><strong>Montant applique:</strong> <span id="amount">-</span></div>
+          <div style="margin-top:10px;"><span id="statusChip" class="signStatus stPending">En attente de signature</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="rowHead">
+          <h2 class="title">Signature entrepreneur</h2>
+        </div>
+        <form id="signForm">
+          <div class="formGrid">
+            <div>
+              <label for="signerName">Nom signataire</label>
+              <input id="signerName" required />
+            </div>
+            <div>
+              <label for="signerEmail">Email signataire</label>
+              <input id="signerEmail" type="email" required />
+            </div>
+            <div style="grid-column:1/-1;">
+              <label for="signatureNote">Mention de signature</label>
+              <input id="signatureNote" value="Je confirme et signe ce paiement." readonly />
+            </div>
+            <div style="grid-column:1/-1; display:flex; align-items:center; gap:8px;">
+              <input id="consent" type="checkbox" />
+              <label for="consent" style="margin:0;">Je confirme la validite du paiement et autorise la generation du rapport.</label>
+            </div>
+            <div style="grid-column:1/-1;">
+              <label>Signature electronique (dessine ici)</label>
+              <div class="signatureWrap">
+                <canvas id="signatureCanvas" width="760" height="220" class="signatureCanvas"></canvas>
+              </div>
+              <div style="margin-top:8px;">
+                <button id="clearSignatureBtn" type="button" class="miniBtn">Effacer signature</button>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="signBtn" class="btnTop btnNavy" type="submit">Signer via API</button>
+            <button id="downloadBtn" class="btnTop btnGold" type="button" disabled>Telecharger rapport PDF</button>
+            <button id="finishBtn" class="btnTop btnGhost" type="button">Terminer</button>
+          </div>
+          <div class="note" id="result" style="display:none; margin-top:12px;"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const id = Number(qs.get("id") || 0);
+    const sessionId = String(qs.get("sessionId") || "");
+    const amount = Number(qs.get("amount") || 0);
+
+    const rid = document.getElementById("rid");
+    const sid = document.getElementById("sid");
+    const amountEl = document.getElementById("amount");
+    const signerName = document.getElementById("signerName");
+    const signerEmail = document.getElementById("signerEmail");
+    const consent = document.getElementById("consent");
+    const signBtn = document.getElementById("signBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const finishBtn = document.getElementById("finishBtn");
+    const result = document.getElementById("result");
+    const backLink = document.getElementById("backLink");
+    const form = document.getElementById("signForm");
+    const signatureCanvas = document.getElementById("signatureCanvas");
+    const clearSignatureBtn = document.getElementById("clearSignatureBtn");
+    const statusChip = document.getElementById("statusChip");
+
+    let signatureId = "";
+    let hasSignatureStroke = false;
+    let drawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function show(msg) {
+      result.style.display = "block";
+      result.textContent = msg;
+    }
+
+    function setChip(type, text) {
+      statusChip.className = "signStatus " + type;
+      statusChip.textContent = text;
+    }
+
+    function money(n) {
+      return new Intl.NumberFormat("fr-TN").format(Number(n || 0)) + " TND";
+    }
+
+    function init() {
+      rid.textContent = String(id || "-");
+      sid.textContent = sessionId || "-";
+      amountEl.textContent = money(amount || 0);
+      backLink.href = id ? `remboursement-detail.html?id=${encodeURIComponent(String(id))}` : "remboursements-financement.html";
+
+      try {
+        if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function") {
+          const role = String(window.javaBridge.getCurrentUserRole() || "");
+          if (role && role !== "ENTREPRENEUR") {
+            show("Cette etape est reservee a l'entrepreneur.");
+            signBtn.disabled = true;
+            setChip("stPending", "Role non autorise");
+          }
+        }
+        if (window.javaBridge && typeof window.javaBridge.getCurrentUserName === "function") {
+          const n = String(window.javaBridge.getCurrentUserName() || "").trim();
+          if (n) signerName.value = n;
+        }
+      } catch (e) {}
+      initSignaturePad();
+    }
+
+    function initSignaturePad() {
+      const ctx = signatureCanvas.getContext("2d");
+      ctx.lineWidth = 2.2;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#0f2d59";
+
+      function point(evt) {
+        const rect = signatureCanvas.getBoundingClientRect();
+        const x = (evt.clientX - rect.left) * (signatureCanvas.width / rect.width);
+        const y = (evt.clientY - rect.top) * (signatureCanvas.height / rect.height);
+        return { x, y };
+      }
+
+      signatureCanvas.addEventListener("pointerdown", (evt) => {
+        const p = point(evt);
+        drawing = true;
+        lastX = p.x;
+        lastY = p.y;
+        signatureCanvas.setPointerCapture(evt.pointerId);
+      });
+      signatureCanvas.addEventListener("pointermove", (evt) => {
+        if (!drawing) return;
+        const p = point(evt);
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        lastX = p.x;
+        lastY = p.y;
+        hasSignatureStroke = true;
+      });
+      function stopDraw(evt) {
+        drawing = false;
+        try { signatureCanvas.releasePointerCapture(evt.pointerId); } catch (e) {}
+      }
+      signatureCanvas.addEventListener("pointerup", stopDraw);
+      signatureCanvas.addEventListener("pointerleave", stopDraw);
+
+      clearSignatureBtn.addEventListener("click", () => {
+        ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+        hasSignatureStroke = false;
+      });
+    }
+
+    function getSignatureImageData() {
+      if (!hasSignatureStroke) return "";
+      return signatureCanvas.toDataURL("image/png");
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!id) {
+        show("ID remboursement manquant.");
+        return;
+      }
+      if (!consent.checked) {
+        show("Confirme d'abord la case de consentement.");
+        return;
+      }
+      const signatureImage = getSignatureImageData();
+      if (!signatureImage) {
+        show("Merci de dessiner votre signature electronique.");
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.createSignatureForPaymentFromJs !== "function") {
+        show("Bridge signature indisponible.");
+        return;
+      }
+      show("Signature en cours...");
+      setChip("stPending", "Signature en cours...");
+      const payload = new URLSearchParams({
+        id: String(id),
+        sessionId: sessionId,
+        signerName: String(signerName.value || "").trim(),
+        signerEmail: String(signerEmail.value || "").trim(),
+        signatureImage: signatureImage
+      }).toString();
+      const raw = window.javaBridge.createSignatureForPaymentFromJs(payload);
+      if (!raw) {
+        show("Reponse signature vide.");
+        return;
+      }
+      try {
+        const res = JSON.parse(String(raw));
+        if (!res.ok) {
+          show("Erreur signature: " + (res.message || "inconnue"));
+          return;
+        }
+        signatureId = String(res.signatureId || "");
+        show("Signature validee. ID signature: " + (signatureId || "-"));
+        downloadBtn.disabled = false;
+        signBtn.disabled = true;
+        clearSignatureBtn.disabled = true;
+        setChip("stOk", "Signature enregistree");
+      } catch (err) {
+        show("Erreur lecture reponse signature.");
+        setChip("stPending", "Erreur signature");
+      }
+    });
+
+    downloadBtn.addEventListener("click", () => {
+      if (!id) return;
+      if (!window.javaBridge || typeof window.javaBridge.downloadPaymentReportFromJs !== "function") {
+        show("Bridge rapport indisponible.");
+        return;
+      }
+      show("Generation du rapport...");
+      setChip("stOk", "Generation du recu...");
+      const payload = new URLSearchParams({
+        id: String(id),
+        sessionId: sessionId,
+        signatureId: signatureId,
+        signerName: String(signerName.value || "").trim(),
+        signerEmail: String(signerEmail.value || "").trim(),
+        signatureImage: getSignatureImageData()
+      }).toString();
+      const raw = window.javaBridge.downloadPaymentReportFromJs(payload);
+      if (!raw) {
+        show("Reponse rapport vide.");
+        return;
+      }
+      try {
+        const res = JSON.parse(String(raw));
+        if (!res.ok) {
+          show("Erreur rapport: " + (res.message || "inconnue"));
+          return;
+        }
+        show("Rapport telecharge: " + (res.path || ""));
+        setChip("stDone", "Recu PDF telecharge et archive");
+      } catch (e) {
+        show("Erreur lecture reponse rapport.");
+        setChip("stPending", "Erreur recu");
+      }
+    });
+
+    finishBtn.addEventListener("click", () => {
+      if (id) window.location.href = `remboursement-detail.html?id=${encodeURIComponent(String(id))}`;
+      else window.location.href = "remboursements-financement.html";
+    });
+
+    function waitForBridge(retries) {
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) {
+        show("Bridge Java indisponible.");
+        return;
+      }
+      setTimeout(() => waitForBridge(retries - 1), 200);
+    }
+    waitForBridge(30);
+  </script>
+</body>
+</html>

@@ -149,6 +149,41 @@ public class Financement2CRUD implements InterfaceCRUD<Financement2> {
         return null;
     }
 
+    public Financement2 getLatestByInvestissementId(int investissementId) throws SQLException {
+        requireConn();
+        String sql = "SELECT * FROM financement2 WHERE id_investissement=? ORDER BY id_financement DESC LIMIT 1";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, investissementId);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) return mapRow(rs);
+            }
+        }
+        return null;
+    }
+
+    public boolean existsByInvestissementId(int investissementId) throws SQLException {
+        requireConn();
+        String sql = "SELECT 1 FROM financement2 WHERE id_investissement=? LIMIT 1";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, investissementId);
+            try (ResultSet rs = pst.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public boolean existsByInvestissementIdExcluding(int investissementId, int financementId) throws SQLException {
+        requireConn();
+        String sql = "SELECT 1 FROM financement2 WHERE id_investissement=? AND id_financement<>? LIMIT 1";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, investissementId);
+            pst.setInt(2, financementId);
+            try (ResultSet rs = pst.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
     public double totalConfirmeParProjet(int idProjet) throws SQLException {
         requireConn();
         String req = "SELECT COALESCE(SUM(montant),0) AS total FROM financement2 WHERE id_projet=? AND statut='CONFIRMED'";

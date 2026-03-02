@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Echeances (Financement)</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+  <style>
+    :root {
+      --ink: #153a6b;
+      --ink-soft: #5f7597;
+      --line: #dbe5f4;
+      --ok-bg: #e9f7ef;
+      --ok-fg: #147a44;
+      --wait-bg: #fff4de;
+      --wait-fg: #8a6400;
+      --danger-bg: #fff0f0;
+      --danger-fg: #9c2f2f;
+      --panel-bg: linear-gradient(120deg, #f8f5ea 0%, #eef3ff 100%);
+    }
+
+    .workflowCompact {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .workflowCompact .step {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .actionsBar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    .chip[data-active="true"] {
+      background: #1f4d8c;
+      border-color: #1f4d8c;
+      color: #fff;
+    }
+
+    .kpisSticky { margin-top: 12px; }
+    .kpisWrap {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+    }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .kpi {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+    }
+    .kpiLabel {
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .kpiValue {
+      color: var(--ink);
+      font-size: 22px;
+      font-weight: 800;
+      margin-top: 3px;
+      line-height: 1;
+    }
+    .kpiValue.small { font-size: 18px; }
+
+    .tableWrap {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-top: 12px;
+      background: #fff;
+    }
+
+    table tr td { vertical-align: middle; }
+
+    .statusTag {
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .statusTag::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .statusTag.ok {
+      background: var(--ok-bg);
+      color: var(--ok-fg);
+      border: 1px solid #bde5cd;
+    }
+    .statusTag.ok::before { background: var(--ok-fg); }
+    .statusTag.wait {
+      background: var(--wait-bg);
+      color: var(--wait-fg);
+      border: 1px solid #f2deaa;
+    }
+    .statusTag.wait::before { background: #d89e00; }
+
+    .dueCell { font-weight: 800; color: #234874; }
+    .paidCell { font-weight: 800; color: #1f6f47; }
+    .remainCell { font-weight: 800; color: #8a4d00; }
+
+    .rowBtns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btnPay {
+      background: #1f4d8c;
+      color: #fff;
+      border: 1px solid #1f4d8c;
+    }
+    .btnPay:disabled {
+      background: #e6ebf3;
+      color: #6d7b90;
+      border-color: #d2dbe8;
+      cursor: not-allowed;
+    }
+
+    .sectionTitleRow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .errorBox {
+      border: 1px solid #f2c3c3;
+      background: #fff2f2;
+      color: var(--danger-fg);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1100px) {
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Echeances</span>
+        <h1>Echeances d'un financement</h1>
+        <p class="sub">Interface entrepreneur: suivi, paiement et verification des echeances.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGold" id="addLink" href="remboursement-add.html">+ Ajouter</a>
+        <a class="btnTop btnGhost" href="audit-center.html?role=ENTREPRENEUR">Audit</a>
+        <a class="btnTop btnGhost" href="remboursement-stats.html?role=ENTREPRENEUR">Statistiques</a>
+        <a class="btnTop btnGhost" href="remboursement-calendar.html">Calendrier</a>
+        <a class="btnTop btnNavy" id="refreshLink" href="#">Rafraichir</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="sectionTitleRow">
+        <div>
+          <h2 class="title" style="margin:0;">Gestion des echeances</h2>
+          <p class="sub" style="margin-top:6px;">Vue metier: suivre les montants, traiter les impayes, ouvrir le detail.</p>
+        </div>
+      </div>
+      <div class="workflowCompact">
+        <span class="step">1. Filtrer</span>
+        <span class="step">2. Verifier</span>
+        <span class="step">3. Payer / Detail</span>
+      </div>
+
+      <div class="actionsBar">
+        <div class="fieldSmall" style="min-width:220px;">
+          <label for="projectFilter">Projet finance</label>
+          <select id="projectFilter">
+            <option value="">Chargement...</option>
+          </select>
+        </div>
+        <div class="fieldSmall" style="min-width:220px;">
+          <label for="financementFilter">Financement</label>
+          <select id="financementFilter">
+            <option value="">Tous</option>
+          </select>
+        </div>
+        <div class="fieldSmall" style="min-width:220px;">
+          <label for="search">Recherche</label>
+          <input id="search" placeholder="ID, date (YYYY-MM-DD), statut" />
+        </div>
+        <button id="fltAll" class="chip" data-active="true" type="button">Tous</button>
+        <button id="fltPending" class="chip" data-active="false" type="button">En attente</button>
+        <button id="fltPaid" class="chip" data-active="false" type="button">Payes</button>
+      </div>
+
+      <div class="kpisSticky">
+        <div class="kpisWrap">
+          <div class="kpis">
+            <div class="kpi"><div class="kpiLabel">Total du</div><div class="kpiValue small" id="kDue">0 TND</div></div>
+            <div class="kpi"><div class="kpiLabel">Total paye</div><div class="kpiValue small" id="kPaid">0 TND</div></div>
+            <div class="kpi"><div class="kpiLabel">Reste global</div><div class="kpiValue small" id="kRemain">0 TND</div></div>
+            <div class="kpi"><div class="kpiLabel">Echeances en attente</div><div class="kpiValue" id="kPending">0</div></div>
+            <div class="kpi"><div class="kpiLabel">Nb echeances</div><div class="kpiValue" id="kCount">0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tableWrap">
+        <table aria-label="Table des remboursements">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Date echeance</th>
+              <th>Montant du</th>
+              <th>Montant paye</th>
+              <th>Reste</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="note" id="result" style="display:none;"></div>
+    </section>
+
+    <section class="card" style="margin-top:14px;">
+      <div class="rowHead">
+        <h2 class="title">Historique des paiements</h2>
+      </div>
+      <div class="tableWrap" style="margin-top:0;">
+        <table aria-label="Historique des paiements">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Echeance</th>
+              <th>Montant paye</th>
+              <th>Signataire</th>
+              <th>Date de paiement</th>
+              <th>Document</th>
+            </tr>
+          </thead>
+          <tbody id="historyTbody"></tbody>
+        </table>
+      </div>
+      <div class="note" id="historyNote" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const source = params.get("source");
+    const projectIdParam = params.get("projectId");
+    const financementIdParam = params.get("financementId");
+    let selectedProjectId = projectIdParam ? String(projectIdParam) : "";
+    let selectedFinancementId = financementIdParam ? String(financementIdParam) : "";
+
+    const tbody = document.getElementById("tbody");
+    const search = document.getElementById("search");
+    const projectFilter = document.getElementById("projectFilter");
+    const financementFilter = document.getElementById("financementFilter");
+    const result = document.getElementById("result");
+    const addLink = document.getElementById("addLink");
+    const refreshLink = document.getElementById("refreshLink");
+
+    const kDue = document.getElementById("kDue");
+    const kPaid = document.getElementById("kPaid");
+    const kRemain = document.getElementById("kRemain");
+    const kPending = document.getElementById("kPending");
+    const kCount = document.getElementById("kCount");
+
+    const historyTbody = document.getElementById("historyTbody");
+    const historyNote = document.getElementById("historyNote");
+
+    const fltAll = document.getElementById("fltAll");
+    const fltPending = document.getElementById("fltPending");
+    const fltPaid = document.getElementById("fltPaid");
+
+    let quickFilter = "ALL";
+    let data = [];
+    let paymentHistory = [];
+
+    function money(n){ return new Intl.NumberFormat("fr-TN").format(Number(n || 0)) + " TND"; }
+    function round2(n){ return Math.round((Number(n) + Number.EPSILON) * 100) / 100; }
+    function paidCapped(du, paye){
+      const d = Math.max(0, Number(du) || 0);
+      const p = Math.max(0, Number(paye) || 0);
+      return Math.min(d, p);
+    }
+    function remaining(du, paye){ return Math.max(0, round2((Number(du) || 0) - paidCapped(du, paye))); }
+
+    function setQuickFilter(v){
+      quickFilter = v;
+      fltAll.setAttribute("data-active", v === "ALL" ? "true" : "false");
+      fltPending.setAttribute("data-active", v === "EN_ATTENTE" ? "true" : "false");
+      fltPaid.setAttribute("data-active", v === "PAYE" ? "true" : "false");
+      render();
+    }
+
+    function updateUrlState(){
+      const q = new URLSearchParams();
+      if (source) q.set("source", source);
+      if (selectedProjectId) q.set("projectId", selectedProjectId);
+      if (selectedFinancementId) q.set("financementId", selectedFinancementId);
+      history.replaceState(null, "", `${location.pathname}?${q.toString()}`);
+    }
+
+    function computeKpis(rows){
+      const totalDu = rows.reduce((a, r) => a + (Number(r.montantDu) || 0), 0);
+      const totalPaye = rows.reduce((a, r) => a + paidCapped(r.montantDu, r.montantPaye), 0);
+      const resteGlobal = Math.max(0, round2(totalDu - totalPaye));
+      const pendingCount = rows.filter(r => String(r.statut || "").toUpperCase() !== "PAYE").length;
+
+      kDue.textContent = money(round2(totalDu));
+      kPaid.textContent = money(round2(totalPaye));
+      kRemain.textContent = money(resteGlobal);
+      kPending.textContent = String(pendingCount);
+      kCount.textContent = String(rows.length);
+    }
+
+    function loadProjectFilter(){
+      if (!window.javaBridge || typeof window.javaBridge.getMyProjectsJson !== "function") return [];
+      try {
+        const rows = JSON.parse(String(window.javaBridge.getMyProjectsJson() || "[]"));
+        const arr = Array.isArray(rows) ? rows : [];
+        if (!arr.length) {
+          projectFilter.innerHTML = "<option value=''>Aucun projet</option>";
+          selectedProjectId = "";
+          return [];
+        }
+        projectFilter.innerHTML = arr.map(p => `<option value="${String(p.id || "")}">${escapeHtml(String(p.name || ("Projet #" + p.id)))}</option>`).join("");
+        const exists = arr.some(p => String(p.id) === String(selectedProjectId || ""));
+        if (!exists) selectedProjectId = String(arr[0].id);
+        projectFilter.value = selectedProjectId;
+        return arr;
+      } catch (_e) {
+        projectFilter.innerHTML = "<option value=''>Erreur chargement</option>";
+        selectedProjectId = "";
+        return [];
+      }
+    }
+
+    function loadFinancementFilterForProject(pid){
+      financementFilter.innerHTML = "<option value=''>Aucun financement</option>";
+      if (!pid || !window.javaBridge || typeof window.javaBridge.getFinancementsByProjectWithRembStatusJson !== "function") {
+        selectedFinancementId = "";
+        return [];
+      }
+      try {
+        const rows = JSON.parse(String(window.javaBridge.getFinancementsByProjectWithRembStatusJson(Number(pid)) || "[]"));
+        const arr = Array.isArray(rows) ? rows : [];
+        if (!arr.length) {
+          financementFilter.innerHTML = "<option value=''>Aucun financement</option>";
+          selectedFinancementId = "";
+          return [];
+        }
+        financementFilter.innerHTML = arr.map((f, i) => {
+          const label = `Financement N${i + 1} - ${money(f.amount || 0)}`;
+          return `<option value="${String(f.id || "")}">${escapeHtml(label)}</option>`;
+        }).join("");
+        const exists = arr.some(f => String(f.id) === String(selectedFinancementId || ""));
+        if (!exists) selectedFinancementId = String(arr[0].id);
+        financementFilter.value = selectedFinancementId;
+        return arr;
+      } catch (_e) {
+        financementFilter.innerHTML = "<option value=''>Erreur chargement</option>";
+        selectedFinancementId = "";
+        return [];
+      }
+    }
+
+    function loadFromDb(){
+      if (!selectedFinancementId) {
+        result.style.display = "block";
+        result.className = "errorBox";
+        result.textContent = "Aucun financement disponible pour ce projet.";
+        data = [];
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.getRemboursementsByFinancementJson !== "function") {
+        result.style.display = "block";
+        result.className = "errorBox";
+        result.textContent = "Bridge Java indisponible.";
+        data = [];
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getRemboursementsByFinancementJson(Number(selectedFinancementId));
+        const rows = JSON.parse(String(raw || "[]"));
+        data = (Array.isArray(rows) ? rows : []).map(r => {
+          const du = Number(r.montantDu || 0);
+          const paye = Number(r.montantPaye || 0);
+          const statut = (paye + 1e-9 >= du && du > 0) ? "PAYE" : "EN_ATTENTE";
+          return {
+            id: String(r.id),
+            financementId: r.financementId,
+            dateEcheance: r.dateEcheance || "",
+            montantDu: du,
+            montantPaye: paye,
+            statut
+          };
+        }).sort((a, b) => {
+          const da = Date.parse(a.dateEcheance || "");
+          const db = Date.parse(b.dateEcheance || "");
+          const va = Number.isFinite(da) ? da : Number.MAX_SAFE_INTEGER;
+          const vb = Number.isFinite(db) ? db : Number.MAX_SAFE_INTEGER;
+          if (va !== vb) return va - vb;
+          return Number(a.id || 0) - Number(b.id || 0);
+        });
+      } catch (e) {
+        data = [];
+        result.style.display = "block";
+        result.className = "errorBox";
+        result.textContent = "Erreur chargement remboursements: " + e;
+      }
+    }
+
+    function loadPaymentHistory(){
+      paymentHistory = [];
+      if (!window.javaBridge) {
+        historyNote.style.display = "block";
+        historyNote.textContent = "Bridge historique indisponible.";
+        return;
+      }
+      try {
+        let rows = [];
+        const remboursementIds = new Set((Array.isArray(data) ? data : []).map(x => String(x.id || "")));
+        if (typeof window.javaBridge.getPaymentDocumentsByRemboursementsFromJs === "function" && remboursementIds.size > 0) {
+          const payload = new URLSearchParams({ ids: Array.from(remboursementIds).join(",") }).toString();
+          rows = JSON.parse(String(window.javaBridge.getPaymentDocumentsByRemboursementsFromJs(payload) || "[]"));
+        }
+
+        if ((!Array.isArray(rows) || rows.length === 0) && typeof window.javaBridge.getPaymentDocumentsByFinancementJson === "function") {
+          rows = JSON.parse(String(window.javaBridge.getPaymentDocumentsByFinancementJson(Number(selectedFinancementId || 0)) || "[]"));
+        } else if ((!Array.isArray(rows) || rows.length === 0) && typeof window.javaBridge.getPaymentDocumentsForCurrentEntrepreneurJson === "function") {
+          const all = JSON.parse(String(window.javaBridge.getPaymentDocumentsForCurrentEntrepreneurJson() || "[]"));
+          rows = (Array.isArray(all) ? all : []).filter(x => String(x.financementId || "") === String(selectedFinancementId || ""));
+        }
+
+        let arr = Array.isArray(rows) ? rows : [];
+        if (!arr.length && typeof window.javaBridge.getPaymentDocumentsForCurrentEntrepreneurJson === "function" && remboursementIds.size > 0) {
+          const all = JSON.parse(String(window.javaBridge.getPaymentDocumentsForCurrentEntrepreneurJson() || "[]"));
+          arr = (Array.isArray(all) ? all : []).filter(x => remboursementIds.has(String(x.remboursementId || "")));
+        }
+
+        paymentHistory = arr.sort((a, b) => {
+          const da = Date.parse(String(a.generatedAt || ""));
+          const db = Date.parse(String(b.generatedAt || ""));
+          const va = Number.isFinite(da) ? da : 0;
+          const vb = Number.isFinite(db) ? db : 0;
+          return vb - va;
+        });
+      } catch (e) {
+        historyNote.style.display = "block";
+        historyNote.textContent = "Erreur chargement historique: " + e;
+      }
+    }
+
+    function applyFilters(){
+      const s = (search.value || "").toLowerCase().trim();
+      return data.filter(r => {
+        if (quickFilter !== "ALL" && String(r.statut) !== quickFilter) return false;
+        if (!s) return true;
+        return (
+          String(r.id).toLowerCase().includes(s) ||
+          String(r.statut).toLowerCase().includes(s) ||
+          String(r.dateEcheance || "").toLowerCase().includes(s)
+        );
+      });
+    }
+
+    function render(){
+      const rows = applyFilters();
+      computeKpis(rows);
+
+      tbody.innerHTML = rows.map((r, idx) => {
+        const payeAffiche = paidCapped(r.montantDu, r.montantPaye);
+        const resteAffiche = remaining(r.montantDu, payeAffiche);
+        const isPaid = (Number(r.montantDu || 0) > 0 && (payeAffiche + 1e-9) >= Number(r.montantDu || 0));
+
+        const payBtn = isPaid
+          ? `<button class="miniBtn btnPay" disabled type="button">Paye</button>`
+          : `<a class="miniBtn btnPay" href="remboursement-pay.html?id=${encodeURIComponent(r.id)}">Payer</a>`;
+
+        return `
+          <tr>
+            <td><strong>${idx + 1}</strong></td>
+            <td>${escapeHtml(r.dateEcheance || "-")}</td>
+            <td class="dueCell">${money(r.montantDu)}</td>
+            <td class="paidCell">${money(payeAffiche)}</td>
+            <td class="remainCell">${money(resteAffiche)}</td>
+            <td>${isPaid ? '<span class="statusTag ok">PAYE</span>' : '<span class="statusTag wait">EN_ATTENTE</span>'}</td>
+            <td>
+              <div class="rowBtns">
+                ${payBtn}
+                <a class="miniBtn" href="remboursement-detail.html?id=${encodeURIComponent(r.id)}&source=${encodeURIComponent(String(source || ''))}&projectId=${encodeURIComponent(String(selectedProjectId || ''))}&financementId=${encodeURIComponent(String(selectedFinancementId || ''))}&returnUrl=${encodeURIComponent(String(location.pathname + location.search))}">Detail</a>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      renderPaymentHistory();
+    }
+
+    function renderPaymentHistory(){
+      if (!paymentHistory.length){
+        historyTbody.innerHTML = "<tr><td colspan='6'>Aucun paiement archive pour ce financement.</td></tr>";
+        return;
+      }
+      historyNote.style.display = "none";
+      historyTbody.innerHTML = paymentHistory.map((h) => {
+        const rembId = String(h.remboursementId || "");
+        const echeanceNo = getRemboursementOrdinal(rembId);
+        const echeance = getRemboursementDate(rembId) || "-";
+        const montantPaye = getRemboursementPaid(rembId);
+        const signataire = String(h.signerName || "").trim() || "Non renseigne";
+        const date = String(h.generatedAt || "-");
+        const path = String(h.filePath || "");
+        const recuId = Number(h.recuId || 0);
+        const openBtn = (path || recuId > 0)
+          ? `<button type="button" class="miniBtn edit" onclick="openHistoryFile(${recuId}, '${path.replaceAll("\\", "\\\\").replaceAll("'", "\\'")}')">Ouvrir</button>`
+          : `<span class="miniBtn" style="opacity:.55; pointer-events:none;">N/A</span>`;
+
+        return `
+          <tr>
+            <td><strong>${echeanceNo > 0 ? echeanceNo : "-"}</strong></td>
+            <td>${escapeHtml(echeance)}</td>
+            <td><strong>${money(montantPaye)}</strong></td>
+            <td>${escapeHtml(signataire)}</td>
+            <td>${escapeHtml(date)}</td>
+            <td>${openBtn}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function getRemboursementDate(rembId){
+      const row = data.find(x => String(x.id) === String(rembId));
+      return row ? String(row.dateEcheance || "") : "";
+    }
+
+    function getRemboursementPaid(rembId){
+      const row = data.find(x => String(x.id) === String(rembId));
+      if (!row) return 0;
+      return paidCapped(row.montantDu, row.montantPaye);
+    }
+
+    function getRemboursementOrdinal(rembId){
+      const idx = data.findIndex(x => String(x.id) === String(rembId));
+      return idx >= 0 ? (idx + 1) : 0;
+    }
+
+    window.openHistoryFile = function(recuId, path){
+      const p = String(path || "").trim();
+      const rid = Number(recuId || 0);
+      if (!window.javaBridge) {
+        historyNote.style.display = "block";
+        historyNote.textContent = "Ouverture document indisponible.";
+        return;
+      }
+      if (typeof window.javaBridge.openReceiptDocumentFromJs === "function") {
+        const payload = "recuId=" + encodeURIComponent(String(rid)) + "&path=" + encodeURIComponent(p);
+        const raw = String(window.javaBridge.openReceiptDocumentFromJs(payload) || "");
+        try {
+          const res = JSON.parse(raw || "{}");
+          if (!res.ok) {
+            historyNote.style.display = "block";
+            historyNote.textContent = "Ouverture impossible: " + String(res.message || "fichier introuvable");
+          }
+        } catch (_e) {}
+        return;
+      }
+      if (typeof window.javaBridge.openExternalUrl !== "function") {
+        historyNote.style.display = "block";
+        historyNote.textContent = "Ouverture document indisponible.";
+        return;
+      }
+      if (!p) return;
+      const normalized = p.replace(/\\/g, "/");
+      window.javaBridge.openExternalUrl("url=" + encodeURIComponent("file:///" + normalized));
+    };
+
+    function escapeHtml(s){
+      return String(s || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;");
+    }
+
+    function init(){
+      loadProjectFilter();
+      loadFinancementFilterForProject(selectedProjectId);
+      updateUrlState();
+      if (refreshLink) refreshLink.href = `remboursements-financement.html?source=${encodeURIComponent(String(source || ""))}&projectId=${encodeURIComponent(String(selectedProjectId || ""))}&financementId=${encodeURIComponent(String(selectedFinancementId || ""))}`;
+      if (addLink) {
+        if (source === "entrepreneur" && selectedProjectId) {
+          addLink.href = `remboursement-add.html?source=entrepreneur&projectId=${encodeURIComponent(String(selectedProjectId))}&financementId=${encodeURIComponent(selectedFinancementId)}`;
+        } else {
+          addLink.href = `remboursement-add.html?financementId=${encodeURIComponent(selectedFinancementId)}`;
+        }
+      }
+      loadFromDb();
+      loadPaymentHistory();
+      render();
+    }
+
+    window.onJavaBridgeReady = init;
+    function waitForBridge(retries){
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.className = "errorBox";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(30);
+
+    [search].forEach(el => {
+      el.addEventListener("input", render);
+      el.addEventListener("change", render);
+    });
+
+    fltAll.addEventListener("click", function(){ setQuickFilter("ALL"); });
+    fltPending.addEventListener("click", function(){ setQuickFilter("EN_ATTENTE"); });
+    fltPaid.addEventListener("click", function(){ setQuickFilter("PAYE"); });
+    projectFilter.addEventListener("change", function(){
+      selectedProjectId = String(projectFilter.value || "");
+      loadFinancementFilterForProject(selectedProjectId);
+      updateUrlState();
+      init();
+    });
+    financementFilter.addEventListener("change", function(){
+      selectedFinancementId = String(financementFilter.value || "");
+      updateUrlState();
+      init();
+    });
+  </script>
+</body>
+</html>

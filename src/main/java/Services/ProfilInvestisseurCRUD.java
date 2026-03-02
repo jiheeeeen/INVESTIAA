@@ -14,7 +14,6 @@ public class ProfilInvestisseurCRUD {
 
     private final Connection cnx = MyBD.getInstance().getConn();
     private String cachedUserIdCol;
-    private String cachedInvestisseurIdCol;
 
     public ProfilInvestisseur getByUserId(int idUser) throws SQLException {
         String userIdCol = resolveUserIdColumn();
@@ -35,18 +34,17 @@ public class ProfilInvestisseurCRUD {
         return p.getIdInvestisseur();
     }
 
+    // ✅ Utilisé par ProjetBridgeController (investisseur -> user)
     public int getUserIdByInvestisseurId(int idInvestisseur) throws SQLException {
-        String investCol = resolveInvestisseurIdColumn();
-        String userCol = resolveUserIdColumn();
-        if (investCol == null || userCol == null) return 0;
-        String sql = "SELECT " + userCol + " FROM investisseur WHERE " + investCol + " = ?";
+        String userIdCol = resolveUserIdColumn();
+        String sql = "SELECT " + userIdCol + " FROM investisseur WHERE id_investisseur = ?";
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
             ps.setInt(1, idInvestisseur);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return 0;
-                return rs.getInt(1);
+                if (rs.next()) return rs.getInt(1);
             }
         }
+        return 0;
     }
 
     // ===== upsert (insert si absent, update si existe) =====
@@ -180,24 +178,6 @@ public class ProfilInvestisseurCRUD {
         }
     }
 
-    private String resolveInvestisseurIdColumn() {
-        if (cachedInvestisseurIdCol != null) return cachedInvestisseurIdCol;
-        String fallback = "id_investisseur";
-        if (cnx == null) {
-            cachedInvestisseurIdCol = fallback;
-            return cachedInvestisseurIdCol;
-        }
-        try {
-            List<String> cols = loadColumns("investisseur");
-            cachedInvestisseurIdCol = firstExisting(cols, "id_investisseur", "investisseur_id", "id", "idInvestisseur");
-            if (cachedInvestisseurIdCol == null || cachedInvestisseurIdCol.isBlank()) cachedInvestisseurIdCol = fallback;
-            return cachedInvestisseurIdCol;
-        } catch (Exception e) {
-            cachedInvestisseurIdCol = fallback;
-            return cachedInvestisseurIdCol;
-        }
-    }
-
     private List<String> loadColumns(String table) throws SQLException {
         List<String> cols = new ArrayList<>();
         try {
@@ -224,7 +204,6 @@ public class ProfilInvestisseurCRUD {
         }
         if (!cols.isEmpty()) return cols;
 
-        // Fallback: read column names from a simple SELECT
         String fallbackSql = "SELECT * FROM " + table + " LIMIT 1";
         try (PreparedStatement ps = cnx.prepareStatement(fallbackSql);
              ResultSet rs = ps.executeQuery()) {
@@ -246,5 +225,17 @@ public class ProfilInvestisseurCRUD {
             }
         }
         return null;
+    }
+
+    // =========================================================
+    // ✅ AJOUT SANS CHANGER TA LOGIQUE
+    // =========================================================
+    public void updateBudgetTotalByIdInvestisseur(int idInvestisseur, BigDecimal newBudgetTotal) throws SQLException {
+        String sql = "UPDATE investisseur SET budget_total=? WHERE id_investisseur=?";
+        try (PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setBigDecimal(1, newBudgetTotal);
+            ps.setInt(2, idInvestisseur);
+            ps.executeUpdate();
+        }
     }
 }

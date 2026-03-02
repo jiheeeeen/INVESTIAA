@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Remboursements (Investisseur)</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Investisseur</span>
+        <h1>Mes remboursements</h1>
+        <p class="sub">Liste des echeances liees a vos investissements.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="audit-center.html?role=INVESTISSEUR">Audit</a>
+        <a class="btnTop btnGhost" href="remboursement-stats.html?role=INVESTISSEUR">Statistiques</a>
+        <a class="btnTop btnNavy" href="remboursements-investisseur.html">Rafraichir</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="crudHead">
+        <div>
+          <h2 class="title" style="margin:0;">Liste</h2>
+          <p class="sub" style="margin-top:8px;">Filtre par statut ou recherche par projet/financement.</p>
+        </div>
+        <div class="crudFilters">
+          <div class="fieldSmall">
+            <label for="projectFilter">Projet finance</label>
+            <select id="projectFilter">
+              <option value="ALL" selected>Tous</option>
+            </select>
+          </div>
+          <div class="fieldSmall">
+            <label for="financementFilter">Financement</label>
+            <select id="financementFilter">
+              <option value="ALL" selected>Tous</option>
+            </select>
+          </div>
+          <div class="fieldSmall">
+            <label for="search">Recherche</label>
+            <input id="search" placeholder="projet, financement, statut..." />
+          </div>
+          <div class="fieldSmall">
+            <label for="statut">Statut</label>
+            <select id="statut">
+              <option value="ALL" selected>Tous</option>
+              <option value="EN_ATTENTE">EN_ATTENTE</option>
+              <option value="PAYE">PAYE</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="kpiLabel">Total du</div><div class="kpiValue" id="kDue">0 TND</div></div>
+        <div class="kpi"><div class="kpiLabel">Total paye</div><div class="kpiValue" id="kPaid">0 TND</div></div>
+        <div class="kpi"><div class="kpiLabel">Nb echeances</div><div class="kpiValue" id="kCount">0</div></div>
+      </div>
+
+      <table aria-label="Table des remboursements">
+        <thead>
+          <tr>
+            <th>Projet</th>
+            <th>Financement</th>
+            <th>Date echeance</th>
+            <th>Montant du</th>
+            <th>Montant paye</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div class="note" id="result" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script>
+    let data = [];
+    const params = new URLSearchParams(location.search);
+    const onlyFinancementId = String(params.get("financementId") || "");
+    const onlyProjectId = String(params.get("projectId") || "");
+
+    const tbody = document.getElementById("tbody");
+    const search = document.getElementById("search");
+    const projectFilter = document.getElementById("projectFilter");
+    const financementFilter = document.getElementById("financementFilter");
+    const statut = document.getElementById("statut");
+    const result = document.getElementById("result");
+    const kDue = document.getElementById("kDue");
+    const kPaid = document.getElementById("kPaid");
+    const kCount = document.getElementById("kCount");
+    let selectedProject = onlyProjectId || "ALL";
+    let selectedFinancement = onlyFinancementId || "ALL";
+    let financementOrdinalByProjectAndId = new Map();
+
+    function money(n){
+      return new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    }
+
+    function round2(n){
+      return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+    }
+
+    function paidCapped(du, paye){
+      const d = Math.max(0, Number(du) || 0);
+      const p = Math.max(0, Number(paye) || 0);
+      return Math.min(d, p);
+    }
+
+    function escapeHtml(s){
+      return String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\"","&quot;");
+    }
+
+    function rebuildFinancementOrdinals(){
+      financementOrdinalByProjectAndId = new Map();
+      const grouped = new Map();
+      (Array.isArray(data) ? data : []).forEach(r => {
+        const pKey = String(r.projectKey || "");
+        const fId = String(r.financementId || "");
+        if (!pKey || !fId) return;
+        if (!grouped.has(pKey)) grouped.set(pKey, new Set());
+        grouped.get(pKey).add(fId);
+      });
+      grouped.forEach((set, pKey) => {
+        const ids = Array.from(set);
+        ids.sort((a, b) => Number(a || 0) - Number(b || 0));
+        ids.forEach((id, idx) => financementOrdinalByProjectAndId.set(`${pKey}|${id}`, idx + 1));
+      });
+    }
+
+    function financementLabel(finId, projectKey){
+      const key = `${String(projectKey || "")}|${String(finId || "")}`;
+      const n = Number(financementOrdinalByProjectAndId.get(key) || 0);
+      return n > 0 ? `Financement N\u00B0${n}` : "Financement";
+    }
+
+    function computeKpis(rows){
+      const totalDu = rows.reduce((a,r) => a + (Number(r.montantDu) || 0), 0);
+      const totalPaye = rows.reduce((a,r) => a + paidCapped(r.montantDu, r.montantPaye), 0);
+      kDue.textContent = money(round2(totalDu));
+      kPaid.textContent = money(round2(totalPaye));
+      kCount.textContent = String(rows.length);
+    }
+
+    function loadFromDb(){
+      if (!window.javaBridge) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        data = [];
+        return;
+      }
+      try {
+        let rows = [];
+        if (typeof window.javaBridge.getRemboursementsForCurrentInvestorJson === "function") {
+          const raw = window.javaBridge.getRemboursementsForCurrentInvestorJson();
+          rows = JSON.parse(String(raw || "[]"));
+        }
+
+        // Fallback: some datasets expose investor data only via financements endpoint.
+        if ((!Array.isArray(rows) || rows.length === 0)
+          && typeof window.javaBridge.getFinancementsForCurrentInvestorJson === "function") {
+          const rawFin = window.javaBridge.getFinancementsForCurrentInvestorJson();
+          const finRows = JSON.parse(String(rawFin || "[]"));
+          const investorFinancements = Array.isArray(finRows) ? finRows : [];
+
+          // Preferred fallback: fetch remboursements by each financement id.
+          if (typeof window.javaBridge.getRemboursementsByFinancementJson === "function" && investorFinancements.length) {
+            const expanded = [];
+            investorFinancements.forEach(f => {
+              const finId = Number(f.id || 0);
+              if (!finId) return;
+              try {
+                const rawR = window.javaBridge.getRemboursementsByFinancementJson(finId);
+                const rembs = JSON.parse(String(rawR || "[]"));
+                (Array.isArray(rembs) ? rembs : []).forEach(r => {
+                  expanded.push({
+                    id: r.id || "",
+                    financementId: finId,
+                    projectId: f.projectId,
+                    projectName: f.projectName,
+                    dateEcheance: r.dateEcheance || "",
+                    montantDu: r.montantDu || 0,
+                    montantPaye: r.montantPaye || 0,
+                    statut: r.statut || "EN_ATTENTE"
+                  });
+                });
+              } catch (ignore) {}
+            });
+            rows = expanded;
+          }
+
+          // Last fallback: one synthetic row per financement.
+          if (!Array.isArray(rows) || rows.length === 0) {
+            rows = investorFinancements.map(f => ({
+              id: "",
+              financementId: f.id,
+              projectId: f.projectId,
+              projectName: f.projectName,
+              dateEcheance: f.date || "",
+              montantDu: f.amount || 0,
+              montantPaye: String(f.rembStatus || "").toUpperCase() === "PAYE" ? (f.amount || 0) : 0,
+              statut: f.rembStatus || "EN_ATTENTE"
+            }));
+          }
+        }
+
+        // Last-resort fallback: global remboursements filtered by investor financements ids.
+        if ((!Array.isArray(rows) || rows.length === 0)
+          && typeof window.javaBridge.getFinancementsForCurrentInvestorJson === "function"
+          && typeof window.javaBridge.getRemboursementsJson === "function") {
+          const rawFin = window.javaBridge.getFinancementsForCurrentInvestorJson();
+          const finRows = JSON.parse(String(rawFin || "[]"));
+          const finById = new Map();
+          (Array.isArray(finRows) ? finRows : []).forEach(f => {
+            const key = String(f.id || "");
+            if (!key) return;
+            finById.set(key, f);
+          });
+
+          const rawAll = window.javaBridge.getRemboursementsJson();
+          const allRows = JSON.parse(String(rawAll || "[]"));
+          rows = (Array.isArray(allRows) ? allRows : [])
+            .filter(r => finById.has(String(r.financementId || "")))
+            .map(r => {
+              const f = finById.get(String(r.financementId || "")) || {};
+              return {
+                id: r.id || "",
+                financementId: r.financementId || "",
+                projectId: f.projectId || "",
+                projectName: f.projectName || ("Projet #" + String(f.projectId || "")),
+                dateEcheance: r.dateEcheance || "",
+                montantDu: r.montantDu || 0,
+                montantPaye: r.montantPaye || 0,
+                statut: r.statut || "EN_ATTENTE"
+              };
+            });
+        }
+
+        data = (Array.isArray(rows) ? rows : []).map(r => {
+          const du = Number(r.montantDu || 0);
+          const paye = Number(r.montantPaye || 0);
+          const pId = String(r.projectId || "");
+          const pName = String(r.projectName || ("Projet #" + String(r.projectId || "")));
+          const pKey = pId || ("name:" + pName.toLowerCase().trim());
+          return {
+            id: String(r.id || ""),
+            financementId: String(r.financementId || ""),
+            projectId: pId,
+            projectKey: pKey,
+            projectName: pName,
+            dateEcheance: r.dateEcheance || "",
+            montantDu: du,
+            montantPaye: paye,
+            statut: (paye + 1e-9 >= du && du > 0) ? "PAYE" : "EN_ATTENTE"
+          };
+        });
+        rebuildFinancementOrdinals();
+        if (!data.length) {
+          result.style.display = "block";
+          result.textContent = "Aucun remboursement trouve pour cet investisseur (verifier les liens financement/investisseur).";
+        } else {
+          result.style.display = "none";
+          result.textContent = "";
+        }
+      } catch (e) {
+        data = [];
+        result.style.display = "block";
+        result.textContent = "Erreur chargement remboursements: " + e;
+      }
+    }
+
+    function fillProjectFilter(){
+      const map = new Map();
+      data.forEach(r => {
+        const key = String(r.projectKey || "");
+        if (!key) return;
+        if (!map.has(key)) map.set(key, String(r.projectName || "Projet"));
+      });
+      const opts = [`<option value="ALL">Tous</option>`];
+      Array.from(map.entries()).forEach(([id, name]) => {
+        opts.push(`<option value="${escapeHtml(id)}">${escapeHtml(name)}</option>`);
+      });
+      projectFilter.innerHTML = opts.join("");
+      if (!Array.from(map.keys()).includes(selectedProject)) selectedProject = "ALL";
+      projectFilter.value = selectedProject;
+    }
+
+    function fillFinancementFilter(){
+      const map = new Map();
+      data
+        .filter(r => selectedProject === "ALL" || String(r.projectKey) === String(selectedProject))
+        .forEach(r => {
+          const key = String(r.financementId || "");
+          if (!key) return;
+          if (!map.has(key)) map.set(key, financementLabel(key, r.projectKey));
+        });
+      const opts = [`<option value="ALL">Tous</option>`];
+      Array.from(map.entries()).forEach(([id, label]) => {
+        opts.push(`<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`);
+      });
+      financementFilter.innerHTML = opts.join("");
+      if (!Array.from(map.keys()).includes(selectedFinancement)) selectedFinancement = "ALL";
+      financementFilter.value = selectedFinancement;
+    }
+
+    function applyFilters(){
+      const s = (search.value || "").toLowerCase().trim();
+      const st = statut.value;
+      return data.filter(r => {
+        if (onlyProjectId && String(r.projectId) !== onlyProjectId) return false;
+        if (onlyFinancementId && String(r.financementId) !== onlyFinancementId) return false;
+        if (selectedProject !== "ALL" && String(r.projectKey) !== String(selectedProject)) return false;
+        if (selectedFinancement !== "ALL" && String(r.financementId) !== String(selectedFinancement)) return false;
+        if (st !== "ALL" && String(r.statut) !== st) return false;
+        if (!s) return true;
+        return (
+          String(r.projectName || "").toLowerCase().includes(s) ||
+          String(r.financementId || "").toLowerCase().includes(s) ||
+          String(r.statut || "").toLowerCase().includes(s)
+        );
+      });
+    }
+
+    function render(){
+      const rows = applyFilters();
+      computeKpis(rows);
+      tbody.innerHTML = rows.map(r => {
+        const payeAffiche = paidCapped(r.montantDu, r.montantPaye);
+        const tag = r.statut === "PAYE"
+          ? '<span class="tag ok"><span class="tagDot"></span>PAYE</span>'
+          : '<span class="tag pending"><span class="tagDot"></span>EN_ATTENTE</span>';
+        return `
+          <tr>
+            <td><strong>${escapeHtml(r.projectName)}</strong></td>
+            <td><a class="softLink" href="../financement/financement-detail.html?id=${encodeURIComponent(String(r.financementId))}">${escapeHtml(financementLabel(r.financementId, r.projectKey))}</a></td>
+            <td>${r.dateEcheance || "-"}</td>
+            <td><strong>${money(r.montantDu)}</strong></td>
+            <td><strong>${money(payeAffiche)}</strong></td>
+            <td>${tag}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function init(){
+      loadFromDb();
+      fillProjectFilter();
+      fillFinancementFilter();
+      render();
+    }
+
+    window.onJavaBridgeReady = init;
+    function waitForBridge(retries){
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(30);
+
+    [search, statut].forEach(el => {
+      el.addEventListener("input", render);
+      el.addEventListener("change", render);
+    });
+    projectFilter.addEventListener("change", function(){
+      selectedProject = String(projectFilter.value || "ALL");
+      fillFinancementFilter();
+      render();
+    });
+    financementFilter.addEventListener("change", function(){
+      selectedFinancement = String(financementFilter.value || "ALL");
+      render();
+    });
+  </script>
+</body>
+</html>
+

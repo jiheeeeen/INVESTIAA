@@ -1,8 +1,6 @@
 package Services;
 
-import Entities.Role;
-import Entities.StatutVerification;
-import Entities.User;
+import Entities.*;
 import Utils.MyBD;
 import Utils.Session;
 
@@ -38,6 +36,7 @@ public class UserCRUD {
         u.setRole(Role.valueOf(rs.getString("role")));
         u.setActive(rs.getBoolean("est_actif"));
         u.setStatutVerification(StatutVerification.valueOf(rs.getString("statut_verification")));
+        u.setFaceTemplate(rs.getString("face_template"));
 
         // Ces colonnes doivent exister dans ta table users
         u.setCreatedAt(rs.getTimestamp("created_at"));
@@ -324,7 +323,7 @@ public class UserCRUD {
         return "OK";
     }
 
-    // Variante avec telephone+cin -> NON_VERIFIE (comme dans ton code)
+    // Variante avec telephone+cin -> EN_ATTENTE (pour validation admin)
     public String registerPending(String fullName, String email, String password, String roleStr,
                                   String telephone, String cin) throws SQLException {
 
@@ -342,13 +341,16 @@ public class UserCRUD {
 
         try (PreparedStatement pst = conn.prepareStatement(sql)) {
             pst.setString(1, fullName);
-            pst.setString(2, email);
+            pst.setString(2, email.trim().toLowerCase());
             pst.setString(3, (telephone == null || telephone.isBlank()) ? null : telephone.trim());
             pst.setString(4, (cin == null || cin.isBlank()) ? null : cin.trim());
             pst.setString(5, password);
             pst.setString(6, role.name());
-            pst.setBoolean(7, true);
-            pst.setString(8, StatutVerification.NON_VERIFIE.name());
+
+            // ✅ IMPORTANT: admin doit valider
+            pst.setBoolean(7, false);
+            pst.setString(8, StatutVerification.EN_ATTENTE.name());
+
             pst.executeUpdate();
         }
 
@@ -392,5 +394,241 @@ public class UserCRUD {
 
         Session.setCurrentUser(u);
         return "OK_USER";
+    }
+
+    // =========================================================
+// GOOGLE LOGIN (OAuth) - SANS casser login() existant
+// =========================================================
+
+    public String loginWithGoogle(String email, String fullName) throws SQLException {
+        Session.setCurrentUser(null);
+
+        if (email == null || email.isBlank()) return "INVALID";
+        email = email.trim().toLowerCase();
+
+        // 1) chercher user
+        User u = findByEmail(email);
+
+        // 2) si n'existe pas -> créer un user minimal
+        if (u == null) {
+            createUserFromGoogle(fullName, email);
+            u = findByEmail(email);
+            if (u == null) return "ERROR_CREATE";
+        }
+
+        // ADMIN bypass (comme login())
+        if (u.getRole() == Role.ADMIN) {
+            Session.setCurrentUser(u);
+            return "OK_ADMIN";
+        }
+
+        // verification (même logique que login())
+        StatutVerification sv = u.getStatutVerification();
+
+        // NON_VERIFIE => on autorise l'accès pour compléter profil
+        if (sv == StatutVerification.NON_VERIFIE) {
+            Session.setCurrentUser(u);
+            return "OK_NEED_PROFILE";
+        }
+
+        if (sv == StatutVerification.EN_ATTENTE) return "PENDING";
+        if (sv == StatutVerification.REFUSE) return "REFUSED";
+        if (sv != StatutVerification.VERIFIE) return "PENDING";
+
+        // actif
+        if (!u.isActive()) return "INACTIVE";
+
+        Session.setCurrentUser(u);
+        return "OK_USER";
+    }
+
+    private void createUserFromGoogle(String fullName, String email) throws SQLException {
+        // Table: mot_de_passe NOT NULL => on met un mot de passe aléatoire (user se connecte via Google)
+        String randomPass = randomPassword();
+
+        // nom NOT NULL => si Google name vide, on prend la partie avant @
+        String nom = (fullName != null && !fullName.isBlank())
+                ? fullName.trim()
+                : email.split("@")[0];
+
+        // Choix cohérent avec ton flow : user doit compléter profil
+        // => NON_VERIFIE + actif=true
+        Role defaultRole = Role.INVESTISSEUR;
+
+        String sql = "INSERT INTO users(nom, prenom, email, telephone, cin, date_naissance, nationalite, adresse, ville, " +
+                "mot_de_passe, role, est_actif, statut_verification) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, nom);
+            pst.setString(2, null);      // prenom nullable
+            pst.setString(3, email);
+            pst.setString(4, null);      // telephone nullable
+            pst.setString(5, null);      // cin nullable
+            pst.setDate(6, null);        // date_naissance nullable
+            pst.setString(7, null);      // nationalite nullable
+            pst.setString(8, null);      // adresse nullable
+            pst.setString(9, null);      // ville nullable
+            pst.setString(10, randomPass);
+            pst.setString(11, defaultRole.name());
+            pst.setBoolean(12, true);
+            pst.setString(13, StatutVerification.NON_VERIFIE.name());
+            pst.executeUpdate();
+        }
+    }
+
+    private static String randomPassword() {
+        // simple et robuste pour "placeholder" (projet)
+        java.security.SecureRandom r = new java.security.SecureRandom();
+        byte[] bytes = new byte[24];
+        r.nextBytes(bytes);
+        return java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    // =========================
+// FACE - persistence
+// =========================
+
+    public void enableFaceForUser(int userId, String faceTemplate) throws SQLException {
+        String sql = "UPDATE users SET face_enabled=1, face_template=?, face_enrolled_at=NOW(), face_fail_count=0, face_locked_until=NULL WHERE id=?";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, faceTemplate);
+            pst.setInt(2, userId);
+            pst.executeUpdate();
+        }
+    }
+
+    public void resetFaceFails(int userId) throws SQLException {
+        String sql = "UPDATE users SET face_fail_count=0, face_locked_until=NULL, face_last_login_at=NOW() WHERE id=?";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, userId);
+            pst.executeUpdate();
+        }
+    }
+
+    public void incrementFaceFail(int userId) throws SQLException {
+        // +1 fail, et si >=5 alors lock 10 min
+        String sql = """
+        UPDATE users
+        SET face_fail_count = face_fail_count + 1,
+            face_locked_until = CASE
+                WHEN (face_fail_count + 1) >= 5 THEN DATE_ADD(NOW(), INTERVAL 10 MINUTE)
+                ELSE face_locked_until
+            END
+        WHERE id = ?
+        """;
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, userId);
+            pst.executeUpdate();
+        }
+    }
+
+    public boolean isFaceLocked(int userId) throws SQLException {
+        String sql = "SELECT face_locked_until FROM users WHERE id=?";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, userId);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (!rs.next()) return false;
+                Timestamp ts = rs.getTimestamp(1);
+                return ts != null && ts.after(new Timestamp(System.currentTimeMillis()));
+            }
+        }
+    }
+
+    public boolean isProfileCompleted(int userId) {
+        try {
+            User u = findById(userId);
+            if (u == null || u.getRole() == null) return false;
+
+            if (u.getRole() == Role.ADMIN) return true;
+
+            if (u.getRole() == Role.ENTREPRENEUR) {
+                ProfilEntrepreneurCRUD peCrud = new ProfilEntrepreneurCRUD();
+                ProfilEntrepreneur pe = peCrud.getByUserId(userId);
+                if (pe == null) return false;
+
+                // ✅ critères "profil complété" entrepreneur (ajuste si besoin)
+                return notBlank(pe.getCinRectoUrl())
+                        && notBlank(pe.getCinVersoUrl())
+                        && notBlank(pe.getJustificatifDomicileUrl())
+                        && notBlank(pe.getRib());
+            }
+
+            if (u.getRole() == Role.INVESTISSEUR) {
+                ProfilInvestisseurCRUD piCrud = new ProfilInvestisseurCRUD();
+                ProfilInvestisseur pi = piCrud.getByUserId(userId);
+                if (pi == null) return false;
+
+                // ✅ critères "profil complété" investisseur (ajuste si besoin)
+                return pi.getBudgetTotal() != null
+                        && pi.getTicketMoyenParProjet() != null
+                        && notBlank(pi.getCinRectoUrl())
+                        && notBlank(pi.getCinVersoUrl())
+                        && notBlank(pi.getPhotoUrl());
+            }
+
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean notBlank(String s) {
+        return s != null && !s.trim().isEmpty();
+    }
+
+    public void markProfileCompleted(int userId) throws SQLException {
+        String sql = "UPDATE users SET profile_completed=1, profile_completed_at=NOW() WHERE id=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    public List<User> getFaceEnabledUsers() throws SQLException {
+        String sql = "SELECT * FROM users WHERE face_enabled=1 AND face_template IS NOT NULL";
+        List<User> list = new ArrayList<>();
+        try (PreparedStatement pst = conn.prepareStatement(sql);
+             ResultSet rs = pst.executeQuery()) {
+            while (rs.next()) list.add(mapUser(rs));
+        }
+        return list;
+    }
+    public String registerPending(String fullName, String email, String password, String roleStr,
+                                  String telephone, String cin, String faceTemplate) throws SQLException {
+
+        Role role;
+        try {
+            role = Role.valueOf(roleStr.trim().toUpperCase());
+        } catch (Exception e) {
+            return "ROLE_INVALID";
+        }
+
+        if (findByEmail(email) != null) return "EMAIL_EXISTS";
+
+        boolean faceEnabled = faceTemplate != null && !faceTemplate.trim().isEmpty();
+
+        String sql = "INSERT INTO users(nom, email, telephone, cin, mot_de_passe, role, est_actif, statut_verification, face_enabled, face_template) " +
+                "VALUES (?,?,?,?,?,?,?,?,?,?)";
+
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, fullName);
+            pst.setString(2, email.trim().toLowerCase());
+            pst.setString(3, (telephone == null || telephone.isBlank()) ? null : telephone.trim());
+            pst.setString(4, (cin == null || cin.isBlank()) ? null : cin.trim());
+            pst.setString(5, password);
+            pst.setString(6, role.name());
+
+            // ✅ IMPORTANT: admin doit valider
+            pst.setBoolean(7, false);
+            pst.setString(8, StatutVerification.EN_ATTENTE.name());
+
+            pst.setBoolean(9, faceEnabled);
+            pst.setString(10, faceEnabled ? faceTemplate.trim() : null);
+
+            pst.executeUpdate();
+        }
+
+        return "OK";
     }
 }

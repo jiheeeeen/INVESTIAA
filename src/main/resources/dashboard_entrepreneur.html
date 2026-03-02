@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investra - Dashboard Entrepreneur</title>
+  <style>
+    :root{
+      --bg:#f3f5f8;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:rgba(15,23,42,.1);
+      --blue:#1d4ed8;
+      --cyan:#38bdf8;
+      --green:#2563eb;
+      --amber:#60a5fa;
+      --red:#93c5fd;
+      --yellow:#facc15;
+      --yellow-soft:#fef3c7;
+      --radius:14px;
+      --radius-lg:24px;
+      --shadow:0 8px 24px rgba(15,23,42,.08);
+      --shadow-soft:0 4px 14px rgba(15,23,42,.06);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+      background-image:none;
+    }
+    .container{max-width:1160px; margin:24px auto 56px; padding:0 16px;}
+    .report-header{
+      background:#fff;
+      border:1px solid rgba(15,23,42,.08);
+      border-radius:12px;
+      box-shadow:var(--shadow-soft);
+      padding:10px 14px;
+      margin-bottom:10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .report-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:12px;
+      font-weight:800;
+      color:#7c5b00;
+      background:var(--yellow-soft);
+      border:1px solid rgba(250,204,21,.45);
+      border-radius:999px;
+      padding:6px 10px;
+    }
+    .report-dot{width:8px;height:8px;border-radius:999px;background:var(--yellow);}
+    .report-time{font-size:12px; color:#64748b; font-weight:700;}
+    .top{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+      margin-bottom:14px;
+    }
+    h1{margin:0; font-size:34px; font-weight:900; letter-spacing:.2px; color:#1e3a8a;}
+    .muted{color:var(--muted)}
+    .actions{display:flex; gap:10px; flex-wrap:wrap;}
+    .export-status{
+      font-size:12px;
+      color:#64748b;
+      font-weight:700;
+      align-self:center;
+      max-width:280px;
+    }
+    .btn{
+      border:0; cursor:pointer;
+      font-weight:900; font-size:14px;
+      padding:10px 14px; border-radius:12px;
+      text-decoration:none;
+      display:inline-flex; align-items:center; gap:8px;
+      transition:transform .16s ease, box-shadow .16s ease;
+    }
+    .btn.ghost{background:#fff; color:var(--text); border:1px solid var(--line); box-shadow:var(--shadow-soft);}
+    .btn.back{
+      background:linear-gradient(135deg,#1e3a8a,#2563eb);
+      color:#fff;
+      border:1px solid rgba(30,58,138,.35);
+      box-shadow:0 10px 22px rgba(37,99,235,.28);
+      padding:10px 16px;
+    }
+    .btn.back:hover{filter:brightness(1.04); box-shadow:0 14px 24px rgba(37,99,235,.34);}
+    .btn.back .arr{font-size:14px; line-height:1;}
+    .btn:hover{transform:translateY(-1px);}
+    .hero{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:12px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      margin-bottom:16px;
+      background-image:none;
+    }
+    .filterbar{
+      background:rgba(255,255,255,.88);
+      border:1px solid rgba(15,23,42,.08);
+      border-radius:12px;
+      box-shadow:var(--shadow-soft);
+      padding:14px;
+      margin-bottom:16px;
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:12px;
+      align-items:end;
+      border-left:5px solid var(--blue);
+    }
+    .field{display:flex; flex-direction:column; gap:7px;}
+    .field label{font-size:11px; color:#1e3a8a; font-weight:900; letter-spacing:.3px; text-transform:uppercase;}
+    .input-wrap{
+      position:relative;
+      display:flex;
+      align-items:center;
+    }
+    .input-wrap .ico{
+      position:absolute;
+      left:10px;
+      color:#64748b;
+      font-size:12px;
+      pointer-events:none;
+    }
+    .field input,.field select{
+      width:100%;
+      border:1px solid rgba(15,23,42,.14);
+      border-radius:10px;
+      padding:10px 10px;
+      font-size:14px;
+      outline:none;
+      background:linear-gradient(to bottom, #fff, #fbfdff);
+      color:var(--text);
+      box-shadow:0 2px 0 rgba(15,23,42,.03) inset;
+      transition:border-color .14s ease, box-shadow .14s ease, background .14s ease;
+    }
+    .field .input-wrap input{padding-left:30px;}
+    .field input:focus,.field select:focus{border-color:rgba(29,78,216,.5); box-shadow:0 0 0 3px rgba(29,78,216,.12);}
+    .field input::placeholder{color:#94a3b8;}
+    .filter-actions{display:flex; gap:8px;}
+    .btn.small{padding:10px 12px; font-size:13px;}
+    .filter-actions .btn{
+      width:100%;
+      justify-content:center;
+      border:1px solid rgba(30,58,138,.18);
+      color:#1e3a8a;
+      background:#fff;
+    }
+    @media (max-width:1100px){
+      .filterbar{grid-template-columns:1fr 1fr;}
+    }
+    .kpi-grid{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:10px;
+    }
+    .kpi{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:12px 12px;
+      box-shadow:var(--shadow-soft);
+      position:relative;
+      overflow:hidden;
+    }
+    .kpi::before{
+      content:"";
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      width:6px;
+      background:var(--blue);
+      pointer-events:none;
+    }
+    .kpi::after{content:none;}
+    .kpi:nth-child(2)::before{background:var(--cyan);}
+    .kpi:nth-child(3)::before{background:var(--green);}
+    .kpi:nth-child(4)::before{background:var(--amber);}
+    .kpi:nth-child(5)::before{background:var(--yellow);}
+    .kpi .label{font-size:12px; color:var(--muted); font-weight:800;}
+    .kpi .val{font-size:22px; font-weight:900; margin-top:6px; color:#1e3a8a;}
+    @media (max-width:1000px){
+      .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    }
+    .layout{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+    @media (max-width:980px){
+      .layout{grid-template-columns:1fr;}
+    }
+    .span-2{grid-column:1 / -1;}
+    @media (max-width:980px){
+      .span-2{grid-column:auto;}
+    }
+    .card{
+      background:var(--card);
+      border:1px solid rgba(15,23,42,.08);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+      transition:transform .18s ease, box-shadow .18s ease;
+      position:relative;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      left:0;
+      right:0;
+      top:0;
+      height:4px;
+      background:linear-gradient(90deg,var(--blue),var(--cyan));
+      border-radius:14px 14px 0 0;
+    }
+    .card:hover{transform:translateY(-2px);}
+    .card h2{margin:0 0 10px; font-size:18px; letter-spacing:.2px; color:#1e3a8a;}
+    .card-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .card-head h2{margin:0;}
+    .chip{
+      font-size:11px;
+      font-weight:800;
+      color:#475569;
+      background:#f8fafc;
+      border:1px solid rgba(15,23,42,.12);
+      border-radius:999px;
+      padding:4px 8px;
+      white-space:nowrap;
+    }
+    .card:nth-child(odd) .chip{
+      color:#7c5b00;
+      background:var(--yellow-soft);
+      border-color:rgba(250,204,21,.45);
+    }
+    .chart{
+      height:280px;
+      border:1px dashed rgba(15,23,42,.14);
+      border-radius:12px;
+      padding:8px;
+      background:#fff;
+    }
+    .legend{display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; font-size:12px; color:var(--muted); font-weight:700;}
+    .dot{width:8px; height:8px; border-radius:999px; display:inline-block; margin-right:6px;}
+    .table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .table th,.table td{padding:10px 11px; border-bottom:1px solid var(--line); font-size:13px; text-align:left;}
+    .table th{font-size:12px; text-transform:uppercase; letter-spacing:.25px; color:#0b2a55; background:rgba(29,78,216,.06);}
+    .table tbody tr:hover td{background:rgba(250,204,21,.14);}
+    .table tr:last-child td{border-bottom:0;}
+    .table tbody tr:nth-child(even) td{background:rgba(15,23,42,.015);}
+    .num{text-align:right;}
+    .status{padding:4px 8px; border-radius:999px; font-size:11px; font-weight:900;}
+    .status.en_cours{background:rgba(6,182,212,.12); color:#0e7490; border:1px solid rgba(6,182,212,.35);}
+    .status.valide{background:rgba(22,163,74,.12); color:#166534; border:1px solid rgba(22,163,74,.35);}
+    .status.en_attente{background:rgba(245,158,11,.15); color:#7c2d12; border:1px solid rgba(245,158,11,.35);}
+    .status.default{background:rgba(100,116,139,.12); color:#334155; border:1px solid rgba(100,116,139,.35);}
+    .empty{
+      margin-top:12px;
+      border:1px dashed var(--line);
+      border-radius:12px;
+      padding:12px;
+      color:var(--muted);
+      display:none;
+    }
+  </style>
+  <script src="navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <section class="report-header">
+      <span class="report-pill"><span class="report-dot"></span>Rapport entrepreneur</span>
+      <span class="report-time" id="reportTime">Mise a jour: --</span>
+    </section>
+    <div class="top">
+      <div>
+        <h1>Dashboard Entrepreneur</h1>
+      </div>
+      <div class="actions">
+        <span class="export-status" id="exportStatus"></span>
+        <button class="btn ghost small" type="button" id="exportPdfBtn">Exporter PDF</button>
+        <a class="btn back" href="projet_view.html"><span class="arr">←</span>Retour mes projets</a>
+      </div>
+    </div>
+
+    <section class="filterbar">
+      <div class="field">
+        <label for="fQuery">Recherche</label>
+        <div class="input-wrap">
+          <span class="ico">⌕</span>
+          <input id="fQuery" type="text" placeholder="Titre du projet..." />
+        </div>
+      </div>
+      <div class="field">
+        <label for="fStatus">Statut</label>
+        <select id="fStatus">
+          <option value="ALL">Tous</option>
+          <option value="EN_COURS">En cours</option>
+          <option value="VALIDE">Valide</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fSector">Secteur</label>
+        <select id="fSector">
+          <option value="ALL">Tous</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fMinProgress">Progression min (%)</label>
+        <div class="input-wrap">
+          <span class="ico">%</span>
+          <input id="fMinProgress" type="number" min="0" max="100" step="1" placeholder="0" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="fMinGoal">Objectif min (TND)</label>
+        <div class="input-wrap">
+          <span class="ico">TND</span>
+          <input id="fMinGoal" type="number" min="0" step="100" placeholder="0" />
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn ghost small" type="button" id="resetFiltersBtn">Reinitialiser</button>
+      </div>
+    </section>
+
+    <section class="hero">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="label">Projets publies</div><div class="val" id="kpiPublished">0</div></div>
+        <div class="kpi"><div class="label">Objectif total</div><div class="val" id="kpiGoal">0 TND</div></div>
+        <div class="kpi"><div class="label">Leve total</div><div class="val" id="kpiRaised">0 TND</div></div>
+        <div class="kpi"><div class="label">Progression moyenne</div><div class="val" id="kpiProgress">0 %</div></div>
+        <div class="kpi"><div class="label">Investisseurs uniques</div><div class="val" id="kpiInvestors">0</div></div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="card">
+        <div class="card-head">
+          <h2>Progression par projet publie</h2>
+          <span class="chip">Comparatif</span>
+        </div>
+        <div class="chart" id="progressChart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Repartition statuts publies</h2>
+          <span class="chip">Structure</span>
+        </div>
+        <div class="chart" id="statusDonut"></div>
+        <div class="legend" id="statusLegend"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Top secteurs (objectifs)</h2>
+          <span class="chip">Contribution</span>
+        </div>
+        <div class="chart" id="sectorChart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Leve vs restant</h2>
+          <span class="chip">Capacite</span>
+        </div>
+        <div class="chart" id="raisedVsRemainingChart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Distribution des progressions</h2>
+          <span class="chip">Pipeline</span>
+        </div>
+        <div class="chart" id="progressDistChart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Top projets par leve</h2>
+          <span class="chip">Priorites</span>
+        </div>
+        <div class="chart" id="topRaisedChart"></div>
+      </div>
+
+      <div class="card span-2">
+        <div class="card-head">
+          <h2>Tableau recapitulatif</h2>
+          <span class="chip">Detail projets</span>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Projet</th>
+              <th>Statut</th>
+              <th class="num">Objectif</th>
+              <th class="num">Leve</th>
+              <th class="num">Progression</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+    <div class="empty" id="empty">Aucun projet publie trouve. Publiez au moins un projet pour afficher le dashboard.</div>
+  </main>
+
+  <script>
+    const fmt = (n) => new Intl.NumberFormat("fr-TN").format(Math.round(Number(n || 0))) + " TND";
+    let allProjects = [];
+    function setExportStatus(msg){
+      const el = document.getElementById("exportStatus");
+      if (el) el.textContent = msg || "";
+    }
+    function buildPdfHtml(){
+      const cloned = document.documentElement.cloneNode(true);
+      const scripts = cloned.querySelectorAll("script");
+      scripts.forEach((s) => s.remove());
+      const navEls = cloned.querySelectorAll("nav, header, .navbar, .nav-links, #navbar, #topbar, [class*='nav'], [id*='nav']");
+      navEls.forEach((n) => n.remove());
+      const actions = cloned.querySelector(".actions");
+      if (actions) actions.remove();
+      const printStyle = document.createElement("style");
+      printStyle.textContent = `
+        @page { size: A4 landscape; margin: 10mm; }
+        html, body { width: auto !important; }
+        .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+        .report-header, .top, .filterbar, .hero, .card { box-shadow: none !important; }
+        .layout { display: block !important; }
+        .card { margin-bottom: 10mm !important; page-break-inside: avoid !important; }
+        .kpi-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+        .chart { height: 180px !important; }
+        .table { font-size: 11px !important; }
+      `;
+      const clonedHead = cloned.querySelector("head");
+      if (clonedHead) {
+        clonedHead.appendChild(printStyle);
+      } else {
+        cloned.appendChild(printStyle);
+      }
+      return "<!doctype html>\n" + cloned.outerHTML;
+    }
+    (function setReportTime(){
+      const el = document.getElementById("reportTime");
+      if (!el) return;
+      const d = new Date();
+      const pad = (x) => String(x).padStart(2, "0");
+      el.textContent = "Mise a jour: " + d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    })();
+
+    function withBridge(onReady, onFail){
+      const start = Date.now();
+      const timer = setInterval(() => {
+        if (window.javaBridge) {
+          clearInterval(timer);
+          onReady(window.javaBridge);
+          return;
+        }
+        if (Date.now() - start > 8000) {
+          clearInterval(timer);
+          if (onFail) onFail();
+        }
+      }, 100);
+    }
+    function bindExport(){
+      const btn = document.getElementById("exportPdfBtn");
+      if (!btn || btn.dataset.bound) return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", () => {
+        const original = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Export...";
+      withBridge((bridge) => {
+        try {
+          if (typeof bridge.exportCurrentPagePdfWithPdflayer !== "function") {
+            btn.disabled = false;
+            btn.textContent = original;
+            setExportStatus("Export PDF indisponible.");
+            return;
+          }
+          const result = bridge.exportCurrentPagePdfWithPdflayer(
+            window.location.href,
+            buildPdfHtml(),
+            "A4",
+            "",
+            "",
+            "",
+            ""
+          );
+            btn.disabled = false;
+            btn.textContent = original;
+            if ((result || "").startsWith("OK_OPENED:")) {
+              setExportStatus("PDF exporte et ouvert.");
+            } else if ((result || "").startsWith("OK_SAVED_ONLY:")) {
+              setExportStatus("PDF exporte: " + result.substring("OK_SAVED_ONLY:".length));
+            } else if (result) {
+              setExportStatus("Echec export PDF: " + result);
+            } else {
+              setExportStatus("Export annule.");
+            }
+          } catch (e) {
+            btn.disabled = false;
+            btn.textContent = original;
+            setExportStatus("Echec export PDF: " + (e && e.message ? e.message : "Erreur inconnue"));
+          }
+        }, () => {
+          btn.disabled = false;
+          btn.textContent = original;
+          setExportStatus("Bridge indisponible.");
+        });
+      });
+    }
+
+    function statusClass(s){
+      const x = String(s || "").toUpperCase();
+      if (x === "EN_COURS") return "en_cours";
+      if (x === "VALIDE" || x === "VALIDATED") return "valide";
+      if (x === "EN_ATTENTE" || x === "PENDING") return "en_attente";
+      return "default";
+    }
+
+    function loadDashboard(){
+      withBridge((bridge) => {
+        const listFn = (typeof bridge.listMyProjets === "function") ? "listMyProjets" : "listProjets";
+        if (typeof bridge[listFn] !== "function") {
+          renderNoData();
+          setExportStatus("Bridge charge mais fonctions dashboard indisponibles.");
+          return;
+        }
+
+        let raw = [];
+        try {
+          raw = JSON.parse(bridge[listFn]() || "[]");
+        } catch (_) {
+          raw = [];
+        }
+
+        const published = raw.filter(p => {
+          const s = String(p.status || "").toUpperCase();
+          return s === "EN_COURS" || s === "VALIDATED" || s === "VALIDE";
+        });
+        const sourceList = published.length ? published : raw;
+        if (!sourceList.length) {
+          document.getElementById("empty").style.display = "block";
+          renderNoData();
+          return;
+        }
+        if (!published.length) {
+          setExportStatus("Aucun projet publie detecte: affichage base sur tous vos projets.");
+        }
+
+        const enriched = sourceList.map(p => {
+          let raised = 0;
+          const investorIds = new Set();
+          if (typeof bridge.getInvestissementsByProjetJson === "function") {
+            try {
+              const inv = JSON.parse(bridge.getInvestissementsByProjetJson(String(p.id)) || "[]");
+              raised = inv.reduce((a, it) => a + Number(it.montant || 0), 0);
+              inv.forEach(it => {
+                const id = String(it.id_investisseur || "");
+                if (id) investorIds.add(id);
+              });
+            } catch (_) {}
+          }
+          const goal = Number(p.goal || 0);
+          const progress = goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0;
+          return {
+            id: p.id,
+            title: p.title || "Projet",
+            sector: p.category || "Autre",
+            status: String(p.status || ""),
+            goal,
+            raised,
+            progress,
+            investors: Array.from(investorIds)
+          };
+        });
+        allProjects = enriched;
+        hydrateSectorFilter(enriched);
+        applyFilters();
+      }, () => {
+        renderNoData();
+        setExportStatus("Bridge indisponible pour le moment. Rechargez la page.");
+      });
+    }
+
+    function hydrateSectorFilter(list){
+      const select = document.getElementById("fSector");
+      const sectors = Array.from(new Set(list.map(p => String(p.sector || "Autre")))).sort((a,b) => a.localeCompare(b));
+      select.innerHTML = '<option value="ALL">Tous</option>' + sectors.map(s => `<option value="${escapeXml(s)}">${escapeXml(s)}</option>`).join("");
+    }
+
+    function normalizedStatus(status){
+      const s = String(status || "").toUpperCase();
+      if (s === "VALIDATED") return "VALIDE";
+      return s;
+    }
+
+    function applyFilters(){
+      const q = String(document.getElementById("fQuery").value || "").trim().toLowerCase();
+      const status = document.getElementById("fStatus").value;
+      const sector = document.getElementById("fSector").value;
+      const minProgress = Math.max(0, Number(document.getElementById("fMinProgress").value || 0));
+      const minGoal = Math.max(0, Number(document.getElementById("fMinGoal").value || 0));
+
+      const filtered = allProjects.filter(p => {
+        const titleOk = !q || String(p.title || "").toLowerCase().includes(q);
+        const statusOk = status === "ALL" || normalizedStatus(p.status) === status;
+        const sectorOk = sector === "ALL" || String(p.sector || "") === sector;
+        const progressOk = Number(p.progress || 0) >= minProgress;
+        const goalOk = Number(p.goal || 0) >= minGoal;
+        return titleOk && statusOk && sectorOk && progressOk && goalOk;
+      });
+
+      const isEmpty = !filtered.length;
+      document.getElementById("empty").style.display = isEmpty ? "block" : "none";
+
+      const investorsGlobal = new Set();
+      filtered.forEach(p => (p.investors || []).forEach(id => investorsGlobal.add(String(id))));
+      const totalGoal = filtered.reduce((a, p) => a + p.goal, 0);
+      const totalRaised = filtered.reduce((a, p) => a + p.raised, 0);
+      const avgProgress = filtered.length ? Math.round(filtered.reduce((a, p) => a + p.progress, 0) / filtered.length) : 0;
+
+      document.getElementById("kpiPublished").textContent = String(filtered.length);
+      document.getElementById("kpiGoal").textContent = fmt(totalGoal);
+      document.getElementById("kpiRaised").textContent = fmt(totalRaised);
+      document.getElementById("kpiProgress").textContent = avgProgress + " %";
+      document.getElementById("kpiInvestors").textContent = String(investorsGlobal.size);
+
+      if (isEmpty) {
+        renderNoData();
+      } else {
+        renderProgressChart(filtered);
+        renderStatusDonut(filtered);
+        renderSectorChart(filtered);
+        renderRaisedVsRemaining(filtered);
+        renderProgressDistribution(filtered);
+        renderTopRaised(filtered);
+        renderTable(filtered);
+      }
+    }
+
+    function renderNoData(){
+      const msg = `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#64748b;font-weight:700;font-size:13px;">Aucune donnee a afficher</div>`;
+      document.getElementById("progressChart").innerHTML = msg;
+      document.getElementById("statusDonut").innerHTML = msg;
+      document.getElementById("statusLegend").innerHTML = "";
+      document.getElementById("sectorChart").innerHTML = msg;
+      document.getElementById("raisedVsRemainingChart").innerHTML = msg;
+      document.getElementById("progressDistChart").innerHTML = msg;
+      document.getElementById("topRaisedChart").innerHTML = msg;
+      document.getElementById("rows").innerHTML = `<tr><td colspan="5" style="text-align:center;color:#64748b;">Aucun projet publie pour ces filtres.</td></tr>`;
+    }
+
+    function renderProgressChart(list){
+      const host = document.getElementById("progressChart");
+      const w = 720, h = 260, pad = 16;
+      const innerW = w - pad * 2;
+      const rowH = Math.max(24, Math.floor((h - pad * 2) / Math.max(1, list.length)));
+      const bars = list.map((p, i) => {
+        const y = pad + i * rowH + 4;
+        const maxW = innerW - 180;
+        const bw = Math.round((p.progress / 100) * maxW);
+        return `
+          <text x="${pad}" y="${y + 12}" font-size="11" fill="#334155">${escapeXml(p.title.slice(0, 26))}</text>
+          <rect x="${pad + 175}" y="${y}" width="${maxW}" height="12" rx="6" fill="rgba(15,23,42,.08)" />
+          <rect x="${pad + 175}" y="${y}" width="${bw}" height="12" rx="6" fill="#1d4ed8" />
+          <text x="${pad + 175 + maxW + 8}" y="${y + 10}" font-size="11" fill="#64748b">${p.progress}%</text>
+        `;
+      }).join("");
+      host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%">${bars}</svg>`;
+    }
+
+    function renderStatusDonut(list){
+      const host = document.getElementById("statusDonut");
+      const legend = document.getElementById("statusLegend");
+      const counts = { EN_COURS: 0, VALIDE: 0, EN_ATTENTE: 0 };
+      list.forEach(p => {
+        const s = String(p.status || "").toUpperCase();
+        if (s === "EN_COURS") counts.EN_COURS++;
+        else if (s === "EN_ATTENTE" || s === "PENDING") counts.EN_ATTENTE++;
+        else counts.VALIDE++;
+      });
+      const total = Math.max(1, list.length);
+      const parts = [
+        { key: "EN_COURS", val: counts.EN_COURS, color: "#60a5fa", label: "En cours" },
+        { key: "VALIDE", val: counts.VALIDE, color: "#1d4ed8", label: "Valide" },
+        { key: "EN_ATTENTE", val: counts.EN_ATTENTE, color: "#93c5fd", label: "En attente" }
+      ];
+      const r = 66, c = 2 * Math.PI * r;
+      let off = 0;
+      const seg = parts.map(p => {
+        const pct = p.val / total;
+        const dash = pct * c;
+        const out = `<circle cx="110" cy="110" r="${r}" fill="transparent" stroke="${p.color}" stroke-width="24" stroke-dasharray="${dash} ${Math.max(0,c-dash)}" stroke-dashoffset="${-off}" />`;
+        off += dash;
+        return out;
+      }).join("");
+      host.innerHTML = `
+        <svg viewBox="0 0 220 220" width="100%" height="100%">
+          <circle cx="110" cy="110" r="${r}" fill="transparent" stroke="rgba(15,23,42,.08)" stroke-width="24" />
+          ${seg}
+          <text x="110" y="106" text-anchor="middle" font-size="18" font-weight="900" fill="#0f172a">${list.length}</text>
+          <text x="110" y="126" text-anchor="middle" font-size="11" fill="#64748b">projets</text>
+        </svg>
+      `;
+      legend.innerHTML = parts.map(p => `<span><span class="dot" style="background:${p.color};"></span>${p.label}: ${p.val}</span>`).join("");
+    }
+
+    function renderSectorChart(list){
+      const host = document.getElementById("sectorChart");
+      const map = {};
+      list.forEach(p => {
+        const k = p.sector || "Autre";
+        map[k] = (map[k] || 0) + Number(p.goal || 0);
+      });
+      const top = Object.entries(map).sort((a,b) => b[1]-a[1]).slice(0, 6);
+      const max = Math.max(1, ...top.map(x => x[1]));
+      const w = 720, h = 260, pad = 16;
+      const rowH = Math.max(24, Math.floor((h - pad * 2) / Math.max(1, top.length)));
+      const bars = top.map((e, i) => {
+        const y = pad + i * rowH + 4;
+        const maxW = w - pad * 2 - 210;
+        const bw = Math.round((e[1] / max) * maxW);
+        return `
+          <text x="${pad}" y="${y + 12}" font-size="11" fill="#334155">${escapeXml(String(e[0]).slice(0, 26))}</text>
+          <rect x="${pad + 175}" y="${y}" width="${maxW}" height="12" rx="6" fill="rgba(15,23,42,.08)" />
+          <rect x="${pad + 175}" y="${y}" width="${bw}" height="12" rx="6" fill="#2563eb" />
+          <text x="${pad + 175 + maxW + 8}" y="${y + 10}" font-size="11" fill="#64748b">${fmt(e[1])}</text>
+        `;
+      }).join("");
+      host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%">${bars}</svg>`;
+    }
+
+    function renderRaisedVsRemaining(list){
+      const host = document.getElementById("raisedVsRemainingChart");
+      const goal = list.reduce((a,p) => a + Number(p.goal || 0), 0);
+      const raised = list.reduce((a,p) => a + Number(p.raised || 0), 0);
+      const remaining = Math.max(0, goal - raised);
+      const total = Math.max(1, goal);
+      const pRaised = Math.round((raised / total) * 100);
+      const pRemaining = 100 - pRaised;
+      const r = 66, c = 2 * Math.PI * r;
+      const dRaised = (pRaised / 100) * c;
+      const dRemaining = c - dRaised;
+      host.innerHTML = `
+        <svg viewBox="0 0 300 220" width="100%" height="100%">
+          <circle cx="110" cy="110" r="${r}" fill="transparent" stroke="rgba(15,23,42,.08)" stroke-width="22" />
+          <circle cx="110" cy="110" r="${r}" fill="transparent" stroke="#1d4ed8" stroke-width="22"
+            stroke-dasharray="${dRaised} ${Math.max(0,c-dRaised)}" stroke-dashoffset="0" />
+          <circle cx="110" cy="110" r="${r}" fill="transparent" stroke="#93c5fd" stroke-width="22"
+            stroke-dasharray="${dRemaining} ${Math.max(0,c-dRemaining)}" stroke-dashoffset="${-dRaised}" />
+          <text x="110" y="105" text-anchor="middle" font-size="18" font-weight="900" fill="#0f172a">${pRaised}%</text>
+          <text x="110" y="124" text-anchor="middle" font-size="11" fill="#64748b">leve</text>
+          <text x="208" y="92" font-size="12" fill="#1e3a8a">Leve: ${fmt(raised)}</text>
+          <text x="208" y="114" font-size="12" fill="#2563eb">Restant: ${fmt(remaining)}</text>
+          <text x="208" y="136" font-size="12" fill="#475569">Objectif: ${fmt(goal)}</text>
+          <text x="208" y="160" font-size="11" fill="#64748b">Leve ${pRaised}% | Restant ${pRemaining}%</text>
+        </svg>
+      `;
+    }
+
+    function renderProgressDistribution(list){
+      const host = document.getElementById("progressDistChart");
+      const bins = [
+        {label:"0-25%", min:0, max:25, color:"#bfdbfe"},
+        {label:"26-50%", min:26, max:50, color:"#93c5fd"},
+        {label:"51-75%", min:51, max:75, color:"#60a5fa"},
+        {label:"76-100%", min:76, max:100, color:"#2563eb"}
+      ];
+      const counts = bins.map(b => list.filter(p => p.progress >= b.min && p.progress <= b.max).length);
+      const max = Math.max(1, ...counts);
+      const w = 720, h = 260, pad = 20;
+      const gap = 24;
+      const barW = Math.floor((w - pad*2 - gap*(bins.length-1)) / bins.length);
+      const bars = bins.map((b, i) => {
+        const val = counts[i];
+        const bh = Math.round((val / max) * (h - 70));
+        const x = pad + i * (barW + gap);
+        const y = h - 34 - bh;
+        return `
+          <rect x="${x}" y="${y}" width="${barW}" height="${bh}" rx="8" fill="${b.color}" />
+          <text x="${x + barW/2}" y="${y - 6}" text-anchor="middle" font-size="12" fill="#334155">${val}</text>
+          <text x="${x + barW/2}" y="${h - 14}" text-anchor="middle" font-size="11" fill="#64748b">${b.label}</text>
+        `;
+      }).join("");
+      host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%">${bars}</svg>`;
+    }
+
+    function renderTopRaised(list){
+      const host = document.getElementById("topRaisedChart");
+      const top = list.slice().sort((a,b) => b.raised - a.raised).slice(0, 5);
+      const max = Math.max(1, ...top.map(p => p.raised || 0));
+      const w = 720, h = 260, pad = 16;
+      const rowH = Math.max(28, Math.floor((h - pad * 2) / Math.max(1, top.length)));
+      const bars = top.map((p, i) => {
+        const y = pad + i * rowH + 4;
+        const maxW = w - pad * 2 - 240;
+        const bw = Math.round((Number(p.raised || 0) / max) * maxW);
+        return `
+          <text x="${pad}" y="${y + 12}" font-size="11" fill="#334155">${escapeXml(p.title.slice(0, 28))}</text>
+          <rect x="${pad + 200}" y="${y}" width="${maxW}" height="12" rx="6" fill="rgba(15,23,42,.08)" />
+          <rect x="${pad + 200}" y="${y}" width="${bw}" height="12" rx="6" fill="#2563eb" />
+          <text x="${pad + 200 + maxW + 8}" y="${y + 10}" font-size="11" fill="#64748b">${fmt(p.raised)}</text>
+        `;
+      }).join("");
+      host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%">${bars}</svg>`;
+    }
+
+    function renderTable(list){
+      const body = document.getElementById("rows");
+      body.innerHTML = list.map(p => `
+        <tr>
+          <td>${escapeXml(p.title)}</td>
+          <td><span class="status ${statusClass(p.status)}">${escapeXml(String(p.status || "-"))}</span></td>
+          <td class="num">${fmt(p.goal)}</td>
+          <td class="num">${fmt(p.raised)}</td>
+          <td class="num">${p.progress}%</td>
+        </tr>
+      `).join("");
+    }
+
+    function escapeXml(s){
+      return String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    document.getElementById("fQuery").addEventListener("input", applyFilters);
+    document.getElementById("fStatus").addEventListener("change", applyFilters);
+    document.getElementById("fSector").addEventListener("change", applyFilters);
+    document.getElementById("fMinProgress").addEventListener("input", applyFilters);
+    document.getElementById("fMinGoal").addEventListener("input", applyFilters);
+    document.getElementById("resetFiltersBtn").addEventListener("click", () => {
+      document.getElementById("fQuery").value = "";
+      document.getElementById("fStatus").value = "ALL";
+      document.getElementById("fSector").value = "ALL";
+      document.getElementById("fMinProgress").value = "";
+      document.getElementById("fMinGoal").value = "";
+      applyFilters();
+    });
+
+    bindExport();
+    loadDashboard();
+  </script>
+  <script>
+    (function(){
+      const links = Array.from(document.querySelectorAll('.nav-links a'));
+      if (!links.length) return;
+      const active = links.find(a => a.textContent.toLowerCase().includes('mes projets')) || null;
+      if (active) active.classList.add('active');
+    })();
+  </script>
+</body>
+</html>

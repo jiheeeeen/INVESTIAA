@@ -6,14 +6,15 @@ import Entities.User;
 import Services.InvestissementCRUD;
 import Services.ProfilInvestisseurCRUD;
 import Utils.Session;
+import Utils.WebViewBridgeUtil;
 import Utils.sceneManager;
 import Controllers.WebAuthController;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import netscape.javascript.JSObject;
 
+import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Date;
 import java.util.List;
@@ -31,54 +32,25 @@ public class InvestissementWebViewController {
         final WebEngine engine = webView.getEngine();
         engine.setJavaScriptEnabled(true);
 
-        // ✅ AJOUT (sans changer ta logique) :
-        // Active confirm("...") et alert("...") dans JavaFX WebView
-        engine.setConfirmHandler(message -> {
-            javafx.scene.control.Alert alert =
-                    new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Confirmation");
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-
-            java.util.Optional<javafx.scene.control.ButtonType> result = alert.showAndWait();
-            return result.isPresent() && result.get() == javafx.scene.control.ButtonType.OK;
-        });
-
-        engine.setOnAlert(event -> {
-            javafx.scene.control.Alert alert =
-                    new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
-            alert.setTitle("Message");
-            alert.setHeaderText(null);
-            alert.setContentText(event.getData());
-            alert.showAndWait();
-        });
+        // Ã¢Å“â€¦ alert(...) et confirm(...) dans WebView
+        WebViewBridgeUtil.enableAlerts(engine);
 
         engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
 
-                JSObject window = (JSObject) engine.executeScript("window");
-                engine.executeScript("console.log('[JAVA] Bridge injected by InvestissementWebViewController');");
-
-                // ✅ Inject bridge + alias
-                window.setMember("javaBridge", bridge);
-                window.setMember("javaBridgeInvest", bridge);
-                window.setMember("javaBridgeInvestissement", bridge);
-
-                engine.executeScript("window.__bridgeReady = true;");
-
-                // ✅ Anti-écrasement (navbar.js)
-                engine.executeScript(
-                        "try {" +
-                                "window.javaBridge = window.javaBridge || window.javaBridgeInvest || window.javaBridgeInvestissement;" +
-                                "} catch(e) {}"
+                WebViewBridgeUtil.safeExec(engine,
+                        "console.log('[JAVA] Bridge injected by InvestissementWebViewController');"
                 );
 
-                // ✅ Si l’URL contient ?idProjet=... => Session
+                // Ã¢Å“â€¦ COMME AVANT : bridge page investissement seulement
+                WebViewBridgeUtil.injectAll(engine, bridge, bridge);
+
+                // Ã¢Å“â€¦ si URL contient ?idProjet=... => Session
                 pushProjetIdFromUrlToSession(engine);
             }
         });
 
-        // ✅ Load page avec idProjet si dispo
+        // Ã¢Å“â€¦ Load page avec idProjet si dispo
         URL page = getClass().getResource("/investissement_form.html");
         if (page != null) {
             Integer pid = Session.getSelectedProjetId();
@@ -103,16 +75,81 @@ public class InvestissementWebViewController {
             int pid = Integer.parseInt(s);
             if (pid > 0) Session.setSelectedProjetId(pid);
 
-        } catch (Exception ignored) {
+        } catch (Exception ignored) { }
+    }
+
+    // =========================================================
+    // Ã¢Å“â€¦ VALIDATION (TON TRAVAIL GARDÃƒâ€°)
+    // =========================================================
+    private static void validateMontantInvestissement(double montant, BigDecimal budgetTotal) {
+        if (montant <= 0) throw new IllegalArgumentException("ERROR:MONTANT_INVALID");
+        if (montant > 10000) throw new IllegalArgumentException("ERROR:MONTANT_MAX_10000");
+
+        if (budgetTotal != null && budgetTotal.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal m = BigDecimal.valueOf(montant);
+            if (m.compareTo(budgetTotal) > 0) {
+                throw new IllegalArgumentException("ERROR:MONTANT_EXCEEDS_BUDGET_TOTAL");
+            }
         }
     }
 
     // =========================================================
-    // BRIDGE JS <-> JAVA
+    // BRIDGE JS <-> JAVA (investissement)
     // =========================================================
     public class JavaBridge {
 
-        // ===== navbar helpers =====
+        // =========================================================
+        // Ã¢Å“â€¦ Objectif projet + total investi (TON TRAVAIL GARDÃƒâ€°)
+        // =========================================================
+        private BigDecimal getObjectifProjetBD(int projetId) throws Exception {
+            java.sql.Connection c = Utils.MyBD.getInstance().getConn();
+            String sql = "SELECT objectif_tnd FROM projet WHERE id_projet = ?";
+            try (java.sql.PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setInt(1, projetId);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    if (!rs.next()) return null;
+                    return rs.getBigDecimal("objectif_tnd");
+                }
+            }
+        }
+
+        private BigDecimal getTotalInvestiPourProjetBD(int projetId) throws Exception {
+            java.sql.Connection c = Utils.MyBD.getInstance().getConn();
+            String sql = "SELECT COALESCE(SUM(montant),0) AS total FROM investissement WHERE id_projet = ?";
+            try (java.sql.PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setInt(1, projetId);
+                try (java.sql.ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getBigDecimal("total");
+                }
+            }
+        }
+
+        private void validateAgainstProjetObjectif(int projetId, BigDecimal montant, Integer excludeInvestmentId) throws Exception {
+            BigDecimal objectif = getObjectifProjetBD(projetId);
+            if (objectif == null) throw new IllegalArgumentException("ERROR:PROJET_NOT_FOUND");
+            if (objectif.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("ERROR:OBJECTIF_INVALID");
+
+            BigDecimal total = getTotalInvestiPourProjetBD(projetId);
+            if (total == null) total = BigDecimal.ZERO;
+
+            if (excludeInvestmentId != null && excludeInvestmentId > 0) {
+                Investissement old = investissementCRUD.getById(excludeInvestmentId);
+                if (old != null && old.getId_projet() == projetId) {
+                    BigDecimal oldM = BigDecimal.valueOf(old.getMontant());
+                    total = total.subtract(oldM);
+                    if (total.compareTo(BigDecimal.ZERO) < 0) total = BigDecimal.ZERO;
+                }
+            }
+
+            BigDecimal restant = objectif.subtract(total);
+            if (restant.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("ERROR:OBJECTIF_DEJA_ATTEINT");
+            if (montant.compareTo(restant) > 0) throw new IllegalArgumentException("ERROR:MONTANT_GT_OBJECTIF_RESTANT");
+        }
+
+        // ==========================
+        // Header helpers (utiles ÃƒÂ  la page)
+        // ==========================
         public String getCurrentUserRole() {
             try {
                 User u = Session.getCurrentUser();
@@ -131,7 +168,83 @@ public class InvestissementWebViewController {
             return full.isEmpty() ? (u.getEmail() == null ? "-" : u.getEmail().trim()) : full;
         }
 
-        // ===== Projet id =====
+        // ==========================
+        // NAVBAR (COMME AVANT: ici dans le bridge)
+        // ==========================
+        public String goAccueilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/investisseur_view.fxml", "Investia - Accueil Investisseur")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openProjetsInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/investisseur_projets_view.fxml", "Investia - Projets")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openMesInvestissements() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/web/MesInvestissementsWebView.fxml", "Mes investissements")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openProfilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/profil_investisseur_view.fxml", "Investia - Mon Profil")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openEditProfilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/profil_investisseur_edit_view.fxml", "Investia - Modifier Profil")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openWalletInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/web/wallet_investisseur_view.fxml", "Investia - Mon Wallet")
+                );
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        // Ã¢Å“â€¦ AJOUT MINIMAL (pour compat navbar)
+        public String openWallet() {
+            return openWalletInvestisseur();
+        }
+
+        // ==========================
+        // Projet id (Session)
+        // ==========================
         public String getSelectedProjetId() {
             try {
                 Integer pid = Session.getSelectedProjetId();
@@ -155,18 +268,29 @@ public class InvestissementWebViewController {
             }
         }
 
-        // ===== READ table =====
+        // ==========================
+        // READ table Ã¢Å“â€¦ filtrÃƒÂ©: uniquement connectÃƒÂ©
+        // ==========================
         public String listInvestissementsByProjet(String idProjet) {
             try {
                 if (idProjet == null || idProjet.trim().isEmpty()) return "[]";
                 int pid = Integer.parseInt(idProjet.trim());
+
+                User u = Session.getCurrentUser();
+                if (u == null) return "[]";
+
+                ProfilInvestisseur p = profilCrud.getByUserId(u.getId());
+                int currentInvestorId = (p != null ? p.getIdInvestisseur() : u.getId());
 
                 List<Investissement> list = investissementCRUD.afficherParProjet(pid);
 
                 StringBuilder out = new StringBuilder();
                 out.append("[");
                 boolean first = true;
+
                 for (Investissement x : list) {
+                    if (x.getId_investisseur() != currentInvestorId) continue;
+
                     if (!first) out.append(",");
                     first = false;
 
@@ -178,6 +302,7 @@ public class InvestissementWebViewController {
                     out.append("\"id_projet\":").append(x.getId_projet());
                     out.append("}");
                 }
+
                 out.append("]");
                 return out.toString();
 
@@ -187,7 +312,9 @@ public class InvestissementWebViewController {
             }
         }
 
-        // ===== CREATE =====
+        // ==========================
+        // CREATE
+        // ==========================
         public String createInvestissementSimple(String montant, String dateIso) {
             try {
                 User u = Session.getCurrentUser();
@@ -199,18 +326,30 @@ public class InvestissementWebViewController {
 
                 if (montant == null || montant.trim().isEmpty()) return "ERROR:MONTANT_REQUIRED";
                 double m = Double.parseDouble(montant.trim());
-                if (m <= 0) return "ERROR:MONTANT_INVALID";
-
-                Date d;
-                if (dateIso != null && !dateIso.trim().isEmpty()) {
-                    d = Date.valueOf(dateIso.trim()); // yyyy-mm-dd
-                } else {
-                    d = new Date(System.currentTimeMillis());
-                }
 
                 ProfilInvestisseur p = profilCrud.getByUserId(u.getId());
                 if (p == null && !investissementCRUD.investorColumnIsUserId()) {
                     return "ERROR:PROFIL_INVESTISSEUR_NOT_FOUND";
+                }
+                BigDecimal budgetTotal = (p == null ? null : p.getBudgetTotal());
+
+                try {
+                    validateMontantInvestissement(m, budgetTotal);
+                } catch (IllegalArgumentException ex) {
+                    return ex.getMessage();
+                }
+
+                try {
+                    validateAgainstProjetObjectif(pid, BigDecimal.valueOf(m), null);
+                } catch (IllegalArgumentException ex) {
+                    return ex.getMessage();
+                }
+
+                Date d;
+                if (dateIso != null && !dateIso.trim().isEmpty()) {
+                    d = Date.valueOf(dateIso.trim());
+                } else {
+                    d = new Date(System.currentTimeMillis());
                 }
 
                 Investissement inv = new Investissement();
@@ -232,7 +371,9 @@ public class InvestissementWebViewController {
             }
         }
 
-        // ===== UPDATE =====
+        // ==========================
+        // UPDATE
+        // ==========================
         public String updateInvestissement(String idInv, String montant, String dateIso) {
             try {
                 User u = Session.getCurrentUser();
@@ -254,7 +395,19 @@ public class InvestissementWebViewController {
 
                 if (montant == null || montant.trim().isEmpty()) return "ERROR:MONTANT_REQUIRED";
                 double m = Double.parseDouble(montant.trim());
-                if (m <= 0) return "ERROR:MONTANT_INVALID";
+
+                BigDecimal budgetTotal = (p == null ? null : p.getBudgetTotal());
+                try {
+                    validateMontantInvestissement(m, budgetTotal);
+                } catch (IllegalArgumentException ex) {
+                    return ex.getMessage();
+                }
+
+                try {
+                    validateAgainstProjetObjectif(exist.getId_projet(), BigDecimal.valueOf(m), exist.getId_investissement());
+                } catch (IllegalArgumentException ex) {
+                    return ex.getMessage();
+                }
 
                 Date d = (dateIso != null && !dateIso.trim().isEmpty())
                         ? Date.valueOf(dateIso.trim())
@@ -278,8 +431,9 @@ public class InvestissementWebViewController {
             }
         }
 
-        // ===== DELETE =====
-        // ✅ CHANGEMENT MINIMAL : accepte Object pour gérer "10", "10.0", Number/Double venant de JS
+        // ==========================
+        // DELETE
+        // ==========================
         public String deleteInvestissement(Object idInv) {
             try {
                 User u = Session.getCurrentUser();
@@ -314,7 +468,9 @@ public class InvestissementWebViewController {
             }
         }
 
-        // ===== NAV =====
+        // ==========================
+        // NAV (retour local ÃƒÂ  projets)
+        // ==========================
         public String backToProjets() {
             try {
                 javafx.application.Platform.runLater(() ->
@@ -326,6 +482,9 @@ public class InvestissementWebViewController {
             }
         }
 
+        // ==========================
+        // Logout (garde ici car logique de session)
+        // ==========================
         public String logout() {
             try {
                 Session.setCurrentUser(null);
@@ -339,7 +498,9 @@ public class InvestissementWebViewController {
             }
         }
 
-        // ===== JSON helper =====
+        // ==========================
+        // JSON helper
+        // ==========================
         private String json(String s) {
             if (s == null) return "null";
             String esc = s.replace("\\", "\\\\")
@@ -350,3 +511,5 @@ public class InvestissementWebViewController {
         }
     }
 }
+
+

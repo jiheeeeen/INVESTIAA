@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia — Ajouter financement</title>
+  <link rel="stylesheet" href="financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+  <style>
+    .smartPlanBox{
+      display:none;
+      margin:0;
+      border:1px solid rgba(15,23,42,.12);
+      background:linear-gradient(180deg,#ffffff,#f8fbff);
+    }
+    .smartPlanRec{
+      font-weight:900;
+      color:#0b2a55;
+      margin-bottom:6px;
+    }
+    .smartPlanAlts{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .smartAlt{
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(15,23,42,.10);
+      background:#fff;
+      font-size:12px;
+      font-weight:800;
+      color:#334155;
+    }
+    .riskLOW{ background:#ecfdf3; border-color:#86efac; color:#166534; }
+    .riskMEDIUM{ background:#fff7ed; border-color:#fdba74; color:#9a3412; }
+    .riskHIGH{ background:#fef2f2; border-color:#fca5a5; color:#991b1b; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Financement • Ajout</span>
+        <h1>Ajouter un financement</h1>
+        <p class="sub">Saisie d'une nouvelle contribution liee a un projet.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="financements-list.html">Retour liste</a>
+        <!-- JavaFX WebView can be flaky with the HTML5 `form` attribute on buttons outside the form. -->
+        <button class="btnTop btnNavy" id="submitBtn" type="button">Enregistrer</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2 class="title">Formulaire</h2>
+      </div>
+
+      <form id="addForm">
+        <div class="formGrid">
+          <div>
+            <label for="project">Projet</label>
+            <select id="project" required></select>
+          </div>
+          <div>
+            <label for="investor">Investisseur</label>
+            <input id="investorName" type="text" value="" readonly />
+            <input id="investIdField" type="hidden" value="" />
+          </div>
+          <div>
+            <label for="amount">Montant (TND)</label>
+            <input id="amount" type="number" min="0" step="0.01" value="0" required readonly />
+          </div>
+          <div>
+            <label for="method">Paiement</label>
+            <select id="method" required>
+              <option value="CARTE_BANCAIRE">Carte bancaire</option>
+              <option value="VIREMENT">Virement</option>
+              <option value="WALLET">Wallet</option>
+            </select>
+          </div>
+          <div>
+            <label for="status">Statut</label>
+            <select id="status" required>
+              <option value="CONFIRMED" selected>CONFIRMED</option>
+              <option value="EN_ATTENTE">EN_ATTENTE</option>
+            </select>
+          </div>
+          <div>
+            <label for="rate">Taux estime (%)</label>
+            <input id="rate" type="number" min="0" max="30" step="0.5" value="10" />
+          </div>
+          <div>
+            <label for="duration">Duree estimee (mois)</label>
+            <input id="duration" type="number" min="1" max="120" step="1" value="12" readonly />
+          </div>
+          <div style="grid-column:1 / -1;">
+            <label for="note">Note</label>
+            <textarea id="note" placeholder="Ex: contribution pour soutenir l'impact local..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+          <button id="suggestPlanBtn" type="button" class="miniBtn edit">Proposer un plan</button>
+          <div id="smartPlanInfo" class="note smartPlanBox"></div>
+        </div>
+        <div class="note" id="result" style="display:none;"></div>
+      </form>
+    </section>
+  </main>
+
+        <script>
+    let lastRaw = "";
+    let byProject = {};
+    let existingFinancementInvestIds = new Set();
+    let riskState = { canCreate: true, decision: "ALLOW", message: "" };
+    const form = document.getElementById("addForm");
+    const result = document.getElementById("result");
+    const projectSelect = document.getElementById("project");
+    const investIdField = document.getElementById("investIdField");
+    const investorNameInput = document.getElementById("investorName");
+    const amountInput = document.getElementById("amount");
+    const submitBtn = document.getElementById("submitBtn");
+    const statusSelect = document.getElementById("status");
+    const durationInput = document.getElementById("duration");
+    const suggestPlanBtn = document.getElementById("suggestPlanBtn");
+    const smartPlanInfo = document.getElementById("smartPlanInfo");
+    let createHandled = false;
+    submitBtn.addEventListener("click", (e) => {
+      // Always route the top button through the form submit handler.
+      e.preventDefault();
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    function setProjectSelection(projectId){
+      const item = byProject[String(projectId)];
+      if (!item) {
+        amountInput.value = "0";
+        investIdField.value = "";
+        riskState = { canCreate: false, decision: "BLOCK", message: "Donnees de projet invalides." };
+        updateSubmitState();
+        return;
+      }
+      investIdField.value = String(item.investId || "");
+      amountInput.value = String(item.amount);
+      evaluateRisk();
+      updateSubmitState();
+    }
+
+    function loadCurrentInvestorName(){
+      if (!window.javaBridge || typeof window.javaBridge.getCurrentUserName !== "function") return;
+      try {
+        investorNameInput.value = window.javaBridge.getCurrentUserName() || "Investisseur";
+      } catch (e) {
+        investorNameInput.value = "Investisseur";
+      }
+    }
+
+    function loadCurrentInvestorProjectsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getCurrentInvestorInvestissementsByProjectJson !== "function") {
+        result.style.display = "block";
+        result.textContent = "Bridge incomplet: methode investissements investisseur manquante.";
+        updateSubmitState();
+        return;
+      }
+      try {
+        const rows = JSON.parse(window.javaBridge.getCurrentInvestorInvestissementsByProjectJson());
+        byProject = {};
+        (Array.isArray(rows) ? rows : []).forEach(r => {
+          const pid = String(r.projectId || 0);
+          if (!pid || pid === "0") return;
+          if (!byProject[pid]) {
+            byProject[pid] = {
+              projectId: Number(r.projectId || 0),
+              projectName: r.projectName || ("Projet #" + r.projectId),
+              investId: Number(r.investId || 0),
+              amount: 0
+            };
+          }
+          byProject[pid].amount += Number(r.amount || 0);
+          if (!byProject[pid].investId && Number(r.investId || 0) > 0) {
+            byProject[pid].investId = Number(r.investId || 0);
+          }
+        });
+
+        const projects = Object.values(byProject);
+        projectSelect.innerHTML = "";
+        projects.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = String(p.projectId);
+          opt.textContent = p.projectName;
+          projectSelect.appendChild(opt);
+        });
+
+        if (projects.length > 0) {
+          setProjectSelection(projects[0].projectId);
+          result.style.display = "none";
+          result.textContent = "";
+        } else {
+          amountInput.value = "0";
+          investIdField.value = "";
+          result.style.display = "block";
+          result.textContent = "Aucun investissement trouve pour votre compte. Impossible d'ajouter un financement.";
+        }
+        updateSubmitState();
+      } catch (e) {
+        result.style.display = "block";
+        result.textContent = "Erreur chargement investissements de l'investisseur: " + e;
+        updateSubmitState();
+      }
+    }
+
+    function loadCurrentInvestorFinancementsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getFinancementsForCurrentInvestorJson !== "function") {
+        existingFinancementInvestIds = new Set();
+        return;
+      }
+      try {
+        const rows = JSON.parse(window.javaBridge.getFinancementsForCurrentInvestorJson());
+        existingFinancementInvestIds = new Set();
+        (Array.isArray(rows) ? rows : []).forEach(r => {
+          const investId = Number(r.investId || 0);
+          if (investId > 0) existingFinancementInvestIds.add(investId);
+        });
+      } catch (e) {
+        existingFinancementInvestIds = new Set();
+      }
+    }
+
+    function evaluateRisk(){
+      const selected = byProject[String(projectSelect.value || "")];
+      if (!selected || !window.javaBridge || typeof window.javaBridge.getFinancementRiskCheckJson !== "function") {
+        riskState = { canCreate: true, decision: "ALLOW", message: "" };
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getFinancementRiskCheckJson(
+          Number(selected.projectId || 0),
+          Number(selected.investId || 0),
+          Number(selected.amount || 0)
+        );
+        const res = JSON.parse(String(raw || "{}"));
+        riskState = {
+          canCreate: res.canCreate !== false,
+          decision: String(res.decision || "ALLOW"),
+          message: String(res.message || "")
+        };
+      } catch (e) {
+        riskState = { canCreate: true, decision: "ALLOW", message: "" };
+      }
+    }
+
+    function suggestSmartPlan(){
+      const selected = byProject[String(projectSelect.value || "")];
+      const amount = Number(selected ? selected.amount : 0);
+      const rate = Number(document.getElementById("rate").value || 0);
+      if (!amount || amount <= 0) {
+        if (smartPlanInfo) {
+          smartPlanInfo.style.display = "block";
+          smartPlanInfo.textContent = "Montant invalide pour calculer un plan.";
+        }
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.getSmartRepaymentPlanJson !== "function") {
+        if (smartPlanInfo) {
+          smartPlanInfo.style.display = "block";
+          smartPlanInfo.textContent = "API plan intelligent indisponible.";
+        }
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getSmartRepaymentPlanJson(amount, rate);
+        const plan = JSON.parse(String(raw || "{}"));
+        if (!plan.ok || !plan.recommended) {
+          if (smartPlanInfo) {
+            smartPlanInfo.style.display = "block";
+            smartPlanInfo.textContent = plan.message || "Impossible de calculer le plan.";
+          }
+          return;
+        }
+        durationInput.value = String(plan.recommended.durationMonths || 12);
+        const alts = Array.isArray(plan.alternatives) ? plan.alternatives : [];
+        const badges = alts.map(a => {
+          const level = String(a.pressureLevel || "").toUpperCase();
+          const cls = level === "HIGH" ? "riskHIGH" : (level === "MEDIUM" ? "riskMEDIUM" : "riskLOW");
+          return `<span class="smartAlt ${cls}">${Number(a.durationMonths || 0)}m • ${Number(a.monthlyDue || 0).toFixed(2)} TND/mois • ${level || "LOW"}</span>`;
+        }).join("");
+        if (smartPlanInfo) {
+          smartPlanInfo.style.display = "block";
+          smartPlanInfo.innerHTML =
+            `<div class="smartPlanRec">Plan recommande: ${Number(plan.recommended.durationMonths || 0)} mois • ${Number(plan.recommended.monthlyDue || 0).toFixed(2)} TND/mois</div>` +
+            `<div class="smartPlanAlts">${badges}</div>`;
+        }
+      } catch (e) {
+        if (smartPlanInfo) {
+          smartPlanInfo.style.display = "block";
+          smartPlanInfo.textContent = "Erreur calcul plan intelligent.";
+        }
+      }
+    }
+
+    function updateSubmitState(){
+      const hasProjects = projectSelect.options.length > 0;
+      const selected = byProject[String(projectSelect.value || "")];
+      const hasInvest = !!(selected && selected.investId > 0);
+      const hasAmount = !!(selected && Number(selected.amount || 0) > 0);
+      const duplicate = !!(selected && existingFinancementInvestIds.has(Number(selected.investId || 0)));
+      const selectedStatus = statusSelect.value || "CONFIRMED";
+      const riskBlocks = (riskState.decision === "BLOCK" || riskState.canCreate === false);
+      const reviewNeedsPending = (riskState.decision === "REVIEW" && selectedStatus === "CONFIRMED");
+      submitBtn.disabled = !(hasProjects && hasInvest && hasAmount) || duplicate || riskBlocks || reviewNeedsPending;
+      if (duplicate) {
+        result.style.display = "block";
+        result.textContent = "Ce financement existe deja pour ce projet/investissement. Impossible de l'enregistrer une 2eme fois.";
+      } else if (riskBlocks) {
+        result.style.display = "block";
+        result.textContent = riskState.message || "Risque eleve: financement bloque.";
+      } else if (reviewNeedsPending) {
+        result.style.display = "block";
+        result.textContent = "Risque moyen: choisissez EN_ATTENTE pour enregistrer ce financement.";
+      } else if (!(hasProjects && hasInvest && hasAmount)) {
+        result.style.display = "block";
+        result.textContent = "Ajout impossible: aucun montant investi detecte pour le projet selectionne.";
+      } else {
+        result.style.display = "none";
+        result.textContent = "";
+      }
+    }
+    window.onJavaBridgeReady = function(){
+      loadCurrentInvestorName();
+      loadCurrentInvestorFinancementsFromDb();
+      loadCurrentInvestorProjectsFromDb();
+    };
+
+    projectSelect.addEventListener("change", function(){
+      setProjectSelection(projectSelect.value);
+    });
+    suggestPlanBtn.addEventListener("click", function(){
+      suggestSmartPlan();
+    });
+    statusSelect.addEventListener("change", function(){
+      updateSubmitState();
+    });
+
+    function handleCreateResult(raw){
+      if (createHandled) return;
+      createHandled = true;
+      console.log("handleCreateResult", raw);
+      if (raw === undefined || raw === null || raw === "" ) {
+        result.textContent = "Erreur: reponse vide du bridge.";
+        return;
+      }
+      const res = JSON.parse(String(raw));
+      result.textContent = res.ok ? "Financement ajoute." : ("Erreur: " + (res.message || "inconnue"));
+      if (res.ok) {
+        window.location.href = "financements-list.html";
+      }
+    }
+    window.onCreateResult = handleCreateResult;
+    console.log("onCreateResult bound", window.onCreateResult);
+    function waitForBridge(retries){
+      if (window.javaBridge) {
+        window.onJavaBridgeReady();
+        return;
+      }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible (timeout).";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+
+    waitForBridge(20);
+
+    form.addEventListener("submit", (e)=>{
+      e.preventDefault();
+      createHandled = false;
+      result.style.display = "block";
+      result.textContent = "Enregistrement en cours...";
+
+      if (!window.javaBridge || typeof window.javaBridge.createFinancementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+
+      const selected = byProject[String(projectSelect.value || "")];
+      const projectId = Number(selected ? selected.projectId : 0);
+      const investId = Number(selected ? selected.investId : 0);
+      const amount = Number(selected ? selected.amount : 0);
+      const method = document.getElementById("method").value;
+      const status = document.getElementById("status").value || "CONFIRMED";
+      const rate = Number(document.getElementById("rate").value || 0);
+      const note = document.getElementById("note").value || "";
+
+      if (!projectId || !investId || amount <= 0) {
+        result.textContent = "Donnees invalides: choisissez un projet investi avec un montant valide.";
+        return;
+      }
+      if (existingFinancementInvestIds.has(investId)) {
+        result.textContent = "Ce financement existe deja pour ce projet/investissement.";
+        updateSubmitState();
+        return;
+      }
+      evaluateRisk();
+      updateSubmitState();
+      if (riskState.decision === "BLOCK" || riskState.canCreate === false) {
+        result.textContent = riskState.message || "Risque eleve: financement bloque.";
+        return;
+      }
+      if (riskState.decision === "REVIEW" && statusSelect.value === "CONFIRMED") {
+        result.textContent = "Risque moyen: mettez le statut EN_ATTENTE pour continuer.";
+        return;
+      }
+
+      const feesPct = 1.00;
+      const duration = Number(durationInput.value || 12);
+
+      try {
+        const payload = new URLSearchParams({
+          projectId: String(projectId),
+          investId: String(investId),
+          amount: String(amount),
+          feesPct: String(feesPct),
+          method: method,
+          status: status,
+          rate: String(rate),
+          duration: String(duration),
+          note: note
+        }).toString();
+        const raw = window.javaBridge.createFinancementFromJs(payload);
+        if (raw !== undefined && raw !== null && raw !== "") {
+          handleCreateResult(raw);
+        }
+      } catch (err) {
+        result.textContent = "Erreur JS: " + err;
+      }
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

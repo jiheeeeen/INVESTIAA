@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Statistiques remboursements</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+  <style>
+    :root {
+      --ink: #112f5c;
+      --muted: #5f7597;
+      --line: #dbe5f4;
+      --panel: #ffffffd9;
+      --g1: #ecf4ff;
+      --g2: #f8f4e8;
+      --ok: #22a06b;
+      --warn: #f0b429;
+      --accent: #1f4d8c;
+    }
+    body {
+      background:
+        radial-gradient(900px 350px at 8% -10%, #dce9ff 0%, transparent 60%),
+        radial-gradient(700px 280px at 96% 2%, #f8edd0 0%, transparent 58%),
+        linear-gradient(180deg, var(--g1) 0%, #eef2fb 54%, #f5f7fc 100%);
+    }
+    .card {
+      backdrop-filter: blur(5px);
+      background: linear-gradient(120deg, var(--panel) 0%, #ffffffcc 100%);
+      border: 1px solid #d5e2f6;
+      box-shadow: 0 16px 30px #183b6a12;
+    }
+    .statsGrid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+    .kpiCard {
+      border:1px solid #d7e4f8;
+      border-radius:16px;
+      background:linear-gradient(140deg,#fff,#f7faff);
+      padding:14px;
+      box-shadow: inset 0 1px 0 #ffffff80;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .kpiCard:hover { transform: translateY(-2px); box-shadow: 0 10px 18px #163b6914; }
+    .kpiLabel { color:var(--muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+    .kpiVal { color:var(--ink); font-size:30px; font-weight:800; line-height:1.1; margin-top:5px; }
+    .panelGrid { display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-top:12px; }
+    .panel {
+      border:1px solid #d7e4f8;
+      border-radius:16px;
+      background:linear-gradient(140deg,#fff,#f8fbff);
+      padding:14px;
+    }
+    .panel h3 { margin:0 0 10px 0; color:var(--ink); }
+    .bars {
+      display:flex; align-items:flex-end; gap:8px; min-height:220px;
+      border-bottom:1px dashed #cad9f0; padding-bottom:8px; overflow-x:auto;
+    }
+    .barWrap { min-width:42px; text-align:center; }
+    .bar {
+      width:32px; margin:0 auto; border-radius:10px 10px 3px 3px;
+      background:linear-gradient(180deg,#68a4ee,#1f4d8c);
+      box-shadow: 0 7px 14px #1f4d8c2b;
+      animation: grow .35s ease both;
+      transform-origin: bottom;
+    }
+    @keyframes grow { from { transform: scaleY(.3); opacity:.45; } to { transform: scaleY(1); opacity:1; } }
+    .barLbl { margin-top:6px; font-size:11px; color:#5f7597; }
+    .legend { display:flex; gap:10px; margin-top:8px; font-size:12px; color:#5f7597; }
+    .dot { width:10px; height:10px; border-radius:999px; display:inline-block; margin-right:4px; }
+    .donut {
+      width:210px; height:210px; border-radius:999px; margin:0 auto; position:relative;
+      background:conic-gradient(var(--ok) 0deg,var(--ok) 0deg,var(--warn) 0deg,var(--warn) 360deg);
+      box-shadow: 0 15px 24px #163b691f;
+    }
+    .donutCenter {
+      position:absolute; inset:34px; background:#fff; border-radius:999px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--ink);
+      box-shadow: inset 0 0 0 1px #e1eaf8;
+    }
+    .donutCenter strong { font-size:28px; }
+    .filters { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+    .filters .fieldSmall { min-width:180px; }
+    .filters label { color: var(--ink); font-weight: 800; letter-spacing: .03em; }
+    .filters select {
+      border:1px solid #cbdaf1; background:#fff; border-radius:12px; height:42px;
+      box-shadow: inset 0 1px 2px #eaf1fb;
+    }
+    .tbl { width:100%; border-collapse:collapse; margin-top:8px; }
+    .tbl th,.tbl td { border-bottom:1px solid #eef2fb; padding:9px 8px; text-align:left; }
+    .tbl th { color:#5f7597; font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+    .hint { margin-top:10px; color:#5f7597; font-size:12px; }
+    .insights {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .insightCard {
+      border: 1px solid #d7e4f8;
+      border-radius: 16px;
+      padding: 12px;
+      background: linear-gradient(135deg,#ffffff,#f8fbff);
+    }
+    .insightTitle { color: var(--ink); font-weight: 800; font-size: 13px; margin-bottom: 6px; }
+    .insightTxt { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .workspaceGrid {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 12px;
+    }
+    .workspaceHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .btnInline {
+      border: 1px solid #c8d9f2;
+      background: #fff;
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btnInline.primary { background: var(--accent); color: #fff; border-color: #1f4d8c; }
+    .noteList { display: grid; gap: 8px; max-height: 310px; overflow: auto; padding-right: 4px; }
+    .noteItem {
+      border: 1px solid #d9e6f8;
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px;
+    }
+    .noteItem h4 { margin: 0; color: var(--ink); font-size: 14px; }
+    .noteMeta { color: #6a81a6; font-size: 12px; margin-top: 4px; }
+    .noteBody { color: #334f73; font-size: 13px; white-space: pre-wrap; margin-top: 6px; }
+    .rowBtns { display: flex; gap: 8px; margin-top: 8px; }
+    .field {
+      display: grid;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+    .field label { color: var(--ink); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+    .field input, .field textarea {
+      border: 1px solid #cbdaf1;
+      border-radius: 10px;
+      padding: 9px 10px;
+      font: inherit;
+      color: #23426a;
+      background: #fff;
+    }
+    .field textarea { min-height: 92px; resize: vertical; }
+    .calcResult {
+      border: 1px dashed #c6d8f4;
+      border-radius: 12px;
+      padding: 10px;
+      background: #f8fbff;
+      color: #23426a;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .calcHistory { max-height: 220px; overflow: auto; margin-top: 8px; }
+    .calcRow {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #ebf1fb;
+      padding: 8px 0;
+      font-size: 13px;
+      color: #32557f;
+    }
+    @media (max-width: 1100px){
+      .statsGrid{grid-template-columns:repeat(2,minmax(0,1fr));}
+      .panelGrid{grid-template-columns:1fr;}
+      .insights{grid-template-columns:1fr;}
+      .workspaceGrid{grid-template-columns:1fr;}
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Statistiques</span>
+        <h1>Tableau de bord remboursements</h1>
+        <p class="sub">Vision globale: paiements, retards, evolution mensuelle et top projets.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a id="backBtn" class="btnTop btnGhost" href="remboursements-financement.html">Retour</a>
+        <a class="btnTop btnNavy" href="remboursement-stats.html">Rafraichir</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="filters">
+        <div class="fieldSmall">
+          <label for="projectFilter">Projet</label>
+          <select id="projectFilter"><option value="ALL">Tous</option></select>
+        </div>
+        <div class="fieldSmall">
+          <label for="finFilter">Financement</label>
+          <select id="finFilter"><option value="ALL">Tous</option></select>
+        </div>
+        <div class="fieldSmall">
+          <label for="periodFilter">Periode</label>
+          <select id="periodFilter">
+            <option value="ALL">Tout</option>
+            <option value="12">12 derniers mois</option>
+            <option value="6">6 derniers mois</option>
+            <option value="3">3 derniers mois</option>
+          </select>
+        </div>
+        <div class="fieldSmall">
+          <label for="statusFilter">Statut</label>
+          <select id="statusFilter">
+            <option value="ALL">Tous</option>
+            <option value="EN_ATTENTE">En attente</option>
+            <option value="PAYE">Paye</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="statsGrid" style="margin-top:12px;">
+        <div class="kpiCard"><div class="kpiLabel">Total du</div><div id="kDue" class="kpiVal">0 TND</div></div>
+        <div class="kpiCard"><div class="kpiLabel">Total paye</div><div id="kPaid" class="kpiVal">0 TND</div></div>
+        <div class="kpiCard"><div class="kpiLabel">Taux remboursement</div><div id="kRate" class="kpiVal">0%</div></div>
+        <div class="kpiCard"><div class="kpiLabel">Echeances en attente</div><div id="kPending" class="kpiVal">0</div></div>
+      </div>
+
+      <div class="insights">
+        <div class="insightCard">
+          <div class="insightTitle">Insight principal</div>
+          <div id="insightMain" class="insightTxt">Analyse en cours...</div>
+        </div>
+        <div class="insightCard">
+          <div class="insightTitle">Action recommandee</div>
+          <div id="insightAction" class="insightTxt">Preparation de recommandation...</div>
+        </div>
+      </div>
+
+      <div class="panelGrid">
+        <div class="panel">
+          <h3>Evolution mensuelle des paiements</h3>
+          <div id="monthlyBars" class="bars"></div>
+          <div class="legend"><span><span class="dot" style="background:#1f4d8c;"></span>Montant paye / mois</span></div>
+        </div>
+        <div class="panel">
+          <h3>Repartition statuts</h3>
+          <div id="donut" class="donut">
+            <div class="donutCenter">
+              <strong id="donutPct">0%</strong>
+              <span style="font-size:12px;color:#5f7597;">taux paye</span>
+            </div>
+          </div>
+          <div class="legend">
+            <span><span class="dot" style="background:#22a06b;"></span>Paye</span>
+            <span><span class="dot" style="background:#f0b429;"></span>En attente</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:12px;">
+        <h3>Top projets finances</h3>
+        <table class="tbl" aria-label="Top projets">
+          <thead><tr><th>Projet</th><th>Total du</th><th>Total paye</th><th>Taux</th><th>Echeances</th></tr></thead>
+          <tbody id="topProjectsBody"></tbody>
+        </table>
+      </div>
+
+      <div id="workspaceGrid" class="workspaceGrid" style="display:none;">
+        <div class="panel">
+          <div class="workspaceHead">
+            <h3 style="margin:0;">Notes entrepreneur</h3>
+            <button id="noteSaveBtn" class="btnInline primary" type="button">Enregistrer</button>
+          </div>
+          <div class="field">
+            <label for="noteTitle">Titre</label>
+            <input id="noteTitle" type="text" maxlength="190" placeholder="Ex: Priorites semaine" />
+          </div>
+          <div class="field">
+            <label for="noteContent">Contenu</label>
+            <textarea id="noteContent" placeholder="Vos notes strategiques..."></textarea>
+          </div>
+          <div class="rowBtns">
+            <button id="noteNewBtn" class="btnInline" type="button">Nouvelle note</button>
+          </div>
+          <div id="noteList" class="noteList" style="margin-top:8px;"></div>
+        </div>
+        <div class="panel">
+          <div class="workspaceHead">
+            <h3 style="margin:0;">Calculatrice metier</h3>
+            <button id="calcSaveBtn" class="btnInline primary" type="button">Sauvegarder</button>
+          </div>
+          <div class="field">
+            <label for="calcLabel">Scenario</label>
+            <input id="calcLabel" type="text" maxlength="190" placeholder="Ex: Scenario prudent" />
+          </div>
+          <div class="field">
+            <label for="calcPrincipal">Principal (TND)</label>
+            <input id="calcPrincipal" type="number" min="0" step="0.01" placeholder="10000" />
+          </div>
+          <div class="field">
+            <label for="calcRate">Taux annuel (%)</label>
+            <input id="calcRate" type="number" min="0" step="0.01" placeholder="8.5" />
+          </div>
+          <div class="field">
+            <label for="calcMonths">Duree (mois)</label>
+            <input id="calcMonths" type="number" min="1" step="1" placeholder="24" />
+          </div>
+          <div class="rowBtns">
+            <button id="calcComputeBtn" class="btnInline" type="button">Calculer</button>
+          </div>
+          <div id="calcResult" class="calcResult" style="margin-top:8px;">Remplissez les champs puis cliquez sur Calculer.</div>
+          <div id="calcHistory" class="calcHistory"></div>
+        </div>
+      </div>
+
+      <div id="note" class="hint"></div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const roleParam = String(params.get("role") || "").toUpperCase();
+    const backBtn = document.getElementById("backBtn");
+    const projectFilter = document.getElementById("projectFilter");
+    const finFilter = document.getElementById("finFilter");
+    const periodFilter = document.getElementById("periodFilter");
+    const statusFilter = document.getElementById("statusFilter");
+    const note = document.getElementById("note");
+    const monthlyBars = document.getElementById("monthlyBars");
+    const topProjectsBody = document.getElementById("topProjectsBody");
+    const donut = document.getElementById("donut");
+    const donutPct = document.getElementById("donutPct");
+    const kDue = document.getElementById("kDue");
+    const kPaid = document.getElementById("kPaid");
+    const kRate = document.getElementById("kRate");
+    const kPending = document.getElementById("kPending");
+    const insightMain = document.getElementById("insightMain");
+    const insightAction = document.getElementById("insightAction");
+    const workspaceGrid = document.getElementById("workspaceGrid");
+    const noteList = document.getElementById("noteList");
+    const noteTitle = document.getElementById("noteTitle");
+    const noteContent = document.getElementById("noteContent");
+    const noteSaveBtn = document.getElementById("noteSaveBtn");
+    const noteNewBtn = document.getElementById("noteNewBtn");
+    const calcLabel = document.getElementById("calcLabel");
+    const calcPrincipal = document.getElementById("calcPrincipal");
+    const calcRate = document.getElementById("calcRate");
+    const calcMonths = document.getElementById("calcMonths");
+    const calcComputeBtn = document.getElementById("calcComputeBtn");
+    const calcSaveBtn = document.getElementById("calcSaveBtn");
+    const calcResult = document.getElementById("calcResult");
+    const calcHistory = document.getElementById("calcHistory");
+
+    let rows = [];
+    let selectedProject = "ALL";
+    let selectedFin = "ALL";
+    let noteEditId = 0;
+    let calcSnapshot = null;
+
+    function money(n){ return new Intl.NumberFormat("fr-TN").format(Number(n || 0)) + " TND"; }
+    function round2(n){ return Math.round((Number(n || 0) + Number.EPSILON) * 100) / 100; }
+    function ym(d){ const dt = new Date(d); if (Number.isNaN(dt.getTime())) return ""; return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`; }
+    function monthLabel(ymv){ const [y,m]=String(ymv||"").split("-"); return `${m||"--"}/${y||"--"}`; }
+    function toPayload(obj){
+      return Object.entries(obj || {})
+        .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v == null ? "" : String(v))}`)
+        .join("&");
+    }
+
+    function safeJson(raw){ try { return JSON.parse(String(raw || "[]")); } catch (_e) { return []; } }
+
+    function currentRole(){
+      if (roleParam) return roleParam;
+      try {
+        if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function") {
+          return String(window.javaBridge.getCurrentUserRole() || "").toUpperCase();
+        }
+      } catch (_e) {}
+      return "";
+    }
+
+    function normalizeRow(r){
+      const du = Number(r.montantDu || 0);
+      const paye = Math.max(0, Math.min(du, Number(r.montantPaye || 0)));
+      const statut = (du > 0 && paye + 1e-9 >= du) ? "PAYE" : "EN_ATTENTE";
+      const pid = String(r.projectId || "");
+      const pname = String(r.projectName || ("Projet " + (pid || ""))).trim();
+      const fid = String(r.financementId || "");
+      return {
+        projectId: pid || ("name:" + pname.toLowerCase()),
+        projectName: pname || "Projet",
+        financementId: fid,
+        dateEcheance: String(r.dateEcheance || ""),
+        montantDu: du,
+        montantPaye: paye,
+        statut
+      };
+    }
+
+    function loadEntrepreneurRows(){
+      const projects = safeJson(window.javaBridge.getMyProjectsJson());
+      const out = [];
+      (Array.isArray(projects) ? projects : []).forEach(p => {
+        const pid = Number(p.id || 0);
+        const pname = String(p.name || ("Projet " + pid));
+        if (!pid) return;
+        const fins = safeJson(window.javaBridge.getFinancementsByProjectWithRembStatusJson(pid));
+        (Array.isArray(fins) ? fins : []).forEach(f => {
+          const fid = Number(f.id || 0);
+          if (!fid) return;
+          const rembs = safeJson(window.javaBridge.getRemboursementsByFinancementJson(fid));
+          (Array.isArray(rembs) ? rembs : []).forEach(r => {
+            out.push(normalizeRow({
+              projectId: pid,
+              projectName: pname,
+              financementId: fid,
+              dateEcheance: r.dateEcheance,
+              montantDu: r.montantDu,
+              montantPaye: r.montantPaye
+            }));
+          });
+        });
+      });
+      return out;
+    }
+
+    function loadInvestorRows(){
+      let out = safeJson(window.javaBridge.getRemboursementsForCurrentInvestorJson());
+      if (Array.isArray(out) && out.length) return out.map(normalizeRow);
+      const fins = safeJson(window.javaBridge.getFinancementsForCurrentInvestorJson());
+      const tmp = [];
+      (Array.isArray(fins) ? fins : []).forEach(f => {
+        const fid = Number(f.id || 0);
+        if (!fid) return;
+        const rembs = safeJson(window.javaBridge.getRemboursementsByFinancementJson(fid));
+        (Array.isArray(rembs) ? rembs : []).forEach(r => {
+          tmp.push(normalizeRow({
+            projectId: f.projectId,
+            projectName: f.projectName,
+            financementId: fid,
+            dateEcheance: r.dateEcheance,
+            montantDu: r.montantDu,
+            montantPaye: r.montantPaye
+          }));
+        });
+      });
+      return tmp;
+    }
+
+    function fillFilters(){
+      const projMap = new Map();
+      rows.forEach(r => { if (!projMap.has(r.projectId)) projMap.set(r.projectId, r.projectName); });
+      const projOpts = ['<option value="ALL">Tous</option>'];
+      projMap.forEach((name,id)=>projOpts.push(`<option value="${id}">${name}</option>`));
+      projectFilter.innerHTML = projOpts.join("");
+      if (!projMap.has(selectedProject)) selectedProject = "ALL";
+      projectFilter.value = selectedProject;
+
+      const finMap = new Map();
+      rows.filter(r => selectedProject === "ALL" || r.projectId === selectedProject).forEach(r => {
+        const key = `${r.projectId}|${r.financementId}`;
+        if (!finMap.has(key)) finMap.set(key, { fid:r.financementId, pid:r.projectId });
+      });
+      const finOpts = ['<option value="ALL">Tous</option>'];
+      const groupedOrd = new Map();
+      finMap.forEach(v => {
+        if (!groupedOrd.has(v.pid)) groupedOrd.set(v.pid, []);
+        groupedOrd.get(v.pid).push(v.fid);
+      });
+      groupedOrd.forEach((arr,pid)=>arr.sort((a,b)=>Number(a)-Number(b)).forEach((fid,idx)=>{
+        const key = `${pid}|${fid}`;
+        finOpts.push(`<option value="${key}">Financement N\u00B0${idx+1}</option>`);
+      }));
+      finFilter.innerHTML = finOpts.join("");
+      if (!Array.from(finMap.keys()).includes(selectedFin)) selectedFin = "ALL";
+      finFilter.value = selectedFin;
+    }
+
+    function filtered(){
+      const st = String(statusFilter.value || "ALL");
+      const period = String(periodFilter.value || "ALL");
+      const now = new Date();
+      let cutoff = null;
+      if (period !== "ALL") {
+        const m = Number(period || 0);
+        if (m > 0) {
+          cutoff = new Date(now.getFullYear(), now.getMonth() - m + 1, 1);
+        }
+      }
+      return rows.filter(r => {
+        if (selectedProject !== "ALL" && r.projectId !== selectedProject) return false;
+        if (selectedFin !== "ALL") {
+          const k = `${r.projectId}|${r.financementId}`;
+          if (k !== selectedFin) return false;
+        }
+        if (st !== "ALL" && r.statut !== st) return false;
+        if (cutoff) {
+          const d = new Date(r.dateEcheance);
+          if (Number.isNaN(d.getTime()) || d < cutoff) return false;
+        }
+        return true;
+      });
+    }
+
+    function render(){
+      const data = filtered();
+      const totalDu = round2(data.reduce((a,r)=>a+r.montantDu,0));
+      const totalPaye = round2(data.reduce((a,r)=>a+r.montantPaye,0));
+      const pending = data.filter(r=>r.statut!=="PAYE").length;
+      const pct = totalDu > 0 ? Math.round((totalPaye / totalDu) * 100) : 0;
+
+      kDue.textContent = money(totalDu);
+      kPaid.textContent = money(totalPaye);
+      kRate.textContent = `${pct}%`;
+      kPending.textContent = String(pending);
+      donutPct.textContent = `${pct}%`;
+      const paidDeg = Math.round((pct / 100) * 360);
+      donut.style.background = `conic-gradient(#22a06b 0deg,#22a06b ${paidDeg}deg,#f0b429 ${paidDeg}deg,#f0b429 360deg)`;
+
+      const monthly = new Map();
+      data.forEach(r => {
+        const key = ym(r.dateEcheance);
+        if (!key) return;
+        monthly.set(key, round2((monthly.get(key) || 0) + r.montantPaye));
+      });
+      const keys = Array.from(monthly.keys()).sort().slice(-12);
+      const maxV = Math.max(1, ...keys.map(k => Number(monthly.get(k) || 0)));
+      monthlyBars.innerHTML = keys.map(k => {
+        const v = Number(monthly.get(k) || 0);
+        const h = Math.max(4, Math.round((v / maxV) * 180));
+        return `<div class="barWrap"><div class="bar" style="height:${h}px" title="${money(v)}"></div><div class="barLbl">${monthLabel(k)}</div></div>`;
+      }).join("");
+      if (!keys.length) monthlyBars.innerHTML = "<div class='hint'>Aucune donnee mensuelle.</div>";
+
+      const pmap = new Map();
+      data.forEach(r => {
+        const k = r.projectId;
+        if (!pmap.has(k)) pmap.set(k, { name:r.projectName, du:0, paye:0, c:0 });
+        const it = pmap.get(k);
+        it.du += r.montantDu; it.paye += r.montantPaye; it.c += 1;
+      });
+      const tops = Array.from(pmap.values()).sort((a,b)=>b.paye-a.paye).slice(0,8);
+      topProjectsBody.innerHTML = tops.map(t => {
+        const p = t.du > 0 ? Math.round((t.paye / t.du) * 100) : 0;
+        return `<tr><td>${t.name}</td><td>${money(round2(t.du))}</td><td>${money(round2(t.paye))}</td><td>${p}%</td><td>${t.c}</td></tr>`;
+      }).join("");
+      if (!tops.length) topProjectsBody.innerHTML = "<tr><td colspan='5'>Aucune donnee.</td></tr>";
+      const remain = Math.max(0, round2(totalDu - totalPaye));
+      if (pct >= 85) {
+        insightMain.textContent = `Performance solide: ${pct}% du montant total est deja rembourse.`;
+        insightAction.textContent = pending > 0
+          ? `Focus sur ${pending} echeance(s) en attente pour atteindre 100%.`
+          : "Aucune action urgente: portefeuille a jour.";
+      } else if (pct >= 55) {
+        insightMain.textContent = `Rythme moyen: taux remboursement ${pct}% avec un reste de ${money(remain)}.`;
+        insightAction.textContent = `Prioriser les echeances proches pour reduire le solde restant.`;
+      } else {
+        insightMain.textContent = `Risque de retard: seulement ${pct}% rembourse pour l'instant.`;
+        insightAction.textContent = `Lancer un plan de relance cible sur les projets les moins performants.`;
+      }
+      note.textContent = `Lignes analysees: ${data.length}.`;
+    }
+
+    function calcAmortissement(principal, annualRatePct, months){
+      const p = Math.max(0, Number(principal || 0));
+      const m = Math.max(1, Math.round(Number(months || 0)));
+      const annual = Math.max(0, Number(annualRatePct || 0));
+      const r = annual / 12 / 100;
+      let mensualite = 0;
+      if (r > 0) mensualite = p * r / (1 - Math.pow(1 + r, -m));
+      else mensualite = p / m;
+      const total = mensualite * m;
+      const interets = Math.max(0, total - p);
+      return {
+        principal: round2(p),
+        annualRatePct: round2(annual),
+        durationMonths: m,
+        monthlyPayment: round2(mensualite),
+        totalPayment: round2(total),
+        totalInterest: round2(interets)
+      };
+    }
+
+    function clearNoteForm(){
+      noteEditId = 0;
+      noteTitle.value = "";
+      noteContent.value = "";
+      noteSaveBtn.textContent = "Enregistrer";
+    }
+
+    function renderNotes(notes){
+      const arr = Array.isArray(notes) ? notes : [];
+      if (!arr.length) {
+        noteList.innerHTML = "<div class='hint'>Aucune note enregistree.</div>";
+        return;
+      }
+      noteList.innerHTML = arr.map(n => `
+        <article class="noteItem">
+          <h4>${String(n.title || "Sans titre")}</h4>
+          <div class="noteMeta">Maj: ${String(n.updatedAt || "-")}</div>
+          <div class="noteBody">${String(n.content || "").replace(/[<>&]/g, s => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[s]))}</div>
+          <div class="rowBtns">
+            <button class="btnInline" type="button" data-note-edit="${n.id}">Modifier</button>
+            <button class="btnInline" type="button" data-note-del="${n.id}">Supprimer</button>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function loadNotes(){
+      try {
+        const notes = safeJson(window.javaBridge.getEntrepreneurNotesJson());
+        renderNotes(notes);
+      } catch (_e) {
+        noteList.innerHTML = "<div class='hint'>Erreur chargement notes.</div>";
+      }
+    }
+
+    function renderCalcSnapshot(snapshot){
+      if (!snapshot) {
+        calcResult.textContent = "Remplissez les champs puis cliquez sur Calculer.";
+        return;
+      }
+      calcResult.innerHTML = `
+        Mensualite: <strong>${money(snapshot.monthlyPayment)}</strong><br/>
+        Total a payer: <strong>${money(snapshot.totalPayment)}</strong><br/>
+        Interets: <strong>${money(snapshot.totalInterest)}</strong>
+      `;
+    }
+
+    function renderCalcHistory(list){
+      const arr = Array.isArray(list) ? list : [];
+      if (!arr.length) {
+        calcHistory.innerHTML = "<div class='hint'>Aucun calcul sauvegarde.</div>";
+        return;
+      }
+      calcHistory.innerHTML = arr.map(it => `
+        <div class="calcRow">
+          <div>
+            <strong>${String(it.label || "Scenario")}</strong><br/>
+            ${money(it.principal)} | ${it.annualRatePct}% | ${it.durationMonths} mois<br/>
+            Mensualite ${money(it.monthlyPayment)} | Interets ${money(it.totalInterest)}
+          </div>
+          <button class="btnInline" type="button" data-calc-del="${it.id}">Supprimer</button>
+        </div>
+      `).join("");
+    }
+
+    function loadCalcHistory(){
+      try {
+        const list = safeJson(window.javaBridge.getEntrepreneurCalcHistoryJson());
+        renderCalcHistory(list);
+      } catch (_e) {
+        calcHistory.innerHTML = "<div class='hint'>Erreur chargement historique.</div>";
+      }
+    }
+
+    function bindWorkspaceEvents(){
+      if (!workspaceGrid) return;
+      noteNewBtn.addEventListener("click", clearNoteForm);
+      noteSaveBtn.addEventListener("click", () => {
+        const payload = toPayload({
+          id: noteEditId || "",
+          title: noteTitle.value || "",
+          content: noteContent.value || ""
+        });
+        const raw = noteEditId
+          ? window.javaBridge.updateEntrepreneurNoteFromJs(payload)
+          : window.javaBridge.createEntrepreneurNoteFromJs(payload);
+        let res = {};
+        try { res = JSON.parse(String(raw || "{}")); } catch (_e) {}
+        if (!res.ok) {
+          note.textContent = res.message || "Erreur note.";
+          return;
+        }
+        clearNoteForm();
+        loadNotes();
+        note.textContent = "Note enregistree.";
+      });
+      noteList.addEventListener("click", (e) => {
+        const editId = e.target && e.target.getAttribute ? e.target.getAttribute("data-note-edit") : "";
+        const delId = e.target && e.target.getAttribute ? e.target.getAttribute("data-note-del") : "";
+        if (editId) {
+          const notes = safeJson(window.javaBridge.getEntrepreneurNotesJson());
+          const n = (Array.isArray(notes) ? notes : []).find(x => String(x.id) === String(editId));
+          if (!n) return;
+          noteEditId = Number(n.id || 0);
+          noteTitle.value = String(n.title || "");
+          noteContent.value = String(n.content || "");
+          noteSaveBtn.textContent = "Mettre a jour";
+          return;
+        }
+        if (delId) {
+          const raw = window.javaBridge.deleteEntrepreneurNoteFromJs(toPayload({ id: delId }));
+          let res = {};
+          try { res = JSON.parse(String(raw || "{}")); } catch (_e) {}
+          if (!res.ok) {
+            note.textContent = res.message || "Suppression impossible.";
+            return;
+          }
+          if (String(noteEditId) === String(delId)) clearNoteForm();
+          loadNotes();
+          note.textContent = "Note supprimee.";
+        }
+      });
+
+      calcComputeBtn.addEventListener("click", () => {
+        const principal = Number(calcPrincipal.value || 0);
+        const rate = Number(calcRate.value || 0);
+        const months = Number(calcMonths.value || 0);
+        if (!(principal > 0) || !(months > 0)) {
+          calcSnapshot = null;
+          renderCalcSnapshot(null);
+          note.textContent = "Principal et duree requis.";
+          return;
+        }
+        calcSnapshot = calcAmortissement(principal, rate, months);
+        renderCalcSnapshot(calcSnapshot);
+      });
+
+      calcSaveBtn.addEventListener("click", () => {
+        if (!calcSnapshot) {
+          note.textContent = "Calculez d'abord un scenario.";
+          return;
+        }
+        const payload = toPayload({
+          label: calcLabel.value || "",
+          principal: calcSnapshot.principal,
+          annualRatePct: calcSnapshot.annualRatePct,
+          durationMonths: calcSnapshot.durationMonths,
+          monthlyPayment: calcSnapshot.monthlyPayment,
+          totalPayment: calcSnapshot.totalPayment,
+          totalInterest: calcSnapshot.totalInterest
+        });
+        const raw = window.javaBridge.saveEntrepreneurCalcFromJs(payload);
+        let res = {};
+        try { res = JSON.parse(String(raw || "{}")); } catch (_e) {}
+        if (!res.ok) {
+          note.textContent = res.message || "Erreur sauvegarde calcul.";
+          return;
+        }
+        loadCalcHistory();
+        note.textContent = "Calcul sauvegarde.";
+      });
+
+      calcHistory.addEventListener("click", (e) => {
+        const id = e.target && e.target.getAttribute ? e.target.getAttribute("data-calc-del") : "";
+        if (!id) return;
+        const raw = window.javaBridge.deleteEntrepreneurCalcFromJs(toPayload({ id }));
+        let res = {};
+        try { res = JSON.parse(String(raw || "{}")); } catch (_e) {}
+        if (!res.ok) {
+          note.textContent = res.message || "Suppression historique impossible.";
+          return;
+        }
+        loadCalcHistory();
+        note.textContent = "Historique supprime.";
+      });
+    }
+
+    function init(){
+      if (!window.javaBridge) { note.textContent = "Bridge Java indisponible."; return; }
+      const role = currentRole();
+      if (role === "INVESTISSEUR") {
+        backBtn.href = "remboursements-investisseur.html";
+        rows = loadInvestorRows();
+        workspaceGrid.style.display = "none";
+      } else {
+        backBtn.href = "remboursements-financement.html";
+        rows = loadEntrepreneurRows();
+        workspaceGrid.style.display = "grid";
+        clearNoteForm();
+        loadNotes();
+        loadCalcHistory();
+      }
+      fillFilters();
+      render();
+    }
+
+    [projectFilter, finFilter, periodFilter, statusFilter].forEach(el => {
+      el.addEventListener("change", () => {
+        if (el === projectFilter) { selectedProject = projectFilter.value || "ALL"; fillFilters(); }
+        if (el === finFilter) { selectedFin = finFilter.value || "ALL"; }
+        render();
+      });
+    });
+    bindWorkspaceEvents();
+
+    window.onJavaBridgeReady = init;
+    function waitForBridge(retries){
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) { note.textContent = "Bridge Java indisponible."; return; }
+      setTimeout(() => waitForBridge(retries - 1), 200);
+    }
+    waitForBridge(30);
+  </script>
+</body>
+</html>

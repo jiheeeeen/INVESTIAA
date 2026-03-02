@@ -29,8 +29,8 @@ public class ProjetInvestisseurDAO {
             ORDER BY updated_at DESC
         """;
 
-        try (Connection cnx = MyBD.getInstance().getConn();
-             PreparedStatement ps = cnx.prepareStatement(sql);
+        Connection cnx = MyBD.getInstance().getConn();
+        try (PreparedStatement ps = cnx.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {

@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Messagerie</title>
+  <script src="navbar.js" defer></script>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:rgba(15,23,42,.10);
+      --primary:#1d4ed8;
+      --accent:#06b6d4;
+      --orange:#d97706;
+      --orangeSoft:rgba(217,119,6,.12);
+      --blueSoft:rgba(29,78,216,.10);
+      --shadow:0 16px 36px rgba(15,23,42,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:
+        radial-gradient(900px 420px at -10% 0%, rgba(29,78,216,.12), transparent 58%),
+        radial-gradient(980px 460px at 120% 2%, rgba(217,119,6,.11), transparent 56%),
+        var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:1160px;margin:22px auto 34px;padding:0 16px}
+    .title{
+      margin:0 0 12px;
+      font-size:30px;
+      font-weight:900;
+      letter-spacing:.2px;
+      color:#0b2a55;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:12px;
+      flex-wrap:wrap;
+    }
+    .btnBack{
+      border:0;
+      background:linear-gradient(135deg,#0f172a,#1e3a8a);
+      color:#fff;
+      border-radius:10px;
+      padding:9px 12px;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+      box-shadow:0 8px 16px rgba(15,23,42,.18);
+    }
+    .btnBack:hover{
+      filter:brightness(1.03);
+    }
+    .panel{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      min-height:72vh;
+      display:grid;
+      grid-template-columns:320px 1fr;
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
+    .sidebar{
+      border-right:1px solid var(--line);
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      background:linear-gradient(180deg,#ffffff,#fbfdff);
+    }
+    .side-head{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      font-weight:900;
+      color:#0b2a55;
+      background:linear-gradient(180deg,#ffffff,#f4f8ff);
+    }
+    .contact-list{overflow:auto;min-height:0;scrollbar-width:thin}
+    .contact{
+      width:100%;
+      border:0;
+      background:#fff;
+      text-align:left;
+      padding:12px 14px;
+      cursor:pointer;
+      border-bottom:1px solid var(--line);
+      transition:background .15s ease, border-color .15s ease, transform .12s ease;
+    }
+    .contact:hover{
+      background:#f8fbff;
+    }
+    .contact.active{
+      background:linear-gradient(135deg,var(--blueSoft), rgba(6,182,212,.10));
+      border-left:3px solid var(--primary);
+      padding-left:11px;
+    }
+    .c-name{font-weight:800;font-size:14px}
+    .c-meta{margin-top:4px;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chat{display:flex;flex-direction:column;min-height:0}
+    .chat-head{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      font-weight:900;
+      color:#0b2a55;
+      background:linear-gradient(180deg,#ffffff,#f7fbff);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .chat-head::before{
+      content:"";
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:#22c55e;
+      box-shadow:0 0 0 3px rgba(34,197,94,.18);
+      flex:0 0 auto;
+    }
+    .messages{
+      flex:1;
+      overflow:auto;
+      padding:16px;
+      background:
+        radial-gradient(740px 280px at 0% 0%, rgba(29,78,216,.07), transparent 60%),
+        radial-gradient(660px 260px at 100% 0%, rgba(217,119,6,.08), transparent 62%),
+        #f8fbff;
+      scrollbar-width:thin;
+    }
+    .msg{
+      max-width:78%;
+      padding:11px 13px;
+      border-radius:14px;
+      margin-bottom:10px;
+      font-size:14px;
+      line-height:1.45;
+      box-shadow:0 8px 18px rgba(15,23,42,.08);
+      position:relative;
+    }
+    .msg.me{
+      margin-left:auto;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      color:#fff;
+      border-bottom-right-radius:6px;
+    }
+    .msg.other{
+      margin-right:auto;
+      background:#fff;
+      border:1px solid var(--line);
+      border-bottom-left-radius:6px;
+    }
+    .msg-time{
+      margin-top:6px;
+      font-size:11px;
+      opacity:.82;
+      font-weight:700;
+    }
+    .composer{border-top:1px solid var(--line);padding:10px;display:flex;gap:8px}
+    .composer textarea{
+      flex:1;
+      min-height:48px;
+      max-height:140px;
+      resize:vertical;
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:10px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+      transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    .composer textarea:focus{
+      border-color:rgba(29,78,216,.42);
+      box-shadow:0 0 0 3px rgba(29,78,216,.15);
+    }
+    .composer button{
+      border:0;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      color:#fff;
+      border-radius:10px;
+      padding:0 16px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 8px 16px rgba(29,78,216,.24);
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .composer button:hover{
+      transform:translateY(-1px);
+      filter:brightness(1.03);
+    }
+    .empty{padding:16px;color:var(--muted)}
+    @media (max-width:900px){
+      .panel{grid-template-columns:1fr}
+      .sidebar{max-height:240px}
+      .title{font-size:26px}
+      .msg{max-width:92%}
+    }
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <div class="topbar">
+    <h1 class="title">Ma messagerie</h1>
+    <button id="backContactBtn" class="btnBack" type="button">Retour contact</button>
+  </div>
+  <section class="panel">
+    <aside class="sidebar">
+      <div class="side-head">Conversations</div>
+      <div id="contactList" class="contact-list"></div>
+    </aside>
+    <section class="chat">
+      <div id="chatHead" class="chat-head">Selectionnez un contact</div>
+      <div id="messages" class="messages">
+        <div class="empty">Aucune conversation selectionnee.</div>
+      </div>
+      <div class="composer">
+        <textarea id="messageInput" placeholder="Ecrivez votre message..."></textarea>
+        <button id="sendBtn" type="button">Envoyer</button>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script>
+  const bridge = () => (window.javaBridge || window.javaBridgeInvest || null);
+  let selectedUserId = 0;
+  let contacts = [];
+  let currentUserId = 0;
+  let currentRole = "";
+
+  function esc(v){
+    return String(v || "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll("\"","&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function fmtDate(v){
+    if (!v) return "";
+    const d = new Date(v.replace(" ", "T"));
+    if (isNaN(d.getTime())) return v;
+    return d.toLocaleString("fr-FR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
+  }
+
+  function withBridge(onReady){
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const b = bridge();
+      if (b) { clearInterval(timer); onReady(b); return; }
+      if (Date.now() - start > 2500) { clearInterval(timer); }
+    }, 100);
+  }
+
+  function loadCurrentUserId(){
+    const b = bridge();
+    if (!b || typeof b.getCurrentUserId !== "function") return;
+    const id = Number(b.getCurrentUserId() || 0);
+    currentUserId = id > 0 ? id : 0;
+    if (typeof b.getCurrentUserRole === "function") {
+      currentRole = String(b.getCurrentUserRole() || "");
+    }
+  }
+
+  function goBackToContact(){
+    if (String(currentRole).toUpperCase() === "INVESTISSEUR") {
+      window.location.href = "contact_investisseur.html";
+      return;
+    }
+    window.location.href = "contact.html";
+  }
+
+  function renderContacts(){
+    const list = document.getElementById("contactList");
+    if (!contacts.length) {
+      list.innerHTML = `<div class="empty">Aucune conversation.</div>`;
+      return;
+    }
+    list.innerHTML = contacts.map(c => `
+      <button class="contact ${Number(c.user_id)===selectedUserId?"active":""}" data-id="${Number(c.user_id)||0}">
+        <div class="c-name">${esc(c.nom || "Contact")}</div>
+        <div class="c-meta">${esc(c.last_message || c.email || "")}</div>
+      </button>
+    `).join("");
+    list.querySelectorAll(".contact").forEach(btn => {
+      btn.addEventListener("click", () => openConversation(Number(btn.dataset.id || 0)));
+    });
+  }
+
+  function setHeaderFromContact(userId){
+    const head = document.getElementById("chatHead");
+    const c = contacts.find(x => Number(x.user_id) === Number(userId));
+    head.textContent = c ? (c.nom || "Conversation") : "Conversation";
+  }
+
+  function renderMessages(items){
+    const box = document.getElementById("messages");
+    if (!Array.isArray(items) || !items.length) {
+      box.innerHTML = `<div class="empty">Aucun message pour cette conversation.</div>`;
+      return;
+    }
+    box.innerHTML = items.map(m => {
+      const me = Number(m.sender_user_id) === currentUserId;
+      return `
+        <div class="msg ${me ? "me" : "other"}">
+          <div>${esc(m.contenu || "")}</div>
+          <div class="msg-time">${esc(fmtDate(m.created_at || ""))}</div>
+        </div>
+      `;
+    }).join("");
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function fetchContacts(){
+    const b = bridge();
+    if (!b || typeof b.getMessagerieContactsJson !== "function") return;
+    try {
+      contacts = JSON.parse(b.getMessagerieContactsJson() || "[]");
+    } catch (e) {
+      contacts = [];
+    }
+    if (selectedUserId > 0) {
+      const found = contacts.some(c => Number(c.user_id) === selectedUserId);
+      if (!found && b && typeof b.getUserSummaryJson === "function") {
+        try {
+          const raw = b.getUserSummaryJson(String(selectedUserId));
+          if (raw && raw !== "null") {
+            const u = JSON.parse(raw);
+            contacts.unshift({
+              user_id: u.user_id,
+              nom: u.nom,
+              email: u.email,
+              telephone: u.telephone,
+              last_message: ""
+            });
+          }
+        } catch (e) {}
+      }
+    }
+    renderContacts();
+  }
+
+  function loadConversation(){
+    const b = bridge();
+    if (!b || selectedUserId <= 0 || typeof b.getConversationMessagesJson !== "function") return;
+    try {
+      const items = JSON.parse(b.getConversationMessagesJson(String(selectedUserId)) || "[]");
+      renderMessages(items);
+    } catch (e) {
+      renderMessages([]);
+    }
+  }
+
+  function openConversation(userId){
+    if (!userId || userId <= 0) return;
+    selectedUserId = userId;
+    const b = bridge();
+    if (b && typeof b.setSelectedContactUserId === "function") {
+      b.setSelectedContactUserId(String(userId));
+    }
+    setHeaderFromContact(userId);
+    renderContacts();
+    loadConversation();
+  }
+
+  function sendMessage(){
+    const b = bridge();
+    const input = document.getElementById("messageInput");
+    const txt = (input.value || "").trim();
+    if (!txt || selectedUserId <= 0 || !b || typeof b.sendMessageToUser !== "function") return;
+    const res = b.sendMessageToUser(String(selectedUserId), txt);
+    if (String(res || "").startsWith("ERROR")) {
+      alert(String(res).replace("ERROR:", ""));
+      return;
+    }
+    input.value = "";
+    fetchContacts();
+    loadConversation();
+  }
+
+  document.getElementById("sendBtn").addEventListener("click", sendMessage);
+  document.getElementById("backContactBtn").addEventListener("click", goBackToContact);
+  document.getElementById("messageInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  withBridge((b) => {
+    loadCurrentUserId();
+    if (typeof b.getSelectedContactUserId === "function") {
+      selectedUserId = Number(b.getSelectedContactUserId() || 0);
+    }
+    fetchContacts();
+    if (selectedUserId > 0) openConversation(selectedUserId);
+    setInterval(() => {
+      fetchContacts();
+      if (selectedUserId > 0) loadConversation();
+    }, 3000);
+  });
+</script>
+</body>
+</html>

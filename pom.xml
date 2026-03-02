@@ -37,6 +37,61 @@
             <artifactId>javafx-web</artifactId>
             <version>${javafx.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <version>1.6.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>1.3.30</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+        <!-- Google OAuth Desktop (Loopback localhost) -->
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-jetty</artifactId>
+            <version>1.36.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client-jackson2</artifactId>
+            <version>1.44.2</version>
+        </dependency>
+
+        <!-- JavaCV (OpenCV + webcam via FFmpeg) -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv-platform</artifactId>
+            <version>1.5.10</version>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>2.0.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -47,9 +102,17 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>org.example.MainFX</mainClass>
+                    <jvmArgs>
+                        <jvmArg>-Dprism.order=sw</jvmArg>
+                        <jvmArg>-Dprism.d3d=false</jvmArg>
+                        <jvmArg>-Dsun.java2d.d3d=false</jvmArg>
+                        <jvmArg>-Dprism.vsync=false</jvmArg>
+                        <jvmArg>-Dprism.verbose=true</jvmArg>
+                    </jvmArgs>
                 </configuration>
             </plugin>
         </plugins>
     </build>
 
 </project>
+

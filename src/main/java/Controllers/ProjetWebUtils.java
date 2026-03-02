@@ -31,6 +31,7 @@ public final class ProjetWebUtils {
         sb.append("\"goal\":").append(p.getObjectifTnd() == null ? "0" : p.getObjectifTnd()).append(",");
         sb.append("\"odd\":").append(jsonString("")).append(",");
         sb.append("\"status\":").append(jsonString(statusOverride)).append(",");
+        sb.append("\"statusRaw\":").append(jsonString(p.getStatut())).append(",");
         sb.append("\"updatedAt\":").append(jsonString(formatDate(p.getUpdatedAt()))).append(",");
         sb.append("\"url\":").append(jsonString("modifierProjet.html?id=" + p.getIdProjet()));
         sb.append("}");
@@ -211,6 +212,9 @@ public final class ProjetWebUtils {
             case "VALIDE":
                 return "VALIDATED";
             case "EN_COURS":
+            case "INVESTISSEMENT_EN_COURS":
+            case "INVESTISSEMENT_TERMINE":
+            case "PROJET_EN_COURS":
                 return "EN_COURS";
             case "REFUSE":
                 return "REJECTED";

@@ -191,4 +191,75 @@ public class RemboursementCRUD implements InterfaceCRUD<Remboursement> {
     private static String normalizeDbStatut(String raw) {
         return RemboursementStatut.from(raw).name();
     }
+
+    // =========================================================
+    // ✅ AJOUTS SANS CHANGER TA BASE / STRUCTURE
+    // =========================================================
+
+    // DTO simple pour crédit wallet
+    public static class PaidCreditRow {
+        private final int remboursementId;
+        private final double montantPaye;
+        private final java.sql.Date dateEcheance;
+
+        public PaidCreditRow(int remboursementId, double montantPaye, java.sql.Date dateEcheance) {
+            this.remboursementId = remboursementId;
+            this.montantPaye = montantPaye;
+            this.dateEcheance = dateEcheance;
+        }
+
+        public int getRemboursementId() { return remboursementId; }
+        public double getMontantPaye() { return montantPaye; }
+        public java.sql.Date getDateEcheance() { return dateEcheance; }
+    }
+
+    // ✅ récupérer les remboursements PAYE pour un investisseur
+    // jointure: remboursement -> financement2 -> investissement (id_investisseur)
+    public List<PaidCreditRow> getPaidCreditablesByInvestisseur(int idInvestisseur) throws SQLException {
+        requireConn();
+        String sql =
+                "SELECT r.id AS remboursement_id, r.montant_paye, r.date_echeance " +
+                        "FROM remboursement r " +
+                        "JOIN financement2 f ON f.id_financement = r.financement_id " +
+                        "JOIN investissement i ON i.id_investissement = f.id_investissement " +
+                        "WHERE i.id_investisseur = ? " +
+                        "  AND r.statut = 'PAYE' " +
+                        "  AND r.montant_paye IS NOT NULL " +
+                        "  AND r.montant_paye > 0";
+
+        List<PaidCreditRow> rows = new ArrayList<>();
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, idInvestisseur);
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    int id = rs.getInt("remboursement_id");
+                    double mp = rs.getDouble("montant_paye");
+                    java.sql.Date d = rs.getDate("date_echeance");
+                    rows.add(new PaidCreditRow(id, mp, d));
+                }
+            }
+        }
+        return rows;
+    }
+
+    // ✅ pour éviter double crédit SANS changer la base:
+    // après crédit on met montant_paye = 0 pour ces remboursements
+    public int consumeMontantPayeByIds(List<Integer> ids) throws SQLException {
+        requireConn();
+        if (ids == null || ids.isEmpty()) return 0;
+
+        StringBuilder in = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            if (i > 0) in.append(",");
+            in.append("?");
+        }
+
+        String sql = "UPDATE remboursement SET montant_paye = 0 WHERE id IN (" + in + ") AND statut='PAYE'";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            for (int i = 0; i < ids.size(); i++) {
+                pst.setInt(i + 1, ids.get(i));
+            }
+            return pst.executeUpdate();
+        }
+    }
 }

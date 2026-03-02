@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Investia — Dashboard Admin</title>
 
-    <!-- ✅ CSS external -->
     <link rel="stylesheet" href="../css/dashboard_admin.css">
 </head>
 
@@ -26,22 +25,26 @@
         <div class="sep"></div>
 
         <div class="sectionTitle">Gestion</div>
+
+        <!-- ✅ icône + texte (texte caché en mode réduit) -->
         <nav class="nav">
-            <button class="active" data-page="home">Accueil</button>
-            <button data-page="accounts">Comptes</button>
-            <button data-page="users">Users</button>
-            <button data-page="projects">Projets</button>
-            <button data-page="events">Événements</button>
-            <button data-page="history">Historique</button>
+            <button class="active" data-page="home"><span class="navI">🏠</span><span class="navT">Accueil</span></button>
+            <button data-page="accounts"><span class="navI">🧾</span><span class="navT">Comptes</span></button>
+            <button data-page="users"><span class="navI">👥</span><span class="navT">Users</span></button>
+            <button data-page="projects"><span class="navI">📁</span><span class="navT">Projets</span></button>
+            <button data-page="events"><span class="navI">📅</span><span class="navT">Événements</span></button>
+            <button data-page="history"><span class="navI">🕘</span><span class="navT">Historique</span></button>
         </nav>
 
         <div class="sidebarFooter">
             <div class="badge">
                 <span class="badge__dot" aria-hidden="true"></span>
-                1ère plateforme de crowdlending en Tunisie
+                <span class="navT">1ère plateforme de crowdlending en Tunisie</span>
             </div>
 
-            <button class="btnSide" type="button" id="logoutBtn">Logout</button>
+            <button class="btnSide" type="button" id="logoutBtn">
+                <span class="navI">⏻</span><span class="navT">Logout</span>
+            </button>
         </div>
     </aside>
 
@@ -59,7 +62,7 @@
             </div>
         </div>
 
-        <!-- Stats -->
+        <!-- Stats (peuvent rester : sur l’accueil on les cache en JS) -->
         <section class="grid4" aria-label="Statistiques" id="statsRow">
             <div class="card">
                 <div class="cardTop">
@@ -102,13 +105,11 @@
             </div>
         </section>
 
-        <!-- Dynamic Area -->
         <div id="contentArea"></div>
     </main>
 </div>
 
-<!-- ✅ JS external -->
+<script src="../js/vendor/chart.umd.min.js"></script>
 <script src="../js/dashboard_admin.js"></script>
-
 </body>
 </html>

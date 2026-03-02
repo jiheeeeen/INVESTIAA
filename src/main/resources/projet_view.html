@@ -53,6 +53,12 @@
     .btn.ghost{
       background:#fff; border:1px solid var(--border); color:var(--text);
     }
+    .btn.warning{
+      background:linear-gradient(135deg, #f59e0b, #facc15);
+      color:#1f2937;
+      box-shadow:0 10px 20px rgba(245,158,11,.22);
+      border:1px solid rgba(217,119,6,.35);
+    }
     .btn:hover{transform:translateY(-1px); filter:brightness(1.02);}
     .btn:active{transform:translateY(0);}
 
@@ -215,6 +221,7 @@
       display:flex;
       align-items:flex-start;
       justify-content:space-between;
+      flex-wrap:wrap;
       gap:10px;
       position:relative;
       z-index:1;
@@ -231,7 +238,9 @@
       font-weight:900;
       border:1px solid var(--border);
       background:#fff;
-      white-space:nowrap;
+      white-space:normal;
+      line-height:1.2;
+      max-width:100%;
     }
     .status .s-dot{
       width:9px;height:9px;border-radius:50%;
@@ -451,7 +460,8 @@
       </div>
       <div class="actions">
         <a class="btn ghost" href="ajoutProjet.html">+ Nouveau projet</a>
-        <a class="btn primary" href="#" onclick="alert('Demo: tableau de bord entrepreneur'); return false;">Dashboard</a>
+        <a class="btn warning" href="demandesAnnulation.html">Mes demandes d'annulation</a>
+        <a class="btn primary" href="dashboard_entrepreneur.html">Dashboard</a>
       </div>
     </div>
 
@@ -472,7 +482,8 @@
               <option value="DRAFT">Brouillon</option>
               <option value="PENDING">En attente</option>
               <option value="VALIDATED">Valide</option>
-              <option value="EN_COURS">En cours</option>
+              <option value="INVESTISSEMENT_EN_COURS">Campagne d'investissement en cours</option>
+              <option value="PROJET_EN_COURS">Projet en cours</option>
               <option value="REJECTED">Rejete</option>
             </select>
             <span class="selectIcon">▾</span>
@@ -518,7 +529,17 @@
 
     const fmt = (n) => new Intl.NumberFormat("fr-TN").format(n) + " TND";
 
-    function statusUi(s){
+    function statusUi(s, raw){
+      const statusRaw = (raw || "").toUpperCase();
+      switch(statusRaw){
+        case "INVESTISSEMENT_EN_COURS":
+        case "EN_COURS":
+          return { label:"Campagne d'investissement en cours", cls:"inprogress" };
+        case "INVESTISSEMENT_TERMINE":
+          return { label:"Investissement termine", cls:"validated" };
+        case "PROJET_EN_COURS":
+          return { label:"Projet en cours", cls:"inprogress" };
+      }
       switch(s){
         case "PENDING":   return { label:"En attente", cls:"pending" };
         case "VALIDATED": return { label:"Valide", cls:"validated" };
@@ -529,8 +550,9 @@
       }
     }
 
-    function canCancel(status){
-      return status === "PENDING" || status === "VALIDATED" || status === "EN_COURS";
+    function canCancel(status, statusRaw){
+      const raw = (statusRaw || "").toUpperCase();
+      return !(status === "DRAFT" || raw === "BROUILLON");
     }
 
     function onEdit(projectId){
@@ -598,13 +620,17 @@
 
             grid.innerHTML = list.map(p => {
         const oddPill = p.odd ? `<span class="pill">${p.odd}</span>` : "";
-        const st = statusUi(p.status);
-        const cancelBtn = canCancel(p.status)
+        const st = statusUi(p.status, p.statusRaw);
+        const raw = (p.statusRaw || "").toUpperCase();
+        const isDraft = p.status === "DRAFT" || raw === "BROUILLON";
+        const isPending = p.status === "PENDING" || raw === "EN_ATTENTE";
+        const cancelBtn = canCancel(p.status, p.statusRaw)
           ? `<button class="btnSmall cancel" type="button" onclick="onCancel('${p.id}')">Annuler</button>`
           : "";
-        const publishBtn = p.status === "DRAFT"
+        const publishBtn = isDraft
           ? `<button class="btnSmall edit" type="button" onclick="onPublish('${p.id}')">Publier</button>`
           : "";
+        const viewBtn = `<a class="btnLink" href="detailsEntrepreneur.html?id=${p.id}">Voir plus <span class="arrow">-></span></a>`;
 
         return `
           <article class="card">
@@ -624,7 +650,9 @@
 
             <div class="footer">
               <span class="muted" style="font-size:12.5px;">
-                ${p.status === "EN_COURS" ? "Campagne en cours avec investissements." :
+                ${raw === "INVESTISSEMENT_EN_COURS" || raw === "EN_COURS" ? "Campagne d'investissement en cours." :
+                  raw === "INVESTISSEMENT_TERMINE" ? "Objectif atteint: investissement termine." :
+                  raw === "PROJET_EN_COURS" ? "Projet en cours (post-campagne)." :
                   p.status === "PENDING" ? "En cours de validation admin." :
                   p.status === "VALIDATED" ? "Visible aux investisseurs." :
                   p.status === "REJECTED" ? "Corrigez et republiez." :
@@ -635,7 +663,7 @@
                 ${publishBtn}
                 <button class="btnSmall edit" type="button" onclick="onEdit('${p.id}')">Modifier</button>
                 ${cancelBtn}
-                <a class="btnLink" href="detailsEntrepreneur.html?id=${p.id}">Voir plus <span class="arrow">-></span></a>
+                ${viewBtn}
               </div>
             </div>
           </article>
@@ -654,7 +682,11 @@
           p.category.toLowerCase().includes(term) ||
           (p.odd || "").toLowerCase().includes(term);
 
-        const matchesStatus = (st === "ALL") || (p.status === st);
+        const raw = (p.statusRaw || "").toUpperCase();
+        const matchesStatus =
+          (st === "ALL")
+          || (p.status === st)
+          || (raw === st);
         return matchesText && matchesStatus;
       });
 
@@ -662,12 +694,24 @@
       render(filtered);
     }
 
-    function withBridge(onReady){
+    function resolveBridge(requiredFn){
+      const bridges = [
+        window.javaBridge,
+        window.javaBridgeInvest,
+        window.javaBridgeInvestissement,
+        window.invBridge
+      ].filter(Boolean);
+      if (!requiredFn) return bridges[0] || null;
+      return bridges.find((b) => typeof b[requiredFn] === "function") || null;
+    }
+
+    function withBridge(onReady, requiredFn){
       const start = Date.now();
       const timer = setInterval(() => {
-        if (window.javaBridge) {
+        const bridge = resolveBridge(requiredFn);
+        if (bridge) {
           clearInterval(timer);
-          onReady(window.javaBridge);
+          onReady(bridge);
           return;
         }
         if (Date.now() - start > 2000) {
@@ -679,12 +723,13 @@
     function loadFromJava(){
       withBridge((bridge) => {
         const hasMy = typeof bridge.listMyProjets === "function";
-        const hasAll = typeof bridge.listProjets === "function";
-        if (!hasMy && !hasAll) {
+        if (!hasMy) {
+          myProjects = [];
+          applyFilters();
           return;
         }
         try {
-          const json = hasMy ? bridge.listMyProjets() : bridge.listProjets();
+          const json = bridge.listMyProjets();
           myProjects = JSON.parse(json || "[]");
           applyFilters();
         } catch (e) {

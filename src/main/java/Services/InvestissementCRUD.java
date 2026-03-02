@@ -411,4 +411,16 @@ public class InvestissementCRUD {
         }
         return null;
     }
+    public double sumMontantParInvestisseur(int idInvestisseur) throws SQLException {
+        String montantCol = resolveMontantColumn();
+        String investCol = resolveInvestisseurColumn();
+        String sql = "SELECT COALESCE(SUM(" + montantCol + "),0) FROM investissement WHERE " + investCol + "=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idInvestisseur);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble(1);
+                return 0.0;
+            }
+        }
+    }
 }

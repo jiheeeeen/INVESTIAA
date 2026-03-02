@@ -6,6 +6,7 @@ import Entities.StatutCompte;
 import Entities.StatutVerification;
 import Entities.User;
 import Utils.Session;
+import Utils.sceneManager;
 import java.awt.Desktop;
 import java.io.File;
 import java.net.URI;
@@ -234,6 +235,19 @@ public class ProfilBridgeController {
 
             Files.copy(selected.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
             return destination.toUri().toString();
+        } catch (Exception e) {
+            return "ERROR:" + e.getMessage();
+        }
+    }
+
+    public String logout() {
+        try {
+            Session.setCurrentUser(null);
+            WebAuthController.openLoginOnNextLoad();
+            javafx.application.Platform.runLater(() ->
+                    sceneManager.switchTo("/web_auth.fxml", "Investia - Connexion")
+            );
+            return "OK";
         } catch (Exception e) {
             return "ERROR:" + e.getMessage();
         }

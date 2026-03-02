@@ -124,8 +124,10 @@
 
         </div>
 
+        <!-- boutons -->
         <div class="row">
-            <button class="btn" type="button" onclick="save()">Enregistrer</button>
+            <button class="btn secondary" id="btnBack" type="button">Retour</button>
+            <button class="btn" id="btnSubmit" type="button">Valider mes informations</button>
             <button class="btn secondary" type="button" onclick="loadMe()">Charger mes infos</button>
         </div>
 
@@ -138,7 +140,15 @@
     let cinVersoUrl = "";
     let photoUrl = "";
 
-    function bridgeOk(){ return window.javaBridge && window.__bridgeReady; }
+    function getBridge(){
+        return window.javaBridge
+            || window.javaBridgeUpload
+            || window.javaBridgeInvest
+            || window.bridge
+            || window.Bridge
+            || window.app
+            || null;
+    }
 
     function selectedValues(select){
         return Array.from(select.selectedOptions).map(o => o.value);
@@ -150,73 +160,62 @@
         el.className = "pill " + (ok ? "ok" : "");
     }
 
+    function showErr(msg){
+        document.getElementById("msg").innerHTML = "<span class='err'>" + msg + "</span>";
+    }
+
+    function showOk(msg){
+        document.getElementById("msg").innerHTML = "<span class='ok'>" + msg + "</span>";
+    }
+
     function uploadCinRecto(){
-        const msg = document.getElementById("msg");
-        if(!bridgeOk()){ msg.innerHTML = "<span class='err'>Bridge non prêt</span>"; return; }
-        const res = window.javaBridge.uploadPdf("cin_recto");
-        if(res && !res.startsWith("ERROR")){
+        const b = getBridge();
+        if(!b || typeof b.uploadPdf !== "function"){ showErr("Bridge Java indisponible pour upload PDF."); return; }
+
+        const res = b.uploadPdf("cin_recto");
+        if(res && !String(res).startsWith("ERROR")){
             cinRectoUrl = res;
             setState("cinRectoState", true);
-            msg.innerHTML = "<span class='ok'>✅ CIN recto chargé</span>";
-        }else{
-            msg.innerHTML = "<span class='err'>" + res + "</span>";
+            showOk("✅ CIN recto chargé");
+        } else {
+            showErr(res || "Erreur upload CIN recto");
         }
     }
 
     function uploadCinVerso(){
-        const msg = document.getElementById("msg");
-        if(!bridgeOk()){ msg.innerHTML = "<span class='err'>Bridge non prêt</span>"; return; }
-        const res = window.javaBridge.uploadPdf("cin_verso");
-        if(res && !res.startsWith("ERROR")){
+        const b = getBridge();
+        if(!b || typeof b.uploadPdf !== "function"){ showErr("Bridge Java indisponible pour upload PDF."); return; }
+
+        const res = b.uploadPdf("cin_verso"); // ✅ FIX
+        if(res && !String(res).startsWith("ERROR")){
             cinVersoUrl = res;
             setState("cinVersoState", true);
-            msg.innerHTML = "<span class='ok'>✅ CIN verso chargé</span>";
-        }else{
-            msg.innerHTML = "<span class='err'>" + res + "</span>";
+            showOk("✅ CIN verso chargé");
+        } else {
+            showErr(res || "Erreur upload CIN verso");
         }
     }
 
     function uploadPhoto(){
-        const msg = document.getElementById("msg");
-        if(!bridgeOk()){ msg.innerHTML = "<span class='err'>Bridge non prêt</span>"; return; }
-        const res = window.javaBridge.uploadImage("photo");
-        if(res && !res.startsWith("ERROR")){
+        const b = getBridge();
+        if(!b || typeof b.uploadImage !== "function"){ showErr("Bridge Java indisponible pour upload image."); return; }
+
+        const res = b.uploadImage("photo");
+        if(res && !String(res).startsWith("ERROR")){
             photoUrl = res;
             setState("photoState", true);
-            msg.innerHTML = "<span class='ok'>✅ Photo chargée</span>";
-        }else{
-            msg.innerHTML = "<span class='err'>" + res + "</span>";
+            showOk("✅ Photo chargée");
+        } else {
+            showErr(res || "Erreur upload photo");
         }
     }
 
-    function save(){
-        const msg = document.getElementById("msg");
-        if(!bridgeOk()){ msg.innerHTML = "<span class='err'>Bridge non prêt</span>"; return; }
-
-        const budgetTotal = document.getElementById("budget_total").value.trim();
-        const budgetMensuel = document.getElementById("budget_mensuel").value.trim();
-        const ticket = document.getElementById("ticket").value.trim();
-        const horizon = document.getElementById("horizon").value;
-        const secteurs = selectedValues(document.getElementById("secteurs")).join(",");
-        const bio = document.getElementById("bio").value;
-        const accepte = document.getElementById("accepte").checked ? "true" : "false";
-
-        const res = window.javaBridge.saveProfilInvestisseur(
-            budgetTotal, budgetMensuel, ticket, horizon, bio, accepte, secteurs,
-            cinRectoUrl, cinVersoUrl, photoUrl
-        );
-
-        msg.innerHTML = res === "OK"
-            ? "<span class='ok'>✅ Profil enregistré</span>"
-            : "<span class='err'>" + res + "</span>";
-    }
-
     function loadMe(){
-        const msg = document.getElementById("msg");
-        if(!bridgeOk()){ msg.innerHTML = "<span class='err'>Bridge non prêt</span>"; return; }
+        const b = getBridge();
+        if(!b || typeof b.getProfilInvestisseurJson !== "function"){ showErr("Bridge Java indisponible (getProfilInvestisseurJson)."); return; }
 
-        const json = window.javaBridge.getProfilInvestisseurJson();
-        if(json === "null"){ msg.innerHTML = "Profil introuvable"; return; }
+        const json = b.getProfilInvestisseurJson();
+        if(json === "null"){ showErr("Profil introuvable"); return; }
 
         try{
             const p = JSON.parse(json);
@@ -226,7 +225,6 @@
             document.getElementById("ticket").value = p.ticketMoyenParProjet ?? "";
             document.getElementById("horizon").value = p.horizonInvestissement ?? "COURT";
             document.getElementById("bio").value = p.bio ?? "";
-            document.getElementById("accepte").checked = !!p.accepteConditions;
 
             const sect = (p.secteurs || "").split(",").map(s=>s.trim()).filter(Boolean);
             const sel = document.getElementById("secteurs");
@@ -240,11 +238,50 @@
             setState("cinVersoState", !!cinVersoUrl);
             setState("photoState", !!photoUrl);
 
-            msg.innerHTML = "<span class='ok'>✅ Infos chargées</span>";
+            showOk("✅ Infos chargées");
         }catch(e){
-            msg.innerHTML = "<span class='err'>Erreur JSON: " + e.message + "</span>";
+            showErr("Erreur JSON: " + e.message);
         }
     }
+
+    // Retour -> login normal
+    document.getElementById("btnBack").addEventListener("click", () => {
+        const b = getBridge();
+        if(!b || typeof b.logout !== "function"){ alert("Bridge Java indisponible."); return; }
+        b.logout();
+    });
+
+    // Valider -> une seule méthode Java (pas de double navigation)
+    document.getElementById("btnSubmit").addEventListener("click", () => {
+        const b = getBridge();
+        if(!b){ showErr("Bridge Java indisponible."); return; }
+
+        const budgetTotal = document.getElementById("budget_total").value.trim();
+        const budgetMensuel = document.getElementById("budget_mensuel").value.trim();
+        const ticket = document.getElementById("ticket").value.trim();
+        const horizon = document.getElementById("horizon").value;
+        const secteurs = selectedValues(document.getElementById("secteurs")).join(",");
+        const bio = document.getElementById("bio").value || "";
+        const accepte = document.getElementById("accepte").checked ? "true" : "false";
+
+        const fn = b.submitProfileForVerification || b.saveProfilInvestisseur;
+        if(typeof fn !== "function"){
+            showErr("Méthode submitProfileForVerification/saveProfilInvestisseur introuvable dans le bridge.");
+            return;
+        }
+
+        const res = fn.call(b,
+            budgetTotal, budgetMensuel, ticket, horizon, bio, accepte, secteurs,
+            cinRectoUrl, cinVersoUrl, photoUrl
+        );
+
+        if(String(res) === "OK"){
+            showOk("✅ Profil envoyé. Retour au login...");
+            // ⚠️ Ne pas appeler logoutPending ici: Java le fait déjà (switchTo web_auth.fxml).
+        } else {
+            showErr(res || "Erreur inconnue");
+        }
+    });
 
     window.addEventListener("load", () => setTimeout(loadMe, 250));
 </script>

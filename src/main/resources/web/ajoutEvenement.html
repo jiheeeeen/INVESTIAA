@@ -1,0 +1,693 @@
+﻿﻿<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <script src="../navbar.js" defer></script>
+    <title>Investra — Événements</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root{
+            --bg:#f6f8fc;--card:#fff;--text:#0f172a;--muted:#64748b;
+            --border:rgba(15,23,42,.10);--shadow:0 14px 35px rgba(15,23,42,.08);
+            --primary:#1d4ed8;--accent:#06b6d4;--success:#16a34a;
+            --danger:#ef4444;--warning:#d97706;--radius:18px;--navy:#0b2a55;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+        .container{max-width:1120px;margin:28px auto 60px;padding:0 16px}
+        .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+        .breadcrumb{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:14px}
+        .breadcrumb strong{color:var(--text)}
+        .actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+        @media(max-width:900px){
+            .actions{width:100%;justify-content:flex-start;margin-left:0}
+        }
+        .btn{border:0;cursor:pointer;font-weight:800;font-size:14px;padding:10px 16px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;transition:transform .15s,filter .15s}
+        .btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 10px 20px rgba(29,78,216,.18)}
+        .btn.ghost  {background:#fff;border:1px solid var(--border);color:var(--text)}
+        .btn.danger {background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:#b91c1c}
+        .btn.warning{background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.2);color:#92400e}
+        .btn.sm     {padding:7px 12px;font-size:12px;border-radius:9px}
+        .btn.export {background:linear-gradient(135deg,#16a34a,#059669);color:#fff;box-shadow:0 8px 18px rgba(22,163,74,.22)}
+        .btn.export:disabled{opacity:.6;cursor:not-allowed}
+        .btn:hover{filter:brightness(1.04)}
+        .hero{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;overflow:hidden;position:relative;margin-bottom:22px}
+        .hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(700px 220px at 12% 0%,rgba(29,78,216,.10),transparent 55%),radial-gradient(700px 260px at 98% 20%,rgba(6,182,212,.10),transparent 55%)}
+        .hero-inner{position:relative;z-index:1}
+        .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid rgba(29,78,216,.18);background:rgba(29,78,216,.06);color:#0b2a55}
+        .dot-b{width:8px;height:8px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));box-shadow:0 0 0 3px rgba(6,182,212,.14)}
+        h1{margin:10px 0 6px;font-size:28px;font-weight:900}
+        .pitch{margin:0;color:var(--muted);line-height:1.6;font-size:14.5px}
+        .main-grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start}
+        @media(max-width:900px){.main-grid{grid-template-columns:1fr}}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+        .card:last-child{margin-bottom:0}
+        .section-title{margin:0 0 14px;font-size:17px;font-weight:900;display:flex;align-items:center;gap:8px}
+        label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#0b2a55;font-weight:900;margin:0 0 6px}
+        .req{color:var(--danger)}
+        input[type=text],input[type=number],input[type=email],select,textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;outline:none;font-size:14px;color:var(--text);transition:border-color .15s,box-shadow .15s;font-family:inherit}
+        textarea{min-height:90px;resize:vertical}
+        input:focus,select:focus,textarea:focus{border-color:rgba(29,78,216,.35);box-shadow:0 0 0 4px rgba(29,78,216,.10)}
+        input.field-error,textarea.field-error{border-color:rgba(239,68,68,.5)!important;box-shadow:0 0 0 3px rgba(239,68,68,.10)!important}
+        input.field-ok{border-color:rgba(22,163,74,.4)!important;box-shadow:0 0 0 3px rgba(22,163,74,.08)!important}
+        .field-msg{font-size:11.5px;margin-top:5px;font-weight:700;display:none}
+        .field-msg.err{color:var(--danger);display:block}
+        .field-msg.ok {color:var(--success);display:block}
+        .field{margin-bottom:13px;position:relative}
+        .field:last-child{margin-bottom:0}
+        .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        @media(max-width:600px){.row2{grid-template-columns:1fr}}
+        .hint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+        .mode-toggle{display:flex;gap:8px}
+        .mode-opt{flex:1;padding:10px;border-radius:12px;border:2px solid var(--border);background:#fff;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .2s}
+        .mode-opt:hover{border-color:rgba(29,78,216,.3);color:var(--primary)}
+        .mode-opt.selected{border-color:var(--primary);background:rgba(29,78,216,.06);color:var(--primary)}
+        .cond-field{overflow:hidden}
+        .cond-field.hidden{max-height:0;opacity:0;margin-bottom:0!important;pointer-events:none}
+        .cond-field.visible{max-height:200px;opacity:1}
+        .form-alert{display:none;border-radius:12px;padding:11px 14px;font-size:13.5px;line-height:1.5;font-weight:700;margin-bottom:14px}
+        .form-alert.error{border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.07);color:#7f1d1d;display:block}
+        .form-alert.ok   {border:1px solid rgba(22,163,74,.25);background:rgba(22,163,74,.07);color:#14532d;display:block}
+        .summary{position:sticky;top:68px}
+        .kpi-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+        .kpi{border:1px solid var(--border);border-radius:12px;background:#f8fafc;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+        .kpi .klabel{font-size:12px;color:var(--muted);font-weight:700}
+        .kpi .kval  {font-size:14px;font-weight:900;color:var(--text)}
+        .list-header{display:flex;align-items:center;justify-content:space-between;margin:32px 0 16px}
+        .list-header h2{margin:0;font-size:20px;font-weight:900}
+        .count-badge{background:rgba(29,78,216,.08);border:1px solid rgba(29,78,216,.2);color:var(--primary);font-size:12px;font-weight:800;padding:3px 12px;border-radius:999px}
+        .search-wrap{position:relative;margin-bottom:16px}
+        .search-wrap input{padding-left:38px;border-radius:12px}
+        .search-wrap::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none}
+        .events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+        .ev-card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 6px 20px rgba(15,23,42,.07);overflow:hidden;transition:box-shadow .2s}
+        .ev-card:hover{box-shadow:0 12px 32px rgba(15,23,42,.12)}
+        .ev-card-bar{height:5px}
+        .ev-card-bar.online    {background:linear-gradient(90deg,var(--primary),var(--accent))}
+        .ev-card-bar.presentiel{background:linear-gradient(90deg,var(--warning),#f59e0b)}
+        .ev-card-body{padding:16px}
+        .ev-mode-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;margin-bottom:10px}
+        .ev-mode-tag.online    {background:rgba(29,78,216,.08);border:1px solid rgba(29,78,216,.2);color:var(--primary)}
+        .ev-mode-tag.presentiel{background:rgba(217,119,6,.08); border:1px solid rgba(217,119,6,.2); color:var(--warning)}
+        .ev-titre{font-size:15px;font-weight:900;margin:0 0 6px}
+        .ev-desc {font-size:12.5px;color:var(--muted);margin:0 0 12px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+        .ev-meta{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+        .ev-meta-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+        .ev-meta-row .ico{font-size:13px;flex-shrink:0}
+        .ev-meta-row strong{color:var(--text);font-weight:700}
+        .ev-divider{height:1px;background:var(--border);margin:0 0 12px}
+        .ev-actions{display:flex;gap:8px}
+        .ev-actions .btn{flex:1;justify-content:center}
+        .empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+        .empty-state .big-icon{font-size:48px;margin-bottom:14px}
+        .empty-state p{font-size:15px;font-weight:600}
+        .loading{text-align:center;padding:40px;color:var(--muted)}
+        .spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .dialog-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:950;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+        .dialog-overlay.show{opacity:1;pointer-events:auto}
+        .dialog{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:380px;width:100%;box-shadow:0 20px 60px rgba(15,23,42,.2);transform:scale(.94);transition:transform .2s;text-align:center}
+        .dialog-overlay.show .dialog{transform:scale(1)}
+        .dialog .d-icon{font-size:44px;margin-bottom:12px}
+        .dialog h3{margin:0 0 8px;font-size:17px;font-weight:900}
+        .dialog p{margin:0 0 22px;color:var(--muted);font-size:14px;line-height:1.5}
+        .dialog-btns{display:flex;gap:10px;justify-content:center}
+        #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);z-index:999;min-width:260px;max-width:420px;background:#1e293b;border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 36px rgba(0,0,0,.3);transition:transform .32s cubic-bezier(.34,1.56,.64,1),opacity .25s;opacity:0;font-size:14px;color:#fff;pointer-events:none}
+        #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+        #toast.success{border-left:4px solid var(--success)}
+        #toast.error  {border-left:4px solid var(--danger)}
+        .ev-map-wrap{margin:10px 0 8px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+        .ev-map-loading{display:flex;align-items:center;justify-content:center;gap:8px;height:160px;color:var(--muted);font-size:13px;background:#f8fafc}
+        .btn-itineraire{width:100%;margin-top:6px;justify-content:center;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.2);color:#0369a1;border-radius:10px;padding:7px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+        .btn-itineraire:hover{background:rgba(6,182,212,.15)}
+        .weather-block{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(29,78,216,.05),rgba(6,182,212,.07));border:1px solid rgba(29,78,216,.12);display:flex;align-items:center;gap:10px}
+        .weather-icon{font-size:28px;flex-shrink:0;line-height:1}
+        .weather-info{flex:1;min-width:0}
+        .weather-temp{font-size:15px;font-weight:900;color:var(--navy);margin:0 0 2px}
+        .weather-cond{font-size:11.5px;color:var(--muted);font-weight:700;margin:0}
+        .weather-loading{font-size:12px;color:var(--muted);font-style:italic;display:flex;align-items:center;gap:6px}
+        .weather-unavail{font-size:11.5px;color:var(--muted);font-style:italic}
+        .weather-label{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;color:var(--primary);background:rgba(29,78,216,.08);border:1px solid rgba(29,78,216,.15);padding:2px 7px;border-radius:999px;white-space:nowrap}
+    </style>
+</head>
+<body>
+
+<main class="container">
+    <div class="topbar">
+        <div class="breadcrumb"><span>Événements</span><span>•</span><strong>Gérer</strong></div>
+        <div class="actions">
+            <button class="btn warning" onclick="goInvitations()">✉️ Invitations</button>
+            <button class="btn export" id="btnExport" onclick="exportPdf()">📄 Exporter PDF</button>
+            <button class="btn ghost"  onclick="resetForm()">Réinitialiser</button>
+            <button class="btn primary" onclick="submitForm()">💾 Enregistrer</button>
+        </div>
+    </div>
+
+    <section class="hero">
+        <div class="hero-inner">
+            <span class="badge"><span class="dot-b"></span>Gestion des événements</span>
+            <h1>Événements</h1>
+            <p class="pitch">Créez et gérez les événements. Les champs <span style="color:var(--danger)">*</span> sont obligatoires.</p>
+        </div>
+    </section>
+
+    <div class="main-grid">
+        <div>
+            <div class="form-alert" id="globalAlert"></div>
+
+            <section class="card">
+                <h2 class="section-title">📋 Informations générales</h2>
+                <div class="field">
+                    <label for="titre">Titre <span class="req">*</span></label>
+                    <input id="titre" type="text" placeholder="Ex : Workshop IA" maxlength="120"
+                           oninput="validateField('titre')" onblur="validateField('titre')"/>
+                    <div class="field-msg" id="msg_titre"></div>
+                </div>
+                <div class="row2">
+                    <div class="field">
+                        <label for="projectId">Project ID <span class="req">*</span></label>
+                        <input id="projectId" type="number" min="1" placeholder="5"
+                               oninput="validateField('projectId')" onblur="validateField('projectId')"/>
+                        <div class="field-msg" id="msg_projectId"></div>
+                    </div>
+                    <div class="field">
+                        <label for="organisateurId">Organisateur ID <span class="req">*</span></label>
+                        <input id="organisateurId" type="number" min="1" placeholder="12"
+                               oninput="validateField('organisateurId')" onblur="validateField('organisateurId')"/>
+                        <div class="field-msg" id="msg_organisateurId"></div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="description">Description</label>
+                    <textarea id="description" placeholder="Décrivez l'événement…"
+                              oninput="validateField('description')"></textarea>
+                    <div class="field-msg" id="msg_description"></div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="section-title">📍 Mode & Localisation</h2>
+                <div class="field">
+                    <label>Mode <span class="req">*</span></label>
+                    <div class="mode-toggle">
+                        <div class="mode-opt selected" id="optEL" onclick="setMode('EN_LIGNE')">🌐 En ligne</div>
+                        <div class="mode-opt"          id="optPR" onclick="setMode('PRESENTIEL')">🏢 Présentiel</div>
+                    </div>
+                    <input type="hidden" id="mode" value="EN_LIGNE"/>
+                </div>
+                <div class="cond-field visible" id="condLien" style="margin-top:12px">
+                    <div class="field">
+                        <label for="meetingLink">Lien de réunion</label>
+                        <input id="meetingLink" type="text" placeholder="https://meet.google.com/…"
+                               oninput="validateField('meetingLink')" onblur="validateField('meetingLink')"/>
+                        <div class="field-msg" id="msg_meetingLink"></div>
+                    </div>
+                </div>
+                <div class="cond-field hidden" id="condLieu" style="margin-top:12px">
+                    <div class="field">
+                        <label for="lieu">Lieu <span class="req">*</span></label>
+                        <input id="lieu" type="text" placeholder="Salle A12, Tunis…"
+                               oninput="validateField('lieu')" onblur="validateField('lieu')"/>
+                        <div class="field-msg" id="msg_lieu"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2 class="section-title">📅 Dates & Horaires</h2>
+                <div class="row2">
+                    <!-- ✅ CUSTOM PICKER dateDebut -->
+                    <div class="field">
+                        <label>Date début <span class="req">*</span></label>
+                        <input type="hidden" id="dateDebut"/>
+                        <div id="dp_dateDebut"></div>
+                        <div class="field-msg" id="msg_dateDebut"></div>
+                    </div>
+                    <!-- ✅ CUSTOM PICKER dateFin -->
+                    <div class="field">
+                        <label>Date fin <span class="req">*</span></label>
+                        <input type="hidden" id="dateFin"/>
+                        <div id="dp_dateFin"></div>
+                        <div class="field-msg" id="msg_dateFin"></div>
+                    </div>
+                </div>
+                <p class="hint">⚠️ La date de début ne peut pas être dans le passé. La date de fin doit être après la date de début.</p>
+            </section>
+
+            <div class="actions" style="margin-top:16px">
+                <button class="btn ghost"   onclick="resetForm()">Réinitialiser</button>
+                <button class="btn primary" onclick="submitForm()">💾 Enregistrer</button>
+            </div>
+        </div>
+
+        <aside class="summary">
+            <section class="card">
+                <h2 class="section-title">👁️ Aperçu</h2>
+                <div class="kpi-list">
+                    <div class="kpi"><span class="klabel">Titre</span> <span class="kval" id="kTitre">—</span></div>
+                    <div class="kpi"><span class="klabel">Mode</span>  <span class="kval" id="kMode">EN_LIGNE</span></div>
+                    <div class="kpi"><span class="klabel">Début</span> <span class="kval" id="kDebut">—</span></div>
+                    <div class="kpi"><span class="klabel">Fin</span>   <span class="kval" id="kFin">—</span></div>
+                    <div class="kpi"><span class="klabel">Durée</span> <span class="kval" id="kDuree">—</span></div>
+                </div>
+            </section>
+            <section class="card">
+                <h2 class="section-title" style="font-size:14px">ℹ️ Rappel</h2>
+                <p style="font-size:13px;color:var(--muted);margin:0;line-height:1.6">L'événement sera soumis à validation par un administrateur.</p>
+            </section>
+        </aside>
+    </div>
+
+    <div class="list-header">
+        <h2>📋 Tous les événements <span class="count-badge" id="countBadge">0</span></h2>
+    </div>
+    <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Rechercher…" oninput="filterCards()"/>
+    </div>
+    <div class="loading"     id="stateLoad"><div class="spinner"></div><p>Chargement…</p></div>
+    <div class="empty-state" id="stateEmpty" style="display:none"><div class="big-icon">📭</div><p>Aucun événement</p></div>
+    <div class="events-grid" id="eventsGrid" style="display:none"></div>
+</main>
+
+<div class="dialog-overlay" id="dialogOverlay">
+    <div class="dialog">
+        <div class="d-icon">🗑️</div>
+        <h3>Confirmer la suppression</h3>
+        <p id="dialogMsg">Voulez-vous vraiment supprimer cet événement ?</p>
+        <div class="dialog-btns">
+            <button class="btn ghost"  onclick="closeDialog()">Annuler</button>
+            <button class="btn danger" onclick="confirmSupprimer()">Supprimer</button>
+        </div>
+    </div>
+</div>
+<div id="toast"><span id="toastMsg"></span></div>
+
+<script>
+    /* ═══════════════════════════════════════════════════
+       CUSTOM DATETIME PICKER
+    ═══════════════════════════════════════════════════ */
+    var DP_MONTHS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    var DP_DAYS=['Lu','Ma','Me','Je','Ve','Sa','Di'];
+    var _dp_open=null;
+
+    function dp_injectCss(){
+        if(document.getElementById('dp-style'))return;
+        var s=document.createElement('style');s.id='dp-style';
+        s.textContent=[
+            '.dp-wrap{position:relative;display:flex;gap:6px;align-items:center}',
+            '.dp-display{flex:1;padding:11px 12px;border:1px solid rgba(15,23,42,.10);border-radius:12px;background:#fff;font-size:14px;color:#0f172a;cursor:pointer;font-family:inherit;outline:none;transition:border-color .15s,box-shadow .15s}',
+            '.dp-display:focus,.dp-display:hover{border-color:rgba(29,78,216,.35);box-shadow:0 0 0 4px rgba(29,78,216,.10)}',
+            '.dp-display.field-error{border-color:rgba(239,68,68,.5)!important;box-shadow:0 0 0 3px rgba(239,68,68,.10)!important}',
+            '.dp-display.field-ok{border-color:rgba(22,163,74,.4)!important;box-shadow:0 0 0 3px rgba(22,163,74,.08)!important}',
+            '.dp-btn{padding:10px 13px;border:1px solid rgba(15,23,42,.10);border-radius:12px;background:#fff;cursor:pointer;font-size:16px;flex-shrink:0;transition:background .15s}',
+            '.dp-btn:hover{background:#f1f5f9}',
+            '.dp-popup{position:absolute;top:calc(100% + 6px);left:0;z-index:9999;background:#fff;border:1px solid rgba(15,23,42,.12);border-radius:16px;box-shadow:0 20px 50px rgba(15,23,42,.18);padding:16px;min-width:290px;display:none}',
+            '.dp-popup.open{display:block}',
+            '.dp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}',
+            '.dp-head-label{font-size:14px;font-weight:900;color:#0b2a55}',
+            '.dp-nav{width:30px;height:30px;border-radius:8px;border:1px solid rgba(15,23,42,.10);background:#f8fafc;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s}',
+            '.dp-nav:hover{background:#e2e8f0}',
+            '.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:12px}',
+            '.dp-dow{text-align:center;font-size:10px;font-weight:900;color:#64748b;padding:4px 0}',
+            '.dp-day{text-align:center;padding:6px 2px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:#0f172a;transition:background .12s;border:none;background:none;width:100%}',
+            '.dp-day:hover{background:rgba(29,78,216,.08);color:#1d4ed8}',
+            '.dp-day.today{border:2px solid rgba(29,78,216,.4);color:#1d4ed8;font-weight:900}',
+            '.dp-day.selected{background:linear-gradient(135deg,#1d4ed8,#06b6d4)!important;color:#fff!important;font-weight:900}',
+            '.dp-day.other-month{color:#cbd5e1}',
+            '.dp-day.disabled{color:#e2e8f0!important;cursor:not-allowed!important;pointer-events:none}',
+            '.dp-divider{height:1px;background:rgba(15,23,42,.08);margin:12px 0}',
+            '.dp-time-row{display:flex;align-items:center;justify-content:center;gap:10px}',
+            '.dp-time-label{font-size:11px;font-weight:900;color:#64748b;text-transform:uppercase;letter-spacing:.5px}',
+            '.dp-time-wrap{display:flex;align-items:center;gap:6px}',
+            '.dp-time-sel{width:64px;padding:7px 8px;border:1px solid rgba(15,23,42,.10);border-radius:10px;background:#f8fafc;font-size:15px;font-weight:900;color:#0f172a;text-align:center;cursor:pointer;outline:none;font-family:inherit}',
+            '.dp-time-colon{font-size:20px;font-weight:900;color:#64748b}',
+            '.dp-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}',
+            '.dp-clear{padding:7px 14px;border-radius:8px;border:1px solid rgba(15,23,42,.10);background:#fff;font-size:12px;font-weight:700;cursor:pointer;color:#64748b}',
+            '.dp-ok{padding:7px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#1d4ed8,#06b6d4);color:#fff;font-size:13px;font-weight:800;cursor:pointer}',
+            '.dp-clear:hover{background:#f1f5f9}','.dp-ok:hover{filter:brightness(1.06)}'
+        ].join('');
+        document.head.appendChild(s);
+    }
+
+    function dp_init(id, onChangeFn){
+        dp_injectCss();
+        var hidden=document.getElementById(id);
+        var container=document.getElementById('dp_'+id);
+        if(!hidden||!container)return;
+        var state={year:new Date().getFullYear(),month:new Date().getMonth(),selYear:null,selMonth:null,selDay:null,hour:9,minute:0};
+        if(hidden.value){var d=new Date(hidden.value.replace(' ','T'));if(!isNaN(d)){state.year=d.getFullYear();state.month=d.getMonth();state.selYear=d.getFullYear();state.selMonth=d.getMonth();state.selDay=d.getDate();state.hour=d.getHours();state.minute=d.getMinutes();}}
+        container.innerHTML='<div class="dp-wrap" id="dpWrap_'+id+'"><input type="text" class="dp-display" id="dpDisp_'+id+'" readonly placeholder="jj/mm/aaaa hh:mm"/><button type="button" class="dp-btn" id="dpBtn_'+id+'">📅</button><div class="dp-popup" id="dpPop_'+id+'"><div class="dp-head"><button type="button" class="dp-nav" id="dpPrev_'+id+'">◀</button><span class="dp-head-label" id="dpLbl_'+id+'"></span><button type="button" class="dp-nav" id="dpNext_'+id+'">▶</button></div><div class="dp-grid" id="dpGrid_'+id+'"></div><div class="dp-divider"></div><div class="dp-time-row"><span class="dp-time-label">🕐 Heure</span><div class="dp-time-wrap"><select class="dp-time-sel" id="dpH_'+id+'"></select><span class="dp-time-colon">:</span><select class="dp-time-sel" id="dpM_'+id+'"></select></div></div><div class="dp-footer"><button type="button" class="dp-clear" id="dpClr_'+id+'">Effacer</button><button type="button" class="dp-ok" id="dpOk_'+id+'">✓ OK</button></div></div></div>';
+        var selH=document.getElementById('dpH_'+id),selM=document.getElementById('dpM_'+id);
+        for(var h=0;h<24;h++){var o=document.createElement('option');o.value=h;o.textContent=(h<10?'0':'')+h;if(h===state.hour)o.selected=true;selH.appendChild(o);}
+        for(var m=0;m<60;m+=5){var o2=document.createElement('option');o2.value=m;o2.textContent=(m<10?'0':'')+m;if(m===state.minute)o2.selected=true;selM.appendChild(o2);}
+        function renderCal(){
+            var lbl=document.getElementById('dpLbl_'+id),grid=document.getElementById('dpGrid_'+id);
+            lbl.textContent=DP_MONTHS[state.month]+' '+state.year;
+            var today=new Date();today.setHours(0,0,0,0);
+            var html='';
+            DP_DAYS.forEach(function(d){html+='<div class="dp-dow">'+d+'</div>';});
+            var first=new Date(state.year,state.month,1);
+            var offset=(first.getDay()+6)%7;
+            var days=new Date(state.year,state.month+1,0).getDate();
+            for(var i=0;i<offset;i++){var pv=new Date(state.year,state.month,0-i);html+='<button type="button" class="dp-day other-month disabled">'+pv.getDate()+'</button>';}
+            for(var d2=1;d2<=days;d2++){
+                var dt=new Date(state.year,state.month,d2);
+                var cls='dp-day';
+                if(dt<today)cls+=' disabled';
+                if(dt.getTime()===today.getTime())cls+=' today';
+                if(state.selYear===state.year&&state.selMonth===state.month&&state.selDay===d2)cls+=' selected';
+                html+='<button type="button" class="'+cls+'" data-d="'+d2+'">'+d2+'</button>';
+            }
+            grid.innerHTML=html;
+            var btns=grid.querySelectorAll('.dp-day:not(.disabled):not(.other-month)');
+            for(var b=0;b<btns.length;b++){(function(btn){btn.addEventListener('click',function(){state.selYear=state.year;state.selMonth=state.month;state.selDay=parseInt(btn.getAttribute('data-d'));renderCal();});})(btns[b]);}
+        }
+        function getHiddenVal(){if(state.selDay===null)return'';var mm=state.selMonth+1;var h=parseInt(selH.value);var m=parseInt(selM.value);return state.selYear+'-'+(mm<10?'0':'')+mm+'-'+(state.selDay<10?'0':'')+state.selDay+'T'+(h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
+        function getDispVal(){if(state.selDay===null)return'';var mm=state.selMonth+1;var h=parseInt(selH.value);var m=parseInt(selM.value);return(state.selDay<10?'0':'')+state.selDay+'/'+(mm<10?'0':'')+mm+'/'+state.selYear+' '+(h<10?'0':'')+h+':'+(m<10?'0':'')+m;}
+        function commit(){hidden.value=getHiddenVal();document.getElementById('dpDisp_'+id).value=getDispVal();dp_close(id);if(onChangeFn)onChangeFn();}
+        function open(){if(_dp_open&&_dp_open!==id)dp_close(_dp_open);_dp_open=id;renderCal();document.getElementById('dpPop_'+id).classList.add('open');}
+        document.getElementById('dpPrev_'+id).addEventListener('click',function(){state.month--;if(state.month<0){state.month=11;state.year--;}renderCal();});
+        document.getElementById('dpNext_'+id).addEventListener('click',function(){state.month++;if(state.month>11){state.month=0;state.year++;}renderCal();});
+        document.getElementById('dpBtn_'+id).addEventListener('click',function(e){e.stopPropagation();open();});
+        document.getElementById('dpDisp_'+id).addEventListener('click',function(e){e.stopPropagation();open();});
+        document.getElementById('dpOk_'+id).addEventListener('click',function(){commit();});
+        document.getElementById('dpClr_'+id).addEventListener('click',function(){state.selDay=null;hidden.value='';document.getElementById('dpDisp_'+id).value='';dp_close(id);if(onChangeFn)onChangeFn();});
+        if(state.selDay!==null)document.getElementById('dpDisp_'+id).value=getDispVal();
+        window['dp_set_'+id]=function(val){
+            if(!val){state.selDay=null;hidden.value='';document.getElementById('dpDisp_'+id).value='';return;}
+            var d=new Date(val.replace(' ','T'));if(isNaN(d))return;
+            state.year=d.getFullYear();state.month=d.getMonth();state.selYear=d.getFullYear();state.selMonth=d.getMonth();state.selDay=d.getDate();state.hour=d.getHours();state.minute=d.getMinutes();
+            hidden.value=getHiddenVal();document.getElementById('dpDisp_'+id).value=getDispVal();
+            var sh=document.getElementById('dpH_'+id),sm=document.getElementById('dpM_'+id);
+            if(sh)for(var i=0;i<sh.options.length;i++)sh.options[i].selected=(parseInt(sh.options[i].value)===state.hour);
+            if(sm)for(var i=0;i<sm.options.length;i++)sm.options[i].selected=(parseInt(sm.options[i].value)===state.minute);
+        };
+        // Sync display pour field-ok/err : déléguer à dpDisp
+        hidden._dpDispId='dpDisp_'+id;
+    }
+    function dp_close(id){var pop=document.getElementById('dpPop_'+id);if(pop)pop.classList.remove('open');if(_dp_open===id)_dp_open=null;}
+    document.addEventListener('click',function(e){if(!_dp_open)return;var pop=document.getElementById('dpPop_'+_dp_open);if(pop&&!pop.contains(e.target))dp_close(_dp_open);});
+
+    /* ═══════════════════════════════════════════════════
+       APP
+    ═══════════════════════════════════════════════════ */
+    var allEvents=[];var pendingDelId=null;
+
+    function goInvitations(){if(window.javaBridge&&typeof window.javaBridge.goInvitations==='function')window.javaBridge.goInvitations();}
+    function openInBrowser(url){if(window.javaBridge&&typeof window.javaBridge.openUrl==='function')window.javaBridge.openUrl(url);}
+
+    function withBridge(onReady,onFail){
+        var start=Date.now();
+        var t=setInterval(function(){if(window.javaBridge){clearInterval(t);onReady(window.javaBridge);return;}if(Date.now()-start>3000){clearInterval(t);if(onFail)onFail();}},80);
+    }
+
+    function normalizeEventsData(data){
+        if(typeof data==='string'){
+            try{ data=JSON.parse(data); }catch(e){ data=[]; }
+        }
+        if(!Array.isArray(data)) return [];
+        // Accepte 2 formats:
+        // 1) [{id,titre,...}] (EvenementBridge.getAll)
+        // 2) [{evenement:{...}, invitations:[...]}] (InvitationBridge.getAllData)
+        if(data.length && data[0] && data[0].evenement){
+            var mapped=[];
+            for(var i=0;i<data.length;i++){
+                if(data[i] && data[i].evenement) mapped.push(data[i].evenement);
+            }
+            return mapped;
+        }
+        return data;
+    }
+
+    function renderTable(data){
+        var normalized = normalizeEventsData(data);
+        allEvents = normalized;
+        renderCards(normalized);
+    }
+
+    function renderCards(data){
+        data = Array.isArray(data) ? data : [];
+        var grid=g('eventsGrid'),empty=g('stateEmpty');
+        g('stateLoad').style.display='none';g('countBadge').textContent=data.length;
+        if(!data||data.length===0){empty.style.display='block';grid.style.display='none';return;}
+        empty.style.display='none';grid.style.display='grid';
+        var html='';
+        for(var i=0;i<data.length;i++){
+            var ev=data[i];
+            if(!ev) continue;
+            var isO=ev.mode==='EN_LIGNE';
+            var mc=isO?'online':'presentiel',ml=isO?'🌐 En ligne':'🏢 Présentiel';
+            var det=isO?(ev.meetingLink||'—'):(ev.lieu||'—'),ico=isO?'🔗':'📍';
+            html+='<div class="ev-card"><div class="ev-card-bar '+mc+'"></div><div class="ev-card-body">'
+                +'<span class="ev-mode-tag '+mc+'">'+ml+'</span>'
+                +'<p class="ev-titre">'+esc(ev.titre)+'</p>'
+                +'<p class="ev-desc">'+(ev.description?esc(ev.description):'<em>Aucune description</em>')+'</p>'
+                +'<div class="ev-meta">'
+                +'<div class="ev-meta-row"><span class="ico">📅</span><span>Début : <strong>'+fmtDate(ev.dateDebut)+'</strong></span></div>'
+                +'<div class="ev-meta-row"><span class="ico">🏁</span><span>Fin : <strong>'+fmtDate(ev.dateFin)+'</strong></span></div>'
+                +'<div class="ev-meta-row"><span class="ico">'+ico+'</span><span>'+esc(det)+'</span></div>'
+                +'<div class="ev-meta-row"><span class="ico">🆔</span><span>Projet : <strong>#'+ev.projectId+'</strong></span></div>'
+                +'</div>'
+                +(!isO&&ev.lieu?'<div id="weather_'+ev.id+'" class="weather-block"><span class="weather-loading">⏳ Météo en cours…</span></div>':'')
+                +(!isO&&ev.lieu?buildMapBlock(ev.id,ev.lieu):'')
+                +'<div class="ev-divider"></div>'
+                +'<div class="ev-actions">'
+                +'<button class="btn warning sm" onclick="openModifierWindow('+i+')">✏️ Modifier</button>'
+                +'<button class="btn danger  sm" onclick="openSupprimer('+i+')">🗑️ Supprimer</button>'
+                +'</div></div></div>';
+        }
+        g('eventsGrid').innerHTML=html;
+        setTimeout(initMaps,100);
+        for(var j=0;j<data.length;j++){var ev=data[j];if(ev.mode!=='EN_LIGNE'&&ev.lieu&&ev.dateDebut)loadWeather(ev.id,ev.lieu,ev.dateDebut);}
+    }
+
+    /* ══ MÉTÉO ══ */
+    var WMO_CODES={0:{icon:'☀️',label:'Ciel dégagé'},1:{icon:'🌤️',label:'Peu nuageux'},2:{icon:'⛅',label:'Partiellement nuageux'},3:{icon:'☁️',label:'Couvert'},45:{icon:'🌫️',label:'Brouillard'},48:{icon:'🌫️',label:'Brouillard givrant'},51:{icon:'🌦️',label:'Bruine légère'},53:{icon:'🌦️',label:'Bruine modérée'},55:{icon:'🌦️',label:'Bruine dense'},61:{icon:'🌧️',label:'Pluie légère'},63:{icon:'🌧️',label:'Pluie modérée'},65:{icon:'🌧️',label:'Pluie forte'},71:{icon:'❄️',label:'Neige légère'},73:{icon:'❄️',label:'Neige modérée'},75:{icon:'❄️',label:'Neige forte'},80:{icon:'🌦️',label:'Averses légères'},81:{icon:'🌧️',label:'Averses modérées'},82:{icon:'⛈️',label:'Averses violentes'},95:{icon:'⛈️',label:'Orage'},96:{icon:'⛈️',label:'Orage avec grêle'},99:{icon:'⛈️',label:'Orage violent'}};
+    function getWmo(code){if(WMO_CODES[code])return WMO_CODES[code];var keys=Object.keys(WMO_CODES).map(Number).sort(function(a,b){return a-b;});for(var i=keys.length-1;i>=0;i--)if(code>=keys[i])return WMO_CODES[keys[i]];return{icon:"🌡️",label:"Météo inconnue"};}
+        var __geoCache={};
+    function geocodeLieu(lieu){
+        if(!lieu) return Promise.resolve(null);
+        var key=String(lieu).trim().toLowerCase();
+        if(__geoCache[key]) return Promise.resolve(__geoCache[key]);
+        var q=encodeURIComponent(lieu+', Tunisie');
+        return fetch('https://geocoding-api.open-meteo.com/v1/search?name='+q+'&count=1&language=fr&format=json')
+            .then(function(r){return r.json();})
+            .then(function(data){
+                if(!data||!data.results||!data.results.length) return null;
+                var one=data.results[0], out={lat:parseFloat(one.latitude),lng:parseFloat(one.longitude)};
+                __geoCache[key]=out;
+                return out;
+            })
+            .catch(function(){return null;});
+    }
+    function loadWeather(evId,lieu,dateDebut){
+        var weatherEl=document.getElementById('weather_'+evId);if(!weatherEl)return;
+        var dateStr=dateDebut.substring(0,10);var eventDate=new Date(dateStr);var today=new Date();today.setHours(0,0,0,0);
+        var diffDays=Math.floor((eventDate-today)/86400000);
+        if(diffDays>16){weatherEl.innerHTML='<span class="weather-label">🌤️ Météo</span><span class="weather-unavail" style="margin-left:8px">Prévision indisponible (> 16 jours)</span>';return;}
+        if(diffDays<0){weatherEl.innerHTML='<span class="weather-label">🌤️ Météo</span><span class="weather-unavail" style="margin-left:8px">Événement passé</span>';return;}
+        geocodeLieu(lieu).then(function(pos){
+            if(!pos){weatherEl.innerHTML='<span class="weather-label">🌤️ Météo</span><span class="weather-unavail" style="margin-left:8px">Lieu introuvable</span>';return;}
+            return fetch('https://api.open-meteo.com/v1/forecast?latitude='+pos.lat+'&longitude='+pos.lng+'&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&start_date='+dateStr+'&end_date='+dateStr)
+                .then(function(r){return r.json();})
+                .then(function(meteo){
+                    var daily=meteo&&meteo.daily;if(!daily||!daily.weathercode||daily.weathercode.length===0){weatherEl.innerHTML='<span class="weather-label">🌤️ Météo</span><span class="weather-unavail" style="margin-left:8px">Données indisponibles</span>';return;}
+                    var code=daily.weathercode[0],tmax=Math.round(daily.temperature_2m_max[0]),tmin=Math.round(daily.temperature_2m_min[0]),wmo=getWmo(code);
+                    weatherEl.innerHTML='<span class="weather-icon">'+wmo.icon+'</span><div class="weather-info"><p class="weather-temp">'+tmax+'°C <span style="font-size:12px;font-weight:600;color:var(--muted)">/ '+tmin+'°C</span></p><p class="weather-cond">'+wmo.label+'</p></div><span class="weather-label">Météo</span>';
+                });
+        }).catch(function(){var el=document.getElementById('weather_'+evId);if(el)el.innerHTML='<span class="weather-label">🌤️ Météo</span><span class="weather-unavail" style="margin-left:8px">Erreur de chargement</span>';});
+    }
+
+    /* ══ VALIDATION ══ */
+    var fieldRules={titre:{required:true,minLen:3,maxLen:120,label:'Titre'},projectId:{required:true,isInt:true,min:1,label:'Project ID'},organisateurId:{required:true,isInt:true,min:1,label:'Organisateur ID'},description:{required:false,maxLen:500,label:'Description'},meetingLink:{required:false,isUrl:true,label:'Lien de réunion'},lieu:{required:false,label:'Lieu'}};
+    function validateField(id){
+        var el=g(id),msg=g('msg_'+id);if(!el||!msg)return true;
+        var val=(el.value||'').trim(),rule=fieldRules[id];if(!rule)return true;
+        var mode=g('mode').value;
+        if(id==='meetingLink')rule.required=(mode==='EN_LIGNE');
+        if(id==='lieu')rule.required=(mode==='PRESENTIEL');
+        if(rule.required&&!val){setFieldState(el,msg,false,'⚠️ '+rule.label+' est obligatoire.');return false;}
+        if(!val){clearFieldState(el,msg);return true;}
+        if(rule.isInt){var n=parseInt(val);if(isNaN(n)||n<(rule.min||1)){setFieldState(el,msg,false,'⚠️ '+rule.label+' doit être un entier >= '+(rule.min||1)+'.');return false;}}
+        if(rule.minLen&&val.length<rule.minLen){setFieldState(el,msg,false,'⚠️ Minimum '+rule.minLen+' caracteres.');return false;}
+        if(rule.maxLen&&val.length>rule.maxLen){setFieldState(el,msg,false,'⚠️ Maximum '+rule.maxLen+' caracteres.');return false;}
+        if(rule.isUrl&&!val.match(/^https?:\/\/.+/)){setFieldState(el,msg,false,'⚠️ Doit commencer par http:// ou https://');return false;}
+        setFieldState(el,msg,true,'✓');return true;
+    }
+
+    function validateDates(){
+        var dd=g('dateDebut').value,df=g('dateFin').value;
+        var msgD=g('msg_dateDebut'),msgF=g('msg_dateFin');
+        // Sync field-ok/err visuel sur les dp-display
+        var dispD=document.getElementById('dpDisp_dateDebut'),dispF=document.getElementById('dpDisp_dateFin');
+        var ok=true;
+        if(!dd){setFieldState(g('dateDebut'),msgD,false,'⚠️ Date de début obligatoire.');if(dispD){dispD.classList.add('field-error');dispD.classList.remove('field-ok');}ok=false;}
+        else{var now=new Date(),nowFlat=new Date(now.getFullYear(),now.getMonth(),now.getDate(),now.getHours(),now.getMinutes());
+            if(new Date(dd)<nowFlat){setFieldState(g('dateDebut'),msgD,false,'⚠️ La date de début ne peut pas être dans le passé.');if(dispD){dispD.classList.add('field-error');dispD.classList.remove('field-ok');}ok=false;}
+            else{clearFieldState(g('dateDebut'),msgD);if(dispD){dispD.classList.add('field-ok');dispD.classList.remove('field-error');}}
+        }
+        if(!df){setFieldState(g('dateFin'),msgF,false,'⚠️ Date de fin obligatoire.');if(dispF){dispF.classList.add('field-error');dispF.classList.remove('field-ok');}ok=false;}
+        else if(dd&&new Date(df)<=new Date(dd)){setFieldState(g('dateFin'),msgF,false,'⚠️ La date de fin doit être après la date de début.');if(dispF){dispF.classList.add('field-error');dispF.classList.remove('field-ok');}ok=false;}
+        else{clearFieldState(g('dateFin'),msgF);if(dispF){dispF.classList.add('field-ok');dispF.classList.remove('field-error');}}
+        refreshPreview();return ok;
+    }
+
+    function setFieldState(el,msgEl,isOk,text){el.classList.toggle('field-ok',isOk);el.classList.toggle('field-error',!isOk);msgEl.textContent=text;msgEl.className='field-msg '+(isOk?'ok':'err');}
+    function clearFieldState(el,msgEl){el.classList.remove('field-ok','field-error');msgEl.className='field-msg';msgEl.textContent='';}
+    function validateAll(){var ok=true;['titre','projectId','organisateurId','description'].forEach(function(id){if(!validateField(id))ok=false;});if(!validateField('meetingLink'))ok=false;if(!validateField('lieu'))ok=false;if(!validateDates())ok=false;return ok;}
+
+    /* ══ SUBMIT ══ */
+    function submitForm(){
+        var alertEl=g('globalAlert');alertEl.className='form-alert';alertEl.textContent='';
+        if(!validateAll()){alertEl.className='form-alert error';alertEl.textContent='⚠️ Veuillez corriger les champs en rouge avant d\'enregistrer.';alertEl.scrollIntoView({behavior:'smooth',block:'center'});return;}
+        withBridge(function(b){
+            if(typeof b.ajouter!=='function'){alertEl.className='form-alert error';alertEl.textContent='Bridge.ajouter introuvable.';return;}
+            var r=b.ajouter(g('titre').value.trim(),parseInt(g('projectId').value),g('description').value.trim(),g('mode').value,fmtJava(g('dateDebut').value),fmtJava(g('dateFin').value),g('lieu').value.trim(),g('meetingLink').value.trim(),parseInt(g('organisateurId').value));
+            if(r==='OK'||(r&&r.startsWith('OK'))){alertEl.className='form-alert ok';alertEl.textContent='✅ Événement enregistré avec succès !';resetForm();reloadList();}
+            else{alertEl.className='form-alert error';alertEl.textContent='❌ Erreur : '+(r||'Inconnue');}
+        },function(){alertEl.className='form-alert error';alertEl.textContent='Bridge Java indisponible.';});
+    }
+
+    /* ══ SUPPRIMER ══ */
+    function openSupprimer(idx){var ev=allEvents[idx];if(!ev)return;pendingDelId=ev.id;g('dialogMsg').textContent='Supprimer « '+ev.titre+' » ? Cette action est irréversible.';g('dialogOverlay').classList.add('show');}
+    function closeDialog(){g('dialogOverlay').classList.remove('show');}
+    function confirmSupprimer(){closeDialog();withBridge(function(b){var r=b.supprimer(pendingDelId);if(r==='OK'||(r&&r.startsWith('OK'))){toast('🗑️ Supprimé.','success');reloadList();}else toast('❌ '+(r||'Erreur'),'error');},function(){toast('Bridge indisponible.','error');});}
+
+    /* ══ MODIFIER ══ */
+    function openModifierWindow(idx){
+        var ev=allEvents[idx];
+        if(!ev)return;
+        var q=new URLSearchParams({
+            id:String(ev.id||''),
+            titre:ev.titre||'',
+            projectId:String(ev.projectId||''),
+            organisateurId:String(ev.organisateurId||''),
+            description:ev.description||'',
+            mode:ev.mode||'EN_LIGNE',
+            dateDebut:ev.dateDebut||'',
+            dateFin:ev.dateFin||'',
+            lieu:ev.lieu||'',
+            meetingLink:ev.meetingLink||''
+        });
+        window.location.href='Modifierevenement.html?'+q.toString();
+    }
+
+    /* ══ RELOAD / SEARCH / MODE ══ */
+    function reloadList(){
+        withBridge(function(b){
+            try{
+                if(typeof b.getAll==='function'){ renderTable(b.getAll()); return; }
+                if(typeof b.getAllData==='function'){ renderTable(b.getAllData()); return; }
+            }catch(e){}
+        },function(){});
+    }
+    function filterCards(){
+        var q=g('searchInput').value.toLowerCase();
+        var source = Array.isArray(allEvents) ? allEvents : [];
+        if(!q){renderCards(source);return;}
+        var f=source.filter(function(ev){
+            if(!ev) return false;
+            return (ev.titre||'').toLowerCase().indexOf(q)>=0
+                || (ev.description||'').toLowerCase().indexOf(q)>=0
+                || (ev.mode||'').toLowerCase().indexOf(q)>=0
+                || (ev.lieu||'').toLowerCase().indexOf(q)>=0;
+        });
+        renderCards(f);
+    }
+    function setMode(m){g('mode').value=m;g('optEL').classList.toggle('selected',m==='EN_LIGNE');g('optPR').classList.toggle('selected',m==='PRESENTIEL');g('condLien').className='cond-field '+(m==='EN_LIGNE'?'visible':'hidden');g('condLieu').className='cond-field '+(m==='PRESENTIEL'?'visible':'hidden');g('kMode').textContent=m;validateField('meetingLink');validateField('lieu');}
+
+    /* ══ RESET ══ */
+    function resetForm(){
+        ['titre','projectId','organisateurId','description','meetingLink','lieu'].forEach(function(id){g(id).value='';clearFieldState(g(id),g('msg_'+id));});
+        if(window.dp_set_dateDebut)dp_set_dateDebut('');
+        if(window.dp_set_dateFin)dp_set_dateFin('');
+        clearFieldState(g('dateDebut'),g('msg_dateDebut'));
+        clearFieldState(g('dateFin'),g('msg_dateFin'));
+        setMode('EN_LIGNE');g('globalAlert').className='form-alert';g('globalAlert').textContent='';refreshPreview();
+    }
+
+    /* ══ APERÇU ══ */
+    function refreshPreview(){
+        g('kTitre').textContent=g('titre').value.trim()||'—';
+        var dd=g('dateDebut').value,df=g('dateFin').value;
+        g('kDebut').textContent=dd?fmtDisplay(dd):'—';g('kFin').textContent=df?fmtDisplay(df):'—';
+        if(dd&&df){var diff=new Date(df)-new Date(dd);g('kDuree').textContent=diff>0?Math.floor(diff/3600000)+'h'+Math.floor((diff%3600000)/60000)+'min':'⚠️ invalide';}
+        else g('kDuree').textContent='—';
+    }
+
+    /* ══ MAP ══ */
+    var mapInstances={};
+    function buildMapBlock(evId,lieu){return'<div class="ev-map-wrap"><div class="ev-map-loading" id="mapLoading_'+evId+'">🗺️ Chargement de la carte…</div><div id="map_'+evId+'" style="height:160px;width:100%;display:none;border-radius:12px"></div></div><button class="btn-itineraire" id="itineraire_'+evId+'" onclick="openInBrowser(this.getAttribute(\'data-url\'))" style="display:none">🧭 Voir l itinéraire</button>';}
+    function initMaps(){var cards=document.querySelectorAll('[id^="mapLoading_"]');cards.forEach(function(el){var evId=el.id.replace('mapLoading_','');if(mapInstances[evId])return;var ev=allEvents.find(function(e){return String(e.id)===String(evId);});if(!ev||!ev.lieu)return;geocodeAndShow(evId,ev.lieu);});}
+    function geocodeAndShow(evId,lieu){
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(lieu+', Tunisie')+'&limit=1',{headers:{'Accept-Language':'fr'}})
+            .then(function(r){return r.json();})
+            .then(function(data){
+                var loadEl=document.getElementById('mapLoading_'+evId),mapEl=document.getElementById('map_'+evId),btnEl=document.getElementById('itineraire_'+evId);
+                if(!data||data.length===0){
+                    return geocodeLieu(lieu).then(function(pos){
+                        if(!pos){if(loadEl)loadEl.innerHTML='📍 Carte indisponible pour ce lieu';return;}
+                        var lat=pos.lat,lng=pos.lng;
+                        if(loadEl)loadEl.style.display='none';if(mapEl)mapEl.style.display='block';
+                        var map=L.map('map_'+evId,{center:[lat,lng],zoom:15,zoomControl:true,scrollWheelZoom:false});
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+                        var icon=L.divIcon({html:'<div style="background:linear-gradient(135deg,#1d4ed8,#06b6d4);width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 4px 12px rgba(29,78,216,.4)"></div>',iconSize:[32,32],iconAnchor:[16,32],className:''});
+                        L.marker([lat,lng],{icon:icon}).addTo(map).bindPopup('<strong>📍 '+lieu+'</strong>').openPopup();
+                        mapInstances[evId]=map;
+                        if(btnEl){btnEl.setAttribute('data-url','https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng);btnEl.style.display='flex';}
+                    });
+                }
+                var lat=parseFloat(data[0].lat),lng=parseFloat(data[0].lon);
+                if(loadEl)loadEl.style.display='none';if(mapEl)mapEl.style.display='block';
+                var map=L.map('map_'+evId,{center:[lat,lng],zoom:15,zoomControl:true,scrollWheelZoom:false});
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+                var icon=L.divIcon({html:'<div style="background:linear-gradient(135deg,#1d4ed8,#06b6d4);width:32px;height:32px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 4px 12px rgba(29,78,216,.4)"></div>',iconSize:[32,32],iconAnchor:[16,32],className:''});
+                L.marker([lat,lng],{icon:icon}).addTo(map).bindPopup('<strong>📍 '+lieu+'</strong>').openPopup();
+                mapInstances[evId]=map;
+                if(btnEl){btnEl.setAttribute('data-url','https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng);btnEl.style.display='flex';}
+            }).catch(function(){var loadEl=document.getElementById('mapLoading_'+evId);if(loadEl)loadEl.innerHTML='⚠️ Impossible de charger la carte';});
+    }
+
+    /* ══ UTILS ══ */
+    function g(id){return document.getElementById(id);}
+    function fmtJava(s){if(!s)return'';var p=s.split('T');return p[0]+' '+((p[1]||'00:00').substring(0,5))+':00';}
+    function fmtDate(s){if(!s)return'—';try{var d=new Date(s.replace(' ','T'));return d.toLocaleDateString('fr-FR')+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}catch(e){return s;}}
+    function fmtDisplay(s){if(!s)return'—';var p=s.split('T'),d=p[0].split('-');return d[2]+'/'+d[1]+'/'+d[0]+' '+(p[1]?p[1].substring(0,5):'');}
+    function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    var _tt;
+    function toast(msg,type){var t=g('toast');g('toastMsg').textContent=msg;t.className='show '+(type||'success');clearTimeout(_tt);_tt=setTimeout(function(){t.className=type||'success';},3500);}
+
+    g('dialogOverlay').addEventListener('click',function(e){if(e.target===this)closeDialog();});
+    g('titre').addEventListener('input',refreshPreview);
+
+    /* ══ EXPORT PDF ══ */
+    function exportPdf(){var btn=g('btnExport');if(!window.javaBridge||typeof window.javaBridge.exportPdf!=='function'){toast('⚠️ Bridge indisponible','error');return;}btn.disabled=true;btn.textContent='⏳ Génération…';window.javaBridge.exportPdf();}
+    function onPdfExported(status,info){var btn=g('btnExport');btn.disabled=false;btn.textContent='📄 Exporter PDF';if(status==='OK')toast('✅ PDF exporté avec succès !','success');else toast('❌ Erreur : '+info,'error');}
+
+    /* ══ INIT PICKERS ══ */
+    dp_init('dateDebut', function(){ validateDates(); refreshPreview(); });
+    dp_init('dateFin',   function(){ validateDates(); refreshPreview(); });
+    refreshPreview();
+    withBridge(function(b){
+        try{
+            if(typeof b.getAll==='function'){ renderTable(b.getAll()); return; }
+            if(typeof b.getAllData==='function'){ renderTable(b.getAllData()); return; }
+        }catch(e){}
+        g('stateLoad').style.display='none';
+        g('stateEmpty').style.display='block';
+    },function(){
+        g('stateLoad').style.display='none';
+        g('stateEmpty').style.display='block';
+        var empty=g('stateEmpty');
+        if(empty){ empty.querySelector('p').textContent='Bridge indisponible pour charger les événements'; }
+    });
+</script>
+</body>
+</html>
+
+
+
+
+
+

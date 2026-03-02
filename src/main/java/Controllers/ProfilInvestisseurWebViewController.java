@@ -5,12 +5,12 @@ import Entities.Role;
 import Entities.User;
 import Services.ProfilInvestisseurCRUD;
 import Utils.Session;
+import Utils.WebViewBridgeUtil;
 import Utils.sceneManager;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import netscape.javascript.JSObject;
 
 import java.net.URL;
 
@@ -29,21 +29,14 @@ public class ProfilInvestisseurWebViewController {
         engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
 
-                JSObject window = (JSObject) engine.executeScript("window");
-
-
-                window.setMember("javaBridge", bridge);
-                window.setMember("javaBridgeInvest", bridge);
-                window.setMember("javaBridgeInvestissement", bridge);
-
-                engine.executeScript("window.__bridgeReady = true;");
-
-
-                engine.executeScript(
-                        "try{" +
-                                "window.javaBridge = window.javaBridge || window.javaBridgeInvest || window.javaBridgeInvestissement;" +
-                                "}catch(e){}"
+                // âœ… Debug (optionnel)
+                WebViewBridgeUtil.safeExec(engine,
+                        "console.log('[JAVA] Bridge injected by ProfilInvestisseurWebViewController');"
                 );
+
+                // âœ… CLEAN: javaBridge + alias + __bridgeReady + anti-Ã©crasement + callback
+                // (pas besoin dâ€™un investBridge sÃ©parÃ© ici -> on passe bridge deux fois)
+                WebViewBridgeUtil.injectAll(engine, bridge, bridge);
             }
         });
 
@@ -59,36 +52,79 @@ public class ProfilInvestisseurWebViewController {
         return getClass().getResource("/monProfil_investisseur.html");
     }
 
-
+    // ==========================
+    // BRIDGE
+    // ==========================
     public class JavaBridge {
 
-
-        public String openEditProfilInvestisseur() {
+        // ===== NAVBAR =====
+        public String openMesInvestissements() {
             try {
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/profil_investisseur_edit_view.fxml", "Investia - Modifier Profil")
-                );
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorMesInvestissements);
                 return "OK";
             } catch (Exception e) {
                 return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
             }
         }
 
-
-
-        public String getCurrentUserRole() {
-            User u = Session.getCurrentUser();
-            return (u == null || u.getRole() == null) ? "" : u.getRole().name();
+        public String openContactInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorContact);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
         }
 
-        public String getCurrentUserName() {
-            User u = Session.getCurrentUser();
-            if (u == null) return "";
-            String nom = u.getNom() == null ? "" : u.getNom().trim();
-            String prenom = u.getPrenom() == null ? "" : u.getPrenom().trim();
-            String full = (nom + " " + prenom).trim();
-            if (!full.isEmpty()) return full;
-            return u.getEmail() == null ? "" : u.getEmail().trim();
+        public String openEditProfilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorEditProfil);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openProfilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorProfil);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openProjetsInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorProjets);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String goAccueilInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorAccueil);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        // âœ… AJOUT MINIMAL : WALLET
+        public String openWalletInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorWallet);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        // âœ… AJOUT MINIMAL : alias (si navbar appelle openWallet)
+        public String openWallet() {
+            return openWalletInvestisseur();
         }
 
         public String logout() {
@@ -104,44 +140,23 @@ public class ProfilInvestisseurWebViewController {
             }
         }
 
-
-        public String openProfilInvestisseur() {
-            try {
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/profil_investisseur_view.fxml", "Investia - Mon Profil")
-                );
-                return "OK";
-            } catch (Exception e) {
-                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
-            }
+        // ===== HEADER INFO =====
+        public String getCurrentUserRole() {
+            User u = Session.getCurrentUser();
+            return (u == null || u.getRole() == null) ? "" : u.getRole().name();
         }
 
-        // ✅ Ouvrir Projets
-        public String openProjetsInvestisseur() {
-            try {
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/investisseur_projets_view.fxml", "Investia - Projets")
-                );
-                return "OK";
-            } catch (Exception e) {
-                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
-            }
+        public String getCurrentUserName() {
+            User u = Session.getCurrentUser();
+            if (u == null) return "";
+            String nom = u.getNom() == null ? "" : u.getNom().trim();
+            String prenom = u.getPrenom() == null ? "" : u.getPrenom().trim();
+            String full = (nom + " " + prenom).trim();
+            if (!full.isEmpty()) return full;
+            return u.getEmail() == null ? "" : u.getEmail().trim();
         }
 
-
-        public String goAccueilInvestisseur() {
-            try {
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/investisseur_view.fxml", "Investia - Accueil Investisseur")
-                );
-                return "OK";
-            } catch (Exception e) {
-                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
-            }
-        }
-
-
-
+        // ===== DATA =====
         public String getCurrentUserJson() {
             try {
                 User u = Session.getCurrentUser();
@@ -188,7 +203,7 @@ public class ProfilInvestisseurWebViewController {
         public String goEditProfil() {
             try {
                 javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/investisseur_view.fxml", "Investia - Compléter Profil")
+                        sceneManager.switchTo("/investisseur_view.fxml", "Investia - ComplÃ©ter Profil")
                 );
                 return "OK";
             } catch (Exception e) {
@@ -196,9 +211,13 @@ public class ProfilInvestisseurWebViewController {
             }
         }
 
+        // ===== JSON helper =====
         private String json(String s) {
             if (s == null) return "null";
-            String esc = s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
+            String esc = s.replace("\\", "\\\\")
+                    .replace("\"", "\\\"")
+                    .replace("\n", "\\n")
+                    .replace("\r", "\\r");
             return "\"" + esc + "\"";
         }
     }

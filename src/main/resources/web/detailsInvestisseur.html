@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia — Détails projet</title>
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+  <style>
+    :root{
+      --bg:#f6f8fc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.10);
+      --shadow:0 14px 35px rgba(15,23,42,.08);
+      --radius:18px;
+      --primary:#1d4ed8;
+      --accent:#06b6d4;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .container{max-width:980px;margin:28px auto 60px;padding:0 16px;}
+    h1{margin:0;font-size:30px;font-weight:900;}
+    .subtitle{margin:10px 0 0;color:var(--muted);font-size:14.5px;line-height:1.5}
+
+    .card{
+      margin-top:18px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .row{
+      display:flex;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .pill{
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:#0f172a;
+      font-weight:800;
+      font-size:13px;
+    }
+    .label{font-size:12px;font-weight:900;color:#0b2a55;letter-spacing:.25px;text-transform:uppercase;}
+    .value{margin-top:4px;color:#0f172a;font-weight:800;}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+      margin-top:14px;
+    }
+    @media (max-width:720px){.grid{grid-template-columns:1fr;}}
+    .box{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(255,255,255,.6);
+    }
+    .btnBar{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      margin-top:14px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:0;
+      cursor:pointer;
+      font-weight:900;
+      font-size:14px;
+      padding:10px 14px;
+      border-radius:12px;
+      background:#fff;
+      border:1px solid var(--border);
+    }
+    .btn.primary{
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      color:#fff;
+      border:0;
+    }
+  </style>
+</head>
+<body>
+<main class="container">
+  <h1 id="title">Détails du projet</h1>
+  <p class="subtitle" id="subtitle">Chargement…</p>
+
+  <section class="card" id="card" style="display:none;">
+    <div class="row" id="chips"></div>
+
+    <div class="grid">
+      <div class="box">
+        <div class="label">Secteur</div>
+        <div class="value" id="secteur"></div>
+      </div>
+      <div class="box">
+        <div class="label">Statut</div>
+        <div class="value" id="statut"></div>
+      </div>
+      <div class="box">
+        <div class="label">Objectif</div>
+        <div class="value" id="objectif"></div>
+      </div>
+      <div class="box">
+        <div class="label">Durée campagne (jours)</div>
+        <div class="value" id="dureeCampagne"></div>
+      </div>
+      <div class="box">
+        <div class="label">Mode remboursement</div>
+        <div class="value" id="modeRemb"></div>
+      </div>
+      <div class="box">
+        <div class="label">Taux intérêt (%)</div>
+        <div class="value" id="taux"></div>
+      </div>
+    </div>
+
+    <div class="box" style="margin-top:14px;">
+      <div class="label">Description courte</div>
+      <div class="value" id="descCourte" style="font-weight:700;color:#334155;"></div>
+    </div>
+
+    <div class="box" style="margin-top:14px;">
+      <div class="label">Description longue</div>
+      <div class="value" id="descLongue" style="font-weight:700;color:#334155;white-space:pre-wrap;"></div>
+    </div>
+
+    <div class="btnBar">
+      <button class="btn" type="button" onclick="history.back()">← Retour</button>
+      <button class="btn primary" type="button" onclick="goInvestir()">
+        Investir
+      </button>
+    </div>
+  </section>
+
+  <section class="card" id="errorCard" style="display:none;">
+    <b>Erreur:</b> <span id="errMsg"></span>
+    <div class="btnBar">
+      <button class="btn" type="button" onclick="history.back()">← Retour</button>
+    </div>
+  </section>
+</main>
+
+<script>
+  const qs = new URLSearchParams(location.search);
+  const id = qs.get("id");
+
+  const el = (id) => document.getElementById(id);
+  const fmt = (n) => new Intl.NumberFormat("fr-TN").format(Number(n || 0)) + " TND";
+
+  function showError(msg){
+    el("errorCard").style.display = "block";
+    el("errMsg").textContent = msg || "Impossible de charger les détails.";
+    el("subtitle").textContent = "Une erreur est survenue.";
+  }
+
+  // ✅ Bridge safe : javaBridge + alias
+  function getSafeBridge(){
+    try{ if (window.javaBridge) return window.javaBridge; }catch(e){}
+    try{ if (window.javaBridgeInvest) return window.javaBridgeInvest; }catch(e){}
+    try{ if (window.javaBridgeInvestissement) return window.javaBridgeInvestissement; }catch(e){}
+    return null;
+  }
+
+  function withBridge(onReady){
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const b = getSafeBridge();
+      if (b) {
+        clearInterval(timer);
+        onReady(b);
+        return;
+      }
+      if (Date.now() - start > 5000) {
+        clearInterval(timer);
+        onReady(null);
+      }
+    }, 100);
+  }
+
+  function loadDetails(){
+    if (!id) {
+      showError("ID projet manquant dans l'URL.");
+      return;
+    }
+
+    withBridge((bridge) => {
+      if (!bridge || !bridge.getProjetById) {
+        showError("Méthode Java getProjetById() introuvable.");
+        return;
+      }
+      try {
+        const json = bridge.getProjetById(String(id));
+        const p = JSON.parse(json || "null");
+        if (!p) {
+          showError("Projet introuvable.");
+          return;
+        }
+
+        el("card").style.display = "block";
+        el("title").textContent = p.titre || ("Projet #" + id);
+        el("subtitle").textContent = "Détails du projet sélectionné.";
+
+        el("secteur").textContent = p.secteur || "";
+        el("statut").textContent = p.statut || "";
+        el("objectif").textContent = fmt(p.objectifTnd);
+        el("dureeCampagne").textContent = (p.dureeCampagneJours ?? "");
+        el("modeRemb").textContent = (p.modeRemboursement ?? "");
+        el("taux").textContent = (p.tauxInteretPct == null ? "-" : p.tauxInteretPct);
+
+        el("descCourte").textContent = p.descriptionCourte || "";
+        el("descLongue").textContent = p.descriptionLongue || "-";
+
+        const chips = [];
+        chips.push(`<span class="pill">ID: ${p.idProjet}</span>`);
+        chips.push(`<span class="pill">Entrepreneur: ${p.entrepreneurId}</span>`);
+        if (p.updatedAt) chips.push(`<span class="pill">Màj: ${p.updatedAt}</span>`);
+        el("chips").innerHTML = chips.join("");
+
+      } catch (e) {
+        showError("JSON invalide depuis Java.");
+      }
+    });
+  }
+
+  // ✅ Investir : on FORCE openInvestir() pour changer de Scene (FXML)
+  function goInvestir(){
+    if (!id) { alert("ID projet manquant."); return; }
+
+    withBridge((bridge) => {
+      if (bridge && bridge.openInvestir) {
+        const res = bridge.openInvestir(String(id));
+        if (res && String(res).startsWith("ERROR")) alert(res);
+        return;
+      }
+
+      // ⚠️ si vraiment pas de bridge (mode navigateur pur)
+      window.location.href = "investissement_form.html?idProjet=" + encodeURIComponent(id);
+    });
+  }
+
+  loadDetails();
+  function getProjetId(){
+    // 1) query param ?id=
+    try{
+      const id = new URLSearchParams(location.search).get("id");
+      if (id) return id;
+    }catch(e){}
+
+    // 2) fallback Session via bridge
+    try{
+      const b = window.javaBridge || window.javaBridgeInvest || window.javaBridgeInvestissement;
+      if (b && b.getSelectedProjetId) {
+        const pid = (b.getSelectedProjetId() || "").toString().trim();
+        if (pid) return pid;
+      }
+    }catch(e){}
+
+    return "";
+  }
+
+</script>
+
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

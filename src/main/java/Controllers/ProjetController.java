@@ -18,7 +18,15 @@ public class ProjetController {
 
     @FXML
     public void initialize() {
-        statutBox.getItems().setAll("BROUILLON","EN_ATTENTE","VALIDE","REFUSE");
+        statutBox.getItems().setAll(
+                "BROUILLON",
+                "REFUSE",
+                "EN_ATTENTE",
+                "VALIDE",
+                "INVESTISSEMENT_EN_COURS",
+                "INVESTISSEMENT_TERMINE",
+                "PROJET_EN_COURS"
+        );
         modeBox.getItems().setAll("MENSUEL","TRIMESTRIEL","SEMESTRIEL","ANNU");
         statutBox.setValue("BROUILLON");
         modeBox.setValue("MENSUEL");

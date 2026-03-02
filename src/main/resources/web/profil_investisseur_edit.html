@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Investia — Modifier profil</title>
+    <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+
+    <style>
+        :root{
+            --bg:#f6f8fc; --card:#fff; --text:#0f172a; --muted:#64748b;
+            --border:rgba(15,23,42,.10); --shadow:0 14px 35px rgba(15,23,42,.08);
+            --radius:18px;
+
+            /* ✅ Couleurs autorisées */
+            --blue:#2563eb;
+            --blue2:#1d4ed8;
+            --yellow:#f4b400;
+
+            /* Neutres */
+            --field:#fff;
+            --fieldBorder:rgba(15,23,42,.16);
+            --focus:rgba(37,99,235,.18);
+            --danger:#ef4444;
+            --danger2:#dc2626;
+            --success:#15803d;
+            --successBg:rgba(21,128,61,.06);
+            --dangerBg:rgba(185,28,28,.06);
+        }
+
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background: radial-gradient(900px 400px at 15% 0%, rgba(244,180,0,.10), transparent 60%),
+            radial-gradient(900px 400px at 85% 0%, rgba(37,99,235,.10), transparent 60%),
+            var(--bg);
+            color:var(--text);
+        }
+
+        .container{max-width:980px;margin:28px auto 70px;padding:0 16px}
+
+        /* ✅ Header */
+        .page-head{
+            display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+            margin-bottom:16px;
+        }
+        h1{
+            margin:0;
+            font-size:30px;
+            font-weight:1000;
+            letter-spacing:-.3px;
+            line-height:1.1;
+        }
+        .sub{
+            margin:6px 0 0;
+            color:var(--muted);
+            font-weight:750;
+        }
+        .badge{
+            display:inline-flex;align-items:center;gap:8px;
+            padding:10px 12px;
+            border-radius:999px;
+            background:rgba(37,99,235,.08);
+            border:1px solid rgba(37,99,235,.18);
+            color:var(--blue2);
+            font-weight:950;
+            white-space:nowrap;
+        }
+        .dot{
+            width:10px;height:10px;border-radius:50%;
+            background:var(--yellow);
+            box-shadow:0 0 0 3px rgba(244,180,0,.18);
+        }
+
+        /* ✅ Card */
+        .card{
+            background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,1));
+            border:1px solid var(--border);
+            border-radius:22px;
+            box-shadow:var(--shadow);
+            padding:18px;
+            position:relative;
+            overflow:hidden;
+        }
+        .card:before{
+            content:"";
+            position:absolute; inset:-2px -2px auto -2px;
+            height:110px;
+            background:linear-gradient(90deg, rgba(244,180,0,.16), rgba(37,99,235,.12));
+            pointer-events:none;
+        }
+        .card-inner{position:relative}
+
+        .muted{color:var(--muted);font-size:13px;font-weight:800;margin:4px 0 0}
+
+        /* ✅ Sections */
+        .sections{
+            margin-top:14px;
+            display:grid;
+            grid-template-columns:1fr;
+            gap:14px;
+        }
+        .section{
+            border:1px solid rgba(15,23,42,.10);
+            background:rgba(255,255,255,.70);
+            border-radius:18px;
+            padding:14px;
+        }
+        .section-title{
+            display:flex;align-items:center;justify-content:space-between;gap:10px;
+            margin-bottom:10px;
+        }
+        .section-title h2{
+            margin:0;
+            font-size:14px;
+            letter-spacing:.4px;
+            text-transform:uppercase;
+            font-weight:1000;
+            color:#0b2a55;
+        }
+        .section-chip{
+            font-size:12px;font-weight:950;
+            padding:6px 10px;border-radius:999px;
+            background:rgba(244,180,0,.10);
+            border:1px solid rgba(244,180,0,.30);
+            color:#7a5b00;
+            white-space:nowrap;
+        }
+
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(2,minmax(0,1fr));
+            gap:14px;
+            align-items:start;
+        }
+        @media(max-width:760px){.grid{grid-template-columns:1fr;} .page-head{flex-direction:column;align-items:flex-start}}
+
+        /* ✅ Fields */
+        .row{display:flex;flex-direction:column;gap:6px;min-width:0;}
+        label{
+            font-size:12px;
+            font-weight:950;
+            color:#0b2a55;
+            text-transform:uppercase;
+            letter-spacing:.25px;
+        }
+        input,textarea{
+            width:100%;
+            padding:11px 12px;
+            border:1px solid var(--fieldBorder);
+            border-radius:14px;
+            font-size:14px;
+            outline:none;
+            background:var(--field);
+            transition: box-shadow .18s ease, border-color .18s ease, transform .08s ease;
+        }
+        input{height:44px;}
+        textarea{min-height:120px;resize:vertical;}
+        input:focus, textarea:focus{
+            border-color:rgba(37,99,235,.45);
+            box-shadow:0 0 0 4px var(--focus);
+        }
+
+        /* ✅ Actions */
+        .actions{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-top:14px;
+            align-items:center;
+            justify-content:space-between;
+        }
+        .btns-left{display:flex;gap:10px;flex-wrap:wrap}
+        button{
+            border:0;
+            border-radius:14px;
+            padding:11px 14px;
+            font-weight:1000;
+            cursor:pointer;
+            transition: transform .08s ease, box-shadow .18s ease, opacity .18s ease;
+        }
+        button:active{transform:translateY(1px)}
+
+        .primary{
+            background:linear-gradient(180deg, var(--blue), var(--blue2));
+            color:#fff;
+            box-shadow:0 14px 26px rgba(37,99,235,.22);
+        }
+        .primary:hover{box-shadow:0 16px 32px rgba(37,99,235,.26)}
+
+        .danger{
+            background:linear-gradient(180deg, var(--danger), var(--danger2));
+            color:#fff;
+            box-shadow:0 14px 26px rgba(239,68,68,.20);
+        }
+        .danger:hover{box-shadow:0 16px 32px rgba(239,68,68,.26)}
+
+        .ghost{
+            background:rgba(244,180,0,.12);
+            color:#7a5b00;
+            border:1px solid rgba(244,180,0,.35);
+        }
+
+        /* ✅ Message */
+        .msg{
+            margin-top:14px;
+            padding:12px 12px;
+            border-radius:16px;
+            background:rgba(255,255,255,.75);
+            border:1px solid rgba(15,23,42,.10);
+            color:var(--muted);
+            font-weight:900;
+            min-height:44px;
+            display:flex;align-items:center;
+            gap:8px;
+        }
+        .msg.ok{
+            color:var(--success);
+            border-color:rgba(21,128,61,.18);
+            background:var(--successBg);
+        }
+        .msg.err{
+            color:#b91c1c;
+            border-color:rgba(185,28,28,.18);
+            background:var(--dangerBg);
+        }
+    </style>
+</head>
+
+<body>
+<main class="container">
+    <div class="page-head">
+        <div>
+            <h1>Modifier profil</h1>
+            <p class="sub">Modifie les infos <b>User</b> + <b>Profil investisseur</b>, ou supprime ton compte.</p>
+        </div>
+        <div class="badge"><span class="dot"></span> Mon profil</div>
+    </div>
+
+    <section class="card">
+        <div class="card-inner">
+
+            <div class="sections">
+
+                <!-- USER -->
+                <div class="section">
+                    <div class="section-title">
+                        <h2>Informations utilisateur</h2>
+                        <span class="section-chip">Compte</span>
+                    </div>
+
+                    <div class="grid">
+                        <div class="row"><label>Nom</label><input id="nom" /></div>
+                        <div class="row"><label>Prénom</label><input id="prenom" /></div>
+                        <div class="row"><label>Email</label><input id="email" /></div>
+                        <div class="row"><label>Téléphone</label><input id="telephone" /></div>
+                        <div class="row"><label>CIN</label><input id="cin" /></div>
+                    </div>
+
+                    <p class="muted">Conseil : garde un email valide et un numéro joignable.</p>
+                </div>
+
+                <!-- PROFIL INVEST -->
+                <div class="section">
+                    <div class="section-title">
+                        <h2>Profil investisseur</h2>
+                        <span class="section-chip">Préférences</span>
+                    </div>
+
+                    <div class="grid">
+                        <div class="row"><label>Budget total</label><input id="budgetTotal" placeholder="ex: 5000" /></div>
+                        <div class="row"><label>Budget mensuel</label><input id="budgetMensuel" placeholder="ex: 800" /></div>
+                        <div class="row"><label>Ticket moyen / projet</label><input id="ticketMoyen" placeholder="ex: 300" /></div>
+                        <div class="row"><label>Horizon investissement</label><input id="horizon" placeholder="ex: 12 mois" /></div>
+
+                        <div class="row" style="grid-column:1/-1">
+                            <label>Secteurs (séparés par virgule)</label>
+                            <input id="secteurs" placeholder="AgriTech, GreenTech" />
+                        </div>
+
+                        <div class="row" style="grid-column:1/-1">
+                            <label>Bio</label>
+                            <textarea id="bio" placeholder="Décris ton profil (optionnel)"></textarea>
+                        </div>
+                    </div>
+
+                    <p class="muted">Ces infos servent à personnaliser les projets affichés.</p>
+                </div>
+
+            </div>
+
+            <div class="actions">
+                <div class="btns-left">
+                    <button class="primary" id="saveBtn">Mettre à jour</button>
+                    <button class="ghost" type="button" onclick="fill()">Recharger</button>
+                </div>
+                <button class="danger" id="deleteBtn">Supprimer mon compte</button>
+            </div>
+
+            <div class="msg" id="msg"></div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const setMsg = (t, type="") => {
+        const el = document.getElementById("msg");
+        el.className = "msg" + (type ? (" " + type) : "");
+        el.textContent = t || "";
+    };
+
+    function withBridge(onReady){
+        const start = Date.now();
+        const timer = setInterval(() => {
+            const b = window.javaBridge || window.javaBridgeInvest || window.javaBridgeInvestissement;
+            if (b) { clearInterval(timer); onReady(b); return; }
+            if (Date.now() - start > 2500) { clearInterval(timer); setMsg("❌ Bridge non prêt.", "err"); }
+        }, 80);
+    }
+
+    function fill(){
+        withBridge((b) => {
+            try{
+                const u = JSON.parse(b.getCurrentUserJson?.() || "null");
+                const p = JSON.parse(b.getProfilInvestisseurJson?.() || "null");
+
+                if (u){
+                    document.getElementById("nom").value = u.nom || "";
+                    document.getElementById("prenom").value = u.prenom || "";
+                    document.getElementById("email").value = u.email || "";
+                    document.getElementById("telephone").value = u.telephone || "";
+                    document.getElementById("cin").value = u.cin || "";
+                }
+                if (p){
+                    document.getElementById("budgetTotal").value = (p.budgetTotal ?? "") + "";
+                    document.getElementById("budgetMensuel").value = (p.budgetMensuel ?? "") + "";
+                    document.getElementById("ticketMoyen").value = (p.ticketMoyenParProjet ?? "") + "";
+                    document.getElementById("horizon").value = p.horizonInvestissement || "";
+                    document.getElementById("bio").value = p.bio || "";
+                    document.getElementById("secteurs").value = p.secteurs || "";
+                }
+
+                setMsg("✅ Données chargées.", "ok");
+            }catch(e){
+                setMsg("❌ Erreur chargement données.", "err");
+            }
+        });
+    }
+
+    document.getElementById("saveBtn").addEventListener("click", () => {
+        setMsg("Enregistrement...", "");
+        withBridge((b) => {
+            try{
+                // On privilégie updateProfilInvestisseur (validation budgets/ticket), sinon fallback.
+                const fn = b.updateProfilInvestisseur || b.updateProfil;
+                if (!fn) { setMsg("❌ ERROR: updateProfilInvestisseur/updateProfil introuvable côté JavaBridge", "err"); return; }
+
+                const r = fn.call(b,
+                    document.getElementById("nom").value,
+                    document.getElementById("prenom").value,
+                    document.getElementById("email").value,
+                    document.getElementById("telephone").value,
+                    document.getElementById("cin").value,
+                    document.getElementById("budgetTotal").value,
+                    document.getElementById("budgetMensuel").value,
+                    document.getElementById("ticketMoyen").value,
+                    document.getElementById("horizon").value,
+                    document.getElementById("bio").value,
+                    document.getElementById("secteurs").value
+                );
+
+                if ((r || "").startsWith("OK")) setMsg("✅ Profil mis à jour.", "ok");
+                else setMsg("❌ " + r, "err");
+            }catch(e){
+                setMsg("❌ Erreur update.", "err");
+            }
+        });
+    });
+
+    document.getElementById("deleteBtn").addEventListener("click", () => {
+        if (!confirm("Confirmer la suppression du compte ?")) return;
+        setMsg("Suppression...", "");
+        withBridge((b) => {
+            try{
+                const r = b.deleteAccount?.();
+                if (!r) { setMsg("❌ ERROR: deleteAccount introuvable côté JavaBridge", "err"); return; }
+
+                if ((r || "").startsWith("OK")) setMsg("✅ Compte supprimé.", "ok");
+                else setMsg("❌ " + r, "err");
+            }catch(e){
+                setMsg("❌ Erreur suppression.", "err");
+            }
+        });
+    });
+
+    fill();
+</script>
+</body>
+</html>

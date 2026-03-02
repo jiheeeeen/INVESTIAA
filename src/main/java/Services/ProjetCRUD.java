@@ -6,7 +6,6 @@ import Utils.MyBD;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class ProjetCRUD implements InterfaceCRUD<Projet> {
@@ -193,10 +192,77 @@ public class ProjetCRUD implements InterfaceCRUD<Projet> {
     // --------- ADMIN actions ----------
     public void acceptProject(int idProjet) throws SQLException {
         updateStatut(idProjet, Statut.VALIDE);
+        syncProjectStatusWithFunding(idProjet);
     }
 
     public void rejectProject(int idProjet) throws SQLException {
         updateStatut(idProjet, Statut.REFUSE);
+    }
+
+    public String syncProjectStatusWithFunding(int idProjet) throws SQLException {
+        Projet p = getById(idProjet);
+        if (p == null) return null;
+
+        String currentRaw = p.getStatut();
+        String current = currentRaw == null ? "" : currentRaw.trim().toUpperCase();
+        if (current.isEmpty()) current = Statut.BROUILLON.name();
+
+        if ("EN_COURS".equals(current)) {
+            current = Statut.INVESTISSEMENT_EN_COURS.name();
+            updateStatutByName(idProjet, current);
+        }
+
+        if (Statut.BROUILLON.name().equals(current)
+                || Statut.REFUSE.name().equals(current)
+                || Statut.EN_ATTENTE.name().equals(current)) {
+            return current;
+        }
+
+        if (Statut.VALIDE.name().equals(current)) {
+            current = Statut.INVESTISSEMENT_EN_COURS.name();
+            updateStatutByName(idProjet, current);
+        }
+
+        if (Statut.INVESTISSEMENT_TERMINE.name().equals(current)) {
+            current = Statut.PROJET_EN_COURS.name();
+            updateStatutByName(idProjet, current);
+            return current;
+        }
+
+        if (Statut.INVESTISSEMENT_EN_COURS.name().equals(current)) {
+            if (isFundingTargetReached(idProjet, p)) {
+                updateStatutByName(idProjet, Statut.INVESTISSEMENT_TERMINE.name());
+                updateStatutByName(idProjet, Statut.PROJET_EN_COURS.name());
+                current = Statut.PROJET_EN_COURS.name();
+            }
+        }
+        return current;
+    }
+
+    private void updateStatutByName(int idProjet, String statutName) throws SQLException {
+        String sql = "UPDATE projet SET statut=? WHERE id_projet=?";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setString(1, statutName);
+            pst.setInt(2, idProjet);
+            pst.executeUpdate();
+        }
+    }
+
+    private boolean isFundingTargetReached(int idProjet, Projet p) throws SQLException {
+        if (p == null || p.getObjectifTnd() == null) return false;
+        double objectif = p.getObjectifTnd().doubleValue();
+        if (objectif <= 0) return false;
+
+        String sql = "SELECT COALESCE(SUM(montant),0) AS total FROM financement2 " +
+                "WHERE id_projet=? AND UPPER(COALESCE(statut,''))='CONFIRMED'";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, idProjet);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (!rs.next()) return false;
+                double total = rs.getDouble("total");
+                return total + 1e-9 >= objectif;
+            }
+        }
     }
 
     // ✅✅ FIX ICI

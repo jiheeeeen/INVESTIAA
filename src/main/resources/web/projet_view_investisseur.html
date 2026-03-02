@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Investia — Projets (Investisseur)</title>
+    <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+
+    <style>
+        :root{
+            --navy:#0b2a55;
+            --navy2:#0a1f3e;
+            --gold:#f4b400;
+            --gold2:#d89c00;
+
+            --bg:#f6f8fc;
+            --card:#ffffff;
+            --text:#0f172a;
+            --muted:#64748b;
+            --border:rgba(15,23,42,.10);
+            --shadow:0 16px 45px rgba(15,23,42,.10);
+            --shadowHover:0 18px 55px rgba(15,23,42,.14);
+            --radius:22px;
+
+            --primary:#1d4ed8;
+            --accent:#06b6d4;
+            --ok:#16a34a;
+        }
+
+        *{box-sizing:border-box}
+        body{
+            margin:0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+            background:
+                    radial-gradient(1200px 500px at 20% -10%, rgba(29,78,216,.10), transparent 60%),
+                    radial-gradient(900px 450px at 90% 0%, rgba(244,180,0,.12), transparent 55%),
+                    var(--bg);
+            color:var(--text);
+        }
+        a{color:inherit;text-decoration:none}
+
+        .container{max-width:1120px;margin:28px auto 60px;padding:0 16px;}
+
+        /* ✅ PAGE HEAD (inspiré du design investissements) */
+        .page-head{
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap:16px;
+            margin:14px 0 18px;
+            flex-wrap:wrap;
+        }
+        h1{
+            margin:0;
+            font-size:34px;
+            letter-spacing:.2px;
+            line-height:1.1;
+            font-weight:1000;
+        }
+        .subtitle{
+            margin-top:6px;
+            color:var(--muted);
+            font-weight:800;
+            font-size:13px;
+            line-height:1.5;
+        }
+        .chip{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:6px 12px;
+            border-radius:999px;
+            border:1px solid rgba(244,180,0,.35);
+            background:rgba(244,180,0,.14);
+            color:#7a5200;
+            font-weight:1000;
+            font-size:12px;
+            white-space:nowrap;
+        }
+
+        /* ✅ BARRE OUTILS (garde ta logique : recherche + refresh) */
+        .filterbar{
+            margin-top:6px;
+            background:linear-gradient(180deg, #fff, #fbfcff);
+            border:1px solid var(--border);
+            border-radius:18px;
+            box-shadow:0 12px 30px rgba(15,23,42,.07);
+            padding:14px 16px;
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
+            align-items:center;
+            justify-content:space-between;
+        }
+        .field{display:flex;flex-direction:column;gap:6px;min-width:280px;flex:1}
+        label{
+            font-size:12px;
+            font-weight:900;
+            letter-spacing:.45px;
+            text-transform:uppercase;
+            color:var(--navy);
+        }
+        input{
+            width:100%;
+            height:44px;
+            padding:0 14px;
+            border:1px solid var(--border);
+            border-radius:14px;
+            background:#fff;
+            outline:none;
+            font-size:14px;
+            font-weight:800;
+            transition:border-color .15s ease, box-shadow .15s ease;
+        }
+        input:focus{
+            border-color: rgba(29,78,216,.35);
+            box-shadow: 0 0 0 4px rgba(29,78,216,.10);
+        }
+
+        .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+
+        /* ✅ Bouton style investissements */
+        .btn{
+            height:44px;
+            border:none;
+            border-radius:14px;
+            padding:0 14px;
+            font-weight:1000;
+            cursor:pointer;
+            background:linear-gradient(180deg, #173a70, #0a2348);
+            color:#fff;
+            white-space:nowrap;
+            transition: transform .12s ease, opacity .12s ease;
+        }
+        .btn:hover{ opacity:.95; transform: translateY(-1px); }
+        .btn:active{ transform: translateY(0); }
+
+        /* ✅ GRID */
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:18px;
+            margin-top:18px;
+        }
+        @media (max-width:980px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+        @media (max-width:620px){.grid{grid-template-columns:1fr;}}
+
+        /* ✅ CARD (inspirée investissements, mais sans casser ta logique) */
+        .card{
+            background:linear-gradient(180deg, #fff, #fbfcff);
+            border:1px solid var(--border);
+            border-radius:var(--radius);
+            padding:18px;
+            box-shadow:0 14px 36px rgba(15,23,42,.08);
+            transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+            position:relative;
+            overflow:hidden;
+            min-height:230px;
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+        }
+        .card::before{
+            content:"";
+            position:absolute; inset:0;
+            background:
+                    radial-gradient(600px 220px at 20% 0%, rgba(29,78,216,.08), transparent 55%),
+                    radial-gradient(520px 220px at 95% 10%, rgba(244,180,0,.10), transparent 55%);
+            pointer-events:none;
+        }
+        .card:hover{
+            transform: translateY(-3px);
+            box-shadow:var(--shadowHover);
+            border-color: rgba(29,78,216,.18);
+        }
+
+        .top{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:10px;
+            position:relative;
+            z-index:1;
+        }
+
+        .badge{
+            display:inline-flex;align-items:center;gap:8px;
+            padding:7px 10px;border-radius:999px;
+            font-size:12px;font-weight:900;
+            border:1px solid rgba(29,78,216,.18);
+            background:rgba(29,78,216,.06);
+            color:var(--navy);
+            white-space:nowrap;
+        }
+        .badge .dot{
+            width:8px;height:8px;border-radius:50%;
+            background:linear-gradient(135deg,var(--primary),var(--accent));
+            box-shadow:0 0 0 3px rgba(6,182,212,.14);
+        }
+
+        .okChip{
+            display:inline-flex;align-items:center;gap:8px;
+            padding:7px 10px;border-radius:999px;
+            font-size:12px;font-weight:1000;
+            border:1px solid rgba(22,163,74,.25);
+            background:rgba(22,163,74,.08);
+            color:#14532d;
+            white-space:nowrap;
+        }
+        .okChip .s-dot{
+            width:9px;height:9px;border-radius:50%;
+            background:var(--ok);
+            box-shadow:0 0 0 3px rgba(22,163,74,.14)
+        }
+
+        h3{
+            margin:0;
+            font-size:22px;
+            position:relative;
+            z-index:1;
+            color:var(--text);
+        }
+        .desc{
+            margin:0;
+            color:var(--muted);
+            line-height:1.55;
+            font-size:14.5px;
+            font-weight:800;
+            position:relative;
+            z-index:1;
+        }
+
+        .meta{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            color:var(--muted);
+            font-size:12.5px;
+            font-weight:900;
+            position:relative;
+            z-index:1
+        }
+        .pill{
+            padding:7px 10px;
+            border-radius:999px;
+            border:1px solid rgba(15,23,42,.10);
+            background:#fff;
+            color:#334155;
+            font-weight:900;
+            font-size:12px;
+        }
+
+        .footer{
+            margin-top:auto;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:10px;
+            position:relative;
+            z-index:1;
+        }
+        .muted{color:var(--muted); font-weight:800;}
+
+        .btnLink{
+            border:0;
+            background:linear-gradient(135deg,var(--primary),var(--accent));
+            color:#fff;
+            padding:10px 14px;
+            border-radius:14px;
+            cursor:pointer;
+            font-weight:1000;
+            font-size:14px;
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            box-shadow:0 10px 20px rgba(29,78,216,.18);
+            transition:transform .12s ease, filter .12s ease;
+            white-space:nowrap;
+        }
+        .btnLink:hover{transform:translateY(-1px);filter:brightness(1.03)}
+        .btnLink:active{transform:translateY(0)}
+        .arrow{font-weight:1000}
+
+        .empty{
+            margin-top:18px;
+            background:linear-gradient(180deg, #fff, #fbfcff);
+            border:1px dashed rgba(15,23,42,.18);
+            border-radius:var(--radius);
+            padding:18px;
+            color:var(--muted);
+            font-weight:900;
+            line-height:1.5;
+            display:none;
+            box-shadow:0 12px 30px rgba(15,23,42,.06);
+        }
+    </style>
+</head>
+
+<body>
+<main class="container">
+    <!-- ✅ même contenu + inspiré visuel investissements -->
+    <div class="page-head">
+        <div>
+            <h1>Projets</h1>
+            <p class="subtitle">Liste des projets disponibles (validés uniquement).</p>
+        </div>
+        <span class="chip">✅ Projets validés</span>
+    </div>
+
+    <!-- ✅ PLUS DE STATUT + PLUS DE RÉINITIALISER (inchangé) -->
+    <section class="filterbar">
+        <div class="field">
+            <label for="q">Recherche</label>
+            <input id="q" type="text" placeholder="Titre, secteur…">
+        </div>
+
+        <div class="actions">
+            <button class="btn" type="button" id="refreshBtn">Rafraîchir</button>
+        </div>
+    </section>
+
+    <section class="grid" id="grid"></section>
+
+    <div class="empty" id="empty">
+        Aucun projet validé ne correspond à votre recherche.
+    </div>
+</main>
+
+<script>
+    let projects = [];
+
+    const grid = document.getElementById("grid");
+    const empty = document.getElementById("empty");
+    const q = document.getElementById("q");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    const fmt = (n) => new Intl.NumberFormat("fr-TN").format(n) + " TND";
+
+    function setPid(id){
+        try{
+            const b = window.javaBridge || window.javaBridgeInvest || window.javaBridgeInvestissement || window.investBridge || window.java;
+            if (b && b.setSelectedProjetId) b.setSelectedProjetId(String(id));
+        }catch(e){}
+    }
+
+    function render(list){
+        if(!list.length){
+            grid.innerHTML = "";
+            empty.style.display = "block";
+            return;
+        }
+        empty.style.display = "none";
+
+        grid.innerHTML = list.map(p => {
+            const detailsUrl = "detailsInvestisseur.html?id=" + encodeURIComponent(p.id);
+
+            return `
+        <article class="card">
+          <div class="top">
+            <span class="badge"><span class="dot"></span>${p.category || ""}</span>
+            <span class="okChip"><span class="s-dot"></span>Validé</span>
+          </div>
+
+          <h3>${p.title || ""}</h3>
+          <p class="desc">${p.short || ""}</p>
+
+          <div class="meta">
+            <span class="pill">Objectif: ${fmt(Number(p.goal || 0))}</span>
+            <span class="pill">Màj: ${p.updatedAt || ""}</span>
+          </div>
+
+          <div class="footer">
+            <span class="muted" style="font-size:12.5px;">Projet validé et visible.</span>
+
+            <a class="btnLink" href="${detailsUrl}" onclick="setPid('${p.id}')">
+              Voir détails <span class="arrow">→</span>
+            </a>
+          </div>
+        </article>
+      `;
+        }).join("");
+    }
+
+    function applyFilters(){
+        const term = q.value.trim().toLowerCase();
+
+        let filtered = projects.filter(p => {
+            const title = (p.title || "").toLowerCase();
+            const cat = (p.category || "").toLowerCase();
+            return !term || title.includes(term) || cat.includes(term);
+        });
+
+        filtered.sort((a,b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+        render(filtered);
+    }
+
+    function getBridge(){
+        return window.javaBridge
+            || window.javaBridgeInvest
+            || window.javaBridgeInvestissement
+            || window.investBridge
+            || window.java
+            || null;
+    }
+
+    function withBridge(onReady, retry = 40){
+        const b = getBridge();
+        if (b && typeof b.listProjets === "function") return onReady(b);
+
+        if (retry <= 0) {
+            console.error("Bridge introuvable ou listProjets() manquante");
+            projects = [];
+            applyFilters();
+            return;
+        }
+        setTimeout(() => withBridge(onReady, retry - 1), 120);
+    }
+
+    function loadProjects(retry = 6){
+        withBridge((bridge) => {
+            try {
+                const json = bridge.listProjets();
+                const list = JSON.parse(json || "[]");
+
+                if (!list.length && retry > 0) {
+                    setTimeout(() => loadProjects(retry - 1), 250);
+                    return;
+                }
+
+                // ✅ sécurité côté front aussi (même si Java filtre déjà)
+                projects = (list || []).filter(p => p.status === "VALIDATED");
+                applyFilters();
+            } catch (e) {
+                console.error(e);
+                if (retry > 0) setTimeout(() => loadProjects(retry - 1), 250);
+                else {
+                    projects = [];
+                    applyFilters();
+                }
+            }
+        });
+    }
+
+    window.__onJavaBridgeReady = function () {
+        loadProjects();
+    };
+
+    document.addEventListener("DOMContentLoaded", () => loadProjects());
+
+    q.addEventListener("input", applyFilters);
+    refreshBtn.addEventListener("click", () => loadProjects());
+</script>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia — Notifications</title>
+  <style>
+    .brand,.brand:visited,.brand:hover,.brand:active,.brand:focus{text-decoration:none!important}
+    :root{
+      --bg:#f6f8fc;
+      --card:#fff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:rgba(15,23,42,.10);
+      --shadow:0 14px 35px rgba(15,23,42,.08);
+      --primary:#1d4ed8;
+      --accent:#06b6d4;
+      --warning:#f59e0b;
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .container{max-width:1100px; margin:28px auto 60px; padding:0 16px;}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:16px;
+    }
+    .page-title{
+      font-size:28px;
+      font-weight:900;
+      margin:6px 0 4px;
+    }
+    .page-sub{
+      color:var(--muted);
+      font-size:13px;
+      margin:0 0 14px;
+    }
+    .breadcrumb{
+      display:flex; gap:10px; align-items:center; color:var(--muted); font-size:14px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .item{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:12px 14px;
+      background:#fff;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+    }
+    .item.unread{
+      background:rgba(250,204,21,.12);
+      border-color:rgba(245,158,11,.35);
+    }
+    .item.unread::before{
+      content:"";
+      position:absolute;
+      left:0;
+      top:0;
+      bottom:0;
+      width:4px;
+      background:linear-gradient(180deg, #fbbf24, #f59e0b);
+    }
+    .title{
+      font-weight:800;
+      font-size:14px;
+    }
+    .meta{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .pill{
+      padding:4px 8px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+      border:1px solid var(--border);
+      background:#fff;
+      color:#0f172a;
+    }
+    .empty{
+      color:var(--muted);
+      font-size:14px;
+      text-align:center;
+      padding:16px;
+    }
+    .btn{
+      border:0; cursor:pointer; font-weight:800; font-size:14px;
+      padding:10px 14px; border-radius:12px;
+      background:#fff; border:1px solid var(--border); color:var(--text);
+    }
+    .btn.primary{
+      background:linear-gradient(135deg, var(--primary), var(--accent));
+      color:#fff;
+      border:0;
+      box-shadow:0 10px 18px rgba(29,78,216,.2);
+    }
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:800;
+      color:#0b2a55;
+      padding:5px 9px;
+      border-radius:999px;
+      border:1px solid rgba(29,78,216,.18);
+      background:rgba(29,78,216,.08);
+    }
+  </style>
+  <script src="navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="topbar">
+      <div class="breadcrumb">
+        <a href="projet_view.html">← Retour</a>
+        <span>•</span>
+        <strong class="muted">Notifications</strong>
+      </div>
+      <button class="btn primary" id="refreshBtn">Actualiser</button>
+    </div>
+    <div class="page-title">Notifications</div>
+    <div class="page-sub">Historique des investissements reçus sur vos projets.</div>
+    <section class="card">
+      <div class="toolbar">
+        <span class="badge" id="countBadge">0 notifications</span>
+      </div>
+      <div class="list" id="notifList"></div>
+      <div class="empty" id="emptyMsg" style="display:none;">Aucune notification.</div>
+    </section>
+  </main>
+
+  <script>
+    function withBridge(onReady){
+      const start = Date.now();
+      const timer = setInterval(() => {
+        if (window.javaBridge) {
+          clearInterval(timer);
+          onReady(window.javaBridge);
+          return;
+        }
+        if (Date.now() - start > 2000) clearInterval(timer);
+      }, 100);
+    }
+
+    function render(items){
+      const list = document.getElementById("notifList");
+      const empty = document.getElementById("emptyMsg");
+      const countBadge = document.getElementById("countBadge");
+      if (countBadge) countBadge.textContent = items.length + " notifications";
+      if (!items.length) {
+        list.innerHTML = "";
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+      list.innerHTML = items.map(it => {
+        const title = it.titre || "Projet";
+        const date = it.date || "";
+        const unread = String(it.is_read || "0") === "0";
+        return `
+          <div class="item${unread ? " unread" : ""}" data-id="${it.id_projet}" data-notif="${it.id}">
+            <div>
+              <div class="title">Nouveau investissement pour ${title}</div>
+              <div class="meta">${date}</div>
+            </div>
+            ${unread ? '<span class="pill">Nouveau</span>' : '<span class="pill">Lu</span>'}
+          </div>
+        `;
+      }).join("");
+
+      Array.from(document.querySelectorAll(".item")).forEach(el => {
+        el.addEventListener("click", () => {
+          const pid = el.getAttribute("data-id");
+          const nid = el.getAttribute("data-notif");
+          withBridge(b => {
+            if (nid && typeof b.markEntrepreneurNotificationRead === "function") {
+              try { b.markEntrepreneurNotificationRead(String(nid)); } catch (e) {}
+            }
+            if (pid) window.location.href = "detailsEntrepreneur_encours.html?id=" + encodeURIComponent(pid);
+          });
+        });
+      });
+    }
+
+    function load(){
+      withBridge(b => {
+        if (typeof b.getEntrepreneurNotificationHistoryJson !== "function") {
+          render([]);
+          return;
+        }
+        const payload = JSON.parse(b.getEntrepreneurNotificationHistoryJson("200") || "{}");
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        render(items);
+      });
+    }
+
+    document.getElementById("refreshBtn").addEventListener("click", load);
+    load();
+  </script>
+</body>
+</html>

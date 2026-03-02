@@ -6,12 +6,12 @@ import Entities.User;
 import Services.ProfilInvestisseurCRUD;
 import Services.UserCRUD;
 import Utils.Session;
+import Utils.WebViewBridgeUtil;
 import Utils.sceneManager;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-import netscape.javascript.JSObject;
 
 import java.math.BigDecimal;
 import java.net.URL;
@@ -31,21 +31,14 @@ public class ProfilInvestisseurEditWebViewController {
 
         engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
-                JSObject window = (JSObject) engine.executeScript("window");
 
-                // ✅ Bridge inject + alias (important pour navbar)
-                window.setMember("javaBridge", bridge);
-                window.setMember("javaBridgeInvest", bridge);
-                window.setMember("javaBridgeInvestissement", bridge);
-
-                engine.executeScript("window.__bridgeReady = true;");
-
-                // ✅ Anti-écrasement
-                engine.executeScript(
-                        "try{" +
-                                "window.javaBridge = window.javaBridge || window.javaBridgeInvest || window.javaBridgeInvestissement;" +
-                                "}catch(e){}"
+                // âœ… Debug (optionnel)
+                WebViewBridgeUtil.safeExec(engine,
+                        "console.log('[JAVA] Bridge injected by ProfilInvestisseurEditWebViewController');"
                 );
+
+                // âœ… CLEAN: javaBridge + alias + __bridgeReady + anti-Ã©crasement + callback
+                WebViewBridgeUtil.injectAll(engine, bridge, bridge);
             }
         });
 
@@ -67,6 +60,24 @@ public class ProfilInvestisseurEditWebViewController {
     public class JavaBridge {
 
         // ===== NAVBAR =====
+        public String openMesInvestissements() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorMesInvestissements);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        public String openContactInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorContact);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
         public String getCurrentUserRole() {
             User u = Session.getCurrentUser();
             return (u == null || u.getRole() == null) ? "" : u.getRole().name();
@@ -82,24 +93,9 @@ public class ProfilInvestisseurEditWebViewController {
             return u.getEmail() == null ? "" : u.getEmail().trim();
         }
 
-        public String logout() {
-            try {
-                Session.setCurrentUser(null);
-                WebAuthController.openLoginOnNextLoad();
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/web_auth.fxml", "Investia - Connexion")
-                );
-                return "OK";
-            } catch (Exception e) {
-                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
-            }
-        }
-
         public String openProfilInvestisseur() {
             try {
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/profil_investisseur_view.fxml", "Investia - Mon Profil")
-                );
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorProfil);
                 return "OK";
             } catch (Exception e) {
                 return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
@@ -108,9 +104,7 @@ public class ProfilInvestisseurEditWebViewController {
 
         public String openProjetsInvestisseur() {
             try {
-                javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/investisseur_projets_view.fxml", "Investia - Projets")
-                );
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorProjets);
                 return "OK";
             } catch (Exception e) {
                 return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
@@ -119,8 +113,34 @@ public class ProfilInvestisseurEditWebViewController {
 
         public String goAccueilInvestisseur() {
             try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorAccueil);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        // âœ… AJOUT MINIMAL : WALLET
+        public String openWalletInvestisseur() {
+            try {
+                javafx.application.Platform.runLater(InvestisseurWebViewController::openInvestorWallet);
+                return "OK";
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "UNKNOWN" : e.getMessage());
+            }
+        }
+
+        // âœ… AJOUT MINIMAL : alias (si navbar appelle openWallet)
+        public String openWallet() {
+            return openWalletInvestisseur();
+        }
+
+        public String logout() {
+            try {
+                Session.setCurrentUser(null);
+                WebAuthController.openLoginOnNextLoad();
                 javafx.application.Platform.runLater(() ->
-                        sceneManager.switchTo("/investisseur_view.fxml", "Investia - Accueil Investisseur")
+                        sceneManager.switchTo("/web_auth.fxml", "Investia - Connexion")
                 );
                 return "OK";
             } catch (Exception e) {
@@ -173,7 +193,7 @@ public class ProfilInvestisseurEditWebViewController {
         }
 
         // =========================================================
-        // ✅ UPDATE (User + ProfilInvestisseur) selon TES CRUD
+        // âœ… UPDATE (User + ProfilInvestisseur) + VALIDATION BUDGET/TICKET
         // =========================================================
         public String updateProfil(
                 String nom,
@@ -192,6 +212,20 @@ public class ProfilInvestisseurEditWebViewController {
                 User u = Session.getCurrentUser();
                 if (u == null) return "ERROR:USER_NOT_CONNECTED";
 
+                // -------- VALIDATION STRICTE (AJOUT) --------
+                BigDecimal bt;
+                BigDecimal bm;
+                BigDecimal tk;
+                try {
+                    bt = requirePositiveBD(budgetTotal, "ERROR:BUDGET_TOTAL_REQUIRED");
+                    bm = optionalPositiveBD(budgetMensuel); // null autorisÃ© si vide
+                    tk = requirePositiveBD(ticketMoyen, "ERROR:TICKET_REQUIRED");
+
+                    validateBudgetsAndTicket(bt, bm, tk);
+                } catch (IllegalArgumentException ex) {
+                    return ex.getMessage();
+                }
+
                 // -------- USER --------
                 if (!isEmpty(nom)) u.setNom(nom.trim());
                 if (!isEmpty(prenom)) u.setPrenom(prenom.trim());
@@ -199,31 +233,27 @@ public class ProfilInvestisseurEditWebViewController {
                 if (!isEmpty(telephone)) u.setTelephone(telephone.trim());
                 if (!isEmpty(cin)) u.setCin(cin.trim());
 
-                // ✅ selon ton UserCRUD => updateUser()
                 userCrud.updateUser(u);
-
-                // ✅ garder session à jour (important)
                 Session.setCurrentUser(u);
 
                 // -------- PROFIL INVESTISSEUR --------
                 ProfilInvestisseur p = profilCrud.getByUserId(u.getId());
                 if (p == null) return "ERROR:PROFIL_INVESTISSEUR_NOT_FOUND";
 
-                p.setBudgetTotal(parseBigDecimalOrNull(budgetTotal));
-                p.setBudgetMensuel(parseBigDecimalOrNull(budgetMensuel));
-                p.setTicketMoyenParProjet(parseBigDecimalOrNull(ticketMoyen));
+                // âœ… appliquer les valeurs VALIDÃ‰ES
+                p.setBudgetTotal(bt);
+                p.setBudgetMensuel(bm);
+                p.setTicketMoyenParProjet(tk);
+
                 p.setHorizonInvestissement(emptyToNull(horizon));
                 p.setBio(emptyToNull(bio));
 
-                // secteursCsv: "AgriTech, GreenTech"
-                // ✅ ton entity stocke Set<String>, donc tu peux parser ici si tu veux
-                if (!isEmpty(secteursCsv)) {
-                    // Ici je NE change pas ton modèle: je laisse tel quel.
-                    // Si tu veux vraiment mettre à jour: il faut faire un Set<String> et p.setSecteurs(set)
-                    // (je peux te le donner dès que tu confirmes le type exact de setSecteurs())
-                }
-
+                // (tu peux parser secteursCsv plus tard si tu veux)
                 profilCrud.modifier(p);
+
+                javafx.application.Platform.runLater(() ->
+                        sceneManager.switchTo("/profil_investisseur_view.fxml", "Investia - Mon Profil")
+                );
 
                 return "OK";
             } catch (Exception e) {
@@ -233,20 +263,16 @@ public class ProfilInvestisseurEditWebViewController {
         }
 
         // =========================================================
-        // ✅ DELETE COMPTE (ProfilInvestisseur + User) selon TES CRUD
+        // âœ… DELETE COMPTE (ProfilInvestisseur + User) selon TES CRUD
         // =========================================================
         public String deleteAccount() {
             try {
                 User u = Session.getCurrentUser();
                 if (u == null) return "ERROR:USER_NOT_CONNECTED";
 
-                // ✅ supprimer le profil via id_user (méthode fournie ci-dessous)
                 profilCrud.deleteByUserId(u.getId());
-
-                // ✅ supprimer user selon ton CRUD => deleteUser()
                 userCrud.deleteUser(u.getId());
 
-                // logout + retour login
                 Session.setCurrentUser(null);
                 WebAuthController.openLoginOnNextLoad();
                 javafx.application.Platform.runLater(() ->
@@ -269,6 +295,7 @@ public class ProfilInvestisseurEditWebViewController {
             return isEmpty(s) ? null : s.trim();
         }
 
+        // (je garde ton ancien helper au cas oÃ¹ tu lâ€™utilises ailleurs)
         private BigDecimal parseBigDecimalOrNull(String s) {
             if (isEmpty(s)) return null;
             try {
@@ -276,6 +303,45 @@ public class ProfilInvestisseurEditWebViewController {
                 return new BigDecimal(v);
             } catch (Exception e) {
                 return null;
+            }
+        }
+
+        // âœ… AJOUT: parsing strict
+        private BigDecimal requirePositiveBD(String s, String errorCode) {
+            if (isEmpty(s)) throw new IllegalArgumentException(errorCode);
+            BigDecimal bd = new BigDecimal(s.trim().replace(",", "."));
+            if (bd.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException(errorCode);
+            return bd;
+        }
+
+        // âœ… AJOUT: parsing optionnel mais strict si rempli
+        private BigDecimal optionalPositiveBD(String s) {
+            if (isEmpty(s)) return null;
+            BigDecimal bd = new BigDecimal(s.trim().replace(",", "."));
+            if (bd.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("ERROR:BUDGET_MENSUEL_INVALID");
+            return bd;
+        }
+
+        // âœ… AJOUT: validation mÃ©tier
+        private void validateBudgetsAndTicket(BigDecimal budgetTotal, BigDecimal budgetMensuel, BigDecimal ticket) {
+            // budgetTotal > budgetMensuel (si mensuel existe)
+            if (budgetMensuel != null && budgetTotal.compareTo(budgetMensuel) <= 0) {
+                throw new IllegalArgumentException("ERROR:BUDGET_TOTAL_MUST_BE_GREATER_THAN_MONTHLY");
+            }
+
+            // ticket <= 10000
+            if (ticket.compareTo(new BigDecimal("10000")) > 0) {
+                throw new IllegalArgumentException("ERROR:TICKET_MAX_10000");
+            }
+
+            // ticket <= budgetTotal
+            if (ticket.compareTo(budgetTotal) > 0) {
+                throw new IllegalArgumentException("ERROR:TICKET_MUST_BE_LESS_OR_EQUAL_BUDGET_TOTAL");
+            }
+
+            // (optionnel logique) ticket <= budgetMensuel si mensuel existe
+            if (budgetMensuel != null && ticket.compareTo(budgetMensuel) > 0) {
+                throw new IllegalArgumentException("ERROR:TICKET_MUST_BE_LESS_OR_EQUAL_BUDGET_MENSUEL");
             }
         }
 
@@ -289,3 +355,4 @@ public class ProfilInvestisseurEditWebViewController {
         }
     }
 }
+

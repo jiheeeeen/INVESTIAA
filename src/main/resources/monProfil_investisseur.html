@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Investia — Mon Profil (Investisseur)</title>
+    <title>Investia â€” Mon Profil (Investisseur)</title>
 
     <style>
         :root{
@@ -177,12 +177,12 @@
 <main class="container">
     <div class="topbar">
         <div class="breadcrumb">
-            <a href="accueil_investisseur.html">← Retour</a>
-            <span>•</span>
+            <a href="web/accueil_investisseur.html">â† Retour</a>
+            <span>â€¢</span>
             <strong class="muted">Mon profil</strong>
         </div>
         <div class="actions">
-            <button class="btn ghost" onclick="window.print()">Télécharger PDF</button>
+            <button class="btn ghost" onclick="window.print()">TÃ©lÃ©charger PDF</button>
             <button class="btn primary" id="editBtn">Modifier</button>
         </div>
     </div>
@@ -190,15 +190,15 @@
     <section class="hero">
         <div class="hero-left">
             <span class="badge"><span class="dot"></span>Investisseur</span>
-            <h1 id="fullName">—</h1>
-            <p class="pitch" id="bio">—</p>
+            <h1 id="fullName">â€”</h1>
+            <p class="pitch" id="bio">â€”</p>
 
             <div class="avatarBox" style="margin-top:12px;">
                 <div class="avatar" id="avatarBox">U</div>
                 <div>
-                    <div style="font-weight:900;" id="email">—</div>
-                    <div class="small" id="phoneCin">—</div>
-                    <div class="small" id="secteursLine">—</div>
+                    <div style="font-weight:900;" id="email">â€”</div>
+                    <div class="small" id="phoneCin">â€”</div>
+                    <div class="small" id="secteursLine">â€”</div>
                 </div>
             </div>
         </div>
@@ -207,24 +207,24 @@
             <div class="kpi-grid">
                 <div class="kpi">
                     <div class="label">Budget total</div>
-                    <div class="val" id="budgetTotal">—</div>
+                    <div class="val" id="budgetTotal">â€”</div>
                 </div>
                 <div class="kpi">
                     <div class="label">Budget mensuel</div>
-                    <div class="val" id="budgetMensuel">—</div>
+                    <div class="val" id="budgetMensuel">â€”</div>
                 </div>
                 <div class="kpi">
                     <div class="label">Ticket moyen / projet</div>
-                    <div class="val" id="ticket">—</div>
+                    <div class="val" id="ticket">â€”</div>
                 </div>
                 <div class="kpi">
                     <div class="label">Horizon</div>
-                    <div class="val" id="horizon">—</div>
+                    <div class="val" id="horizon">â€”</div>
                 </div>
             </div>
             <div class="small">
                 <b>Documents :</b>
-                <span id="docsStatus">—</span>
+                <span id="docsStatus">â€”</span>
             </div>
         </aside>
     </section>
@@ -235,8 +235,8 @@
                 <h2>Informations investisseur</h2>
                 <table>
                     <tbody>
-                    <tr><td><b>Secteurs</b></td><td class="num" id="secteurs">—</td></tr>
-                    <tr><td><b>Bio</b></td><td class="num" id="bioRow">—</td></tr>
+                    <tr><td><b>Secteurs</b></td><td class="num" id="secteurs">â€”</td></tr>
+                    <tr><td><b>Bio</b></td><td class="num" id="bioRow">â€”</td></tr>
                     </tbody>
                 </table>
                 <p class="small" style="margin:10px 0 0;">
@@ -247,14 +247,14 @@
 
         <aside>
             <section class="card">
-                <h2>Identité</h2>
+                <h2>IdentitÃ©</h2>
                 <table>
                     <tbody>
-                    <tr><td><b>Nom</b></td><td class="num" id="nom">—</td></tr>
-                    <tr><td><b>Prénom</b></td><td class="num" id="prenom">—</td></tr>
-                    <tr><td><b>Email</b></td><td class="num" id="email2">—</td></tr>
-                    <tr><td><b>Téléphone</b></td><td class="num" id="telephone">—</td></tr>
-                    <tr><td><b>CIN</b></td><td class="num" id="cin">—</td></tr>
+                    <tr><td><b>Nom</b></td><td class="num" id="nom">â€”</td></tr>
+                    <tr><td><b>PrÃ©nom</b></td><td class="num" id="prenom">â€”</td></tr>
+                    <tr><td><b>Email</b></td><td class="num" id="email2">â€”</td></tr>
+                    <tr><td><b>TÃ©lÃ©phone</b></td><td class="num" id="telephone">â€”</td></tr>
+                    <tr><td><b>CIN</b></td><td class="num" id="cin">â€”</td></tr>
                     </tbody>
                 </table>
                 <div style="margin-top:10px;">
@@ -267,7 +267,7 @@
 
 <script>
     const fmt = (n) => {
-        if (n == null || n === "" || n === "null") return "—";
+        if (n == null || n === "" || n === "null") return "â€”";
         const num = Number(n);
         if (Number.isNaN(num)) return String(n);
         return new Intl.NumberFormat("fr-TN").format(num) + " TND";
@@ -291,10 +291,10 @@
     function setText(id, v){
         const el = document.getElementById(id);
         if (!el) return;
-        el.textContent = (v == null || v === "" || v === "null") ? "—" : v;
+        el.textContent = (v == null || v === "" || v === "null") ? "â€”" : v;
     }
 
-    // Bouton Modifier => renvoie vers compléter infos (via Java)
+    // Bouton Modifier => renvoie vers complÃ©ter infos (via Java)
     document.getElementById("editBtn").addEventListener("click", () => {
         withBridge((b) => {
             if (typeof b.goEditProfil === "function") b.openEditProfilInvestisseur();
@@ -306,7 +306,7 @@
         const u = safeJsonParse(bridge.getCurrentUserJson?.() || "null") || {};
         const p = safeJsonParse(bridge.getProfilInvestisseurJson?.() || "null") || {};
 
-        const fullName = ((u.nom || "") + " " + (u.prenom || "")).trim() || (u.email || "—");
+        const fullName = ((u.nom || "") + " " + (u.prenom || "")).trim() || (u.email || "â€”");
         setText("fullName", fullName);
         setText("nom", u.nom);
         setText("prenom", u.prenom);
@@ -315,12 +315,12 @@
         setText("telephone", u.telephone);
         setText("cin", u.cin);
 
-        const phoneCin = [u.telephone ? ("📞 " + u.telephone) : null, u.cin ? ("🪪 CIN: " + u.cin) : null].filter(Boolean).join(" • ");
-        setText("phoneCin", phoneCin || "—");
+        const phoneCin = [u.telephone ? ("ðŸ“ž " + u.telephone) : null, u.cin ? ("ðŸªª CIN: " + u.cin) : null].filter(Boolean).join(" â€¢ ");
+        setText("phoneCin", phoneCin || "â€”");
 
-        const secteurs = p.secteurs || "—";
+        const secteurs = p.secteurs || "â€”";
         setText("secteurs", secteurs);
-        setText("secteursLine", "🎯 Secteurs: " + secteurs);
+        setText("secteursLine", "ðŸŽ¯ Secteurs: " + secteurs);
 
         const bio = p.bio || "Profil investisseur.";
         setText("bio", bio);
@@ -329,14 +329,14 @@
         setText("budgetTotal", fmt(p.budgetTotal));
         setText("budgetMensuel", fmt(p.budgetMensuel));
         setText("ticket", fmt(p.ticketMoyenParProjet));
-        setText("horizon", p.horizonInvestissement || "—");
+        setText("horizon", p.horizonInvestissement || "â€”");
 
         const docsOk =
             !!p.cinRectoUrl && p.cinRectoUrl !== "null" &&
             !!p.cinVersoUrl && p.cinVersoUrl !== "null" &&
             !!p.photoUrl && p.photoUrl !== "null";
 
-        setText("docsStatus", docsOk ? "✅ OK" : "⚠️ Manquants");
+        setText("docsStatus", docsOk ? "âœ… OK" : "âš ï¸ Manquants");
 
         // Avatar
         const avatarBox = document.getElementById("avatarBox");
@@ -351,3 +351,4 @@
 </script>
 </body>
 </html>
+

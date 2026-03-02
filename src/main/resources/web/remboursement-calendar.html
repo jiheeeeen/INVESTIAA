@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Calendrier API remboursements</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+  <style>
+    :root {
+      --ink: #173a6a;
+      --ink-soft: #5e7699;
+      --line: #dbe5f4;
+      --ok-bg: #eaf7ef;
+      --ok-fg: #187a46;
+      --wait-bg: #fff4de;
+      --wait-fg: #8f6500;
+      --panel: linear-gradient(120deg, #f8f5ea 0%, #eef3ff 100%);
+    }
+    .layout { display:grid; grid-template-columns: 1.8fr 1fr; gap:16px; }
+    .panel { border:1px solid var(--line); border-radius:18px; background:var(--panel); padding:14px; }
+    .apiRow { display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
+    .apiInfo { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .apiTag { border-radius:999px; padding:6px 10px; font-size:12px; font-weight:700; }
+    .apiTag.live { background:#e5f2ff; color:#1f5f97; border:1px solid #c9def4; }
+    .apiTag.local { background:#f4f6fa; color:#4f6077; border:1px solid #dde5f1; }
+    .apiTag.err { background:#ffe7e7; color:#963535; border:1px solid #f2c3c3; }
+    .btnBar { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .btnApi { border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:12px; padding:8px 12px; font-weight:700; cursor:pointer; }
+    .btnApi.primary { background:#1f4d8c; color:#fff; border-color:#1f4d8c; }
+    .btnApi[data-active="true"] { box-shadow:0 0 0 2px #c9def4 inset; }
+    .btnApi:disabled { opacity:.55; cursor:not-allowed; }
+    .lastSync { font-size:12px; color:var(--ink-soft); font-weight:700; }
+
+    .kpis { display:grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px; margin-top:12px; }
+    .kpi { background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px; }
+    .kpi .k { color:var(--ink-soft); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+    .kpi .v { color:var(--ink); font-size:22px; font-weight:800; margin-top:4px; }
+
+    .monthHead { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .monthNav { display:flex; gap:8px; }
+    .mini { border:1px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; font-weight:700; cursor:pointer; color:var(--ink); }
+    .filterBar { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0 12px; }
+    .chip { border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:999px; padding:6px 10px; font-size:12px; font-weight:800; cursor:pointer; }
+    .chip[data-active="true"] { background:#1f4d8c; color:#fff; border-color:#1f4d8c; }
+
+    .calHead, .calGrid { display:grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap:8px; }
+    .calHead div { text-align:center; font-size:12px; color:var(--ink-soft); font-weight:800; text-transform:uppercase; letter-spacing:.07em; }
+    .day { background:#fff; border:1px solid var(--line); border-radius:12px; min-height:104px; padding:8px; display:flex; flex-direction:column; gap:5px; }
+    .day.empty { background:transparent; border-style:dashed; opacity:.45; }
+    .dNum { color:var(--ink); font-weight:800; font-size:13px; }
+    .mark { border:none; border-radius:999px; padding:3px 8px; font-size:11px; font-weight:700; text-align:left; cursor:pointer; }
+    .mark.ok { background:var(--ok-bg); color:var(--ok-fg); }
+    .mark.wait { background:var(--wait-bg); color:var(--wait-fg); }
+
+    .rightTitle { margin:0 0 10px; color:var(--ink); }
+    .list { border:1px solid var(--line); border-radius:14px; background:#fff; max-height:420px; overflow:auto; }
+    .item { border-bottom:1px solid #edf2fb; padding:10px; }
+    .item:last-child { border-bottom:none; }
+    .item .topLine { display:flex; justify-content:space-between; gap:8px; align-items:center; }
+    .item .project { color:var(--ink); font-weight:700; font-size:14px; }
+    .item .date { color:var(--ink-soft); font-size:12px; }
+    .item .amt { color:#274a7e; font-weight:700; font-size:13px; margin-top:4px; }
+    .status { border-radius:999px; padding:2px 8px; font-size:11px; font-weight:800; }
+    .status.ok { background:var(--ok-bg); color:var(--ok-fg); }
+    .status.wait { background:var(--wait-bg); color:var(--wait-fg); }
+    .selBox { border:1px solid var(--line); border-radius:12px; background:#fff; padding:10px; margin-bottom:10px; }
+    .selTitle { color:var(--ink); font-weight:800; font-size:13px; margin-bottom:6px; }
+    .selLine { color:var(--ink-soft); font-size:12px; margin:3px 0; }
+    .selAmt { color:#274a7e; font-weight:800; font-size:13px; margin-top:4px; }
+    .selBtn { margin-top:8px; border:1px solid #1f4d8c; color:#1f4d8c; background:#fff; border-radius:10px; padding:6px 10px; font-weight:700; cursor:pointer; }
+
+    .alert { margin-top:10px; border-radius:12px; padding:10px 12px; font-weight:700; font-size:13px; border:1px solid var(--line); background:#f8fbff; color:#214777; }
+    .alert.err { border-color:#f2c3c3; background:#fff2f2; color:#8a2d2d; }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Calendrier API</span>
+        <h1>Calendrier des echeances</h1>
+        <p class="sub">Vue calendrier professionnelle avec source Microsoft Graph (Outlook) ou local.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="remboursements-financement.html">Retour liste</a>
+      </div>
+    </div>
+
+    <section class="layout">
+      <article class="panel">
+        <div class="apiRow">
+          <div class="apiInfo">
+            <span id="apiSource" class="apiTag local">Source: Local DB</span>
+            <span id="apiState" class="apiTag local">Etat: non charge</span>
+          </div>
+          <span id="lastSync" class="lastSync">Derniere sync: -</span>
+        </div>
+
+        <div class="btnBar">
+          <button id="syncMsBtn" type="button" class="btnApi primary">Synchroniser Outlook</button>
+          <button id="loadMsBtn" type="button" class="btnApi" data-active="true">Vue Outlook</button>
+          <button id="loadLocalBtn" type="button" class="btnApi">Vue locale</button>
+          <button id="diagBtn" type="button" class="btnApi">Verifier donnees</button>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="k">Total echeances</div><div id="kTotal" class="v">0</div></div>
+          <div class="kpi"><div class="k">Payees</div><div id="kPaid" class="v">0</div></div>
+          <div class="kpi"><div class="k">En attente</div><div id="kPending" class="v">0</div></div>
+          <div class="kpi"><div class="k">Mois courant</div><div id="kMonth" class="v">0</div></div>
+        </div>
+
+        <div class="monthHead" style="margin-top:12px;">
+        <h2 class="title" id="monthTitle" style="margin:0;">-</h2>
+          <div class="monthNav">
+            <button id="prevBtn" class="mini" type="button">Mois -</button>
+            <button id="todayBtn" class="mini" type="button">Aujourd'hui</button>
+            <button id="nextBtn" class="mini" type="button">Mois +</button>
+          </div>
+        </div>
+        <div class="filterBar">
+          <button id="fltAll" class="chip" data-active="true" type="button">Tous</button>
+          <button id="fltPaid" class="chip" data-active="false" type="button">Payes</button>
+          <button id="fltPending" class="chip" data-active="false" type="button">En attente</button>
+        </div>
+
+        <div class="calHead" id="calHead"></div>
+        <div class="calGrid" id="grid"></div>
+        <div id="alertBox" class="alert" style="display:none;"></div>
+      </article>
+
+      <aside class="panel">
+        <h3 class="rightTitle">Echeances du mois</h3>
+        <div id="selBox" class="selBox">
+          <div class="selTitle">Selection</div>
+          <div id="selContent" class="selLine">Clique sur une echeance dans le calendrier.</div>
+        </div>
+        <div id="list" class="list"></div>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const DAYS = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+    const calHead = document.getElementById("calHead");
+    const grid = document.getElementById("grid");
+    const monthTitle = document.getElementById("monthTitle");
+    const list = document.getElementById("list");
+    const alertBox = document.getElementById("alertBox");
+
+    const apiSource = document.getElementById("apiSource");
+    const apiState = document.getElementById("apiState");
+
+    const kTotal = document.getElementById("kTotal");
+    const kPaid = document.getElementById("kPaid");
+    const kPending = document.getElementById("kPending");
+    const kMonth = document.getElementById("kMonth");
+
+    const prevBtn = document.getElementById("prevBtn");
+    const todayBtn = document.getElementById("todayBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const syncMsBtn = document.getElementById("syncMsBtn");
+    const loadMsBtn = document.getElementById("loadMsBtn");
+    const loadLocalBtn = document.getElementById("loadLocalBtn");
+    const diagBtn = document.getElementById("diagBtn");
+    const lastSync = document.getElementById("lastSync");
+    const fltAll = document.getElementById("fltAll");
+    const fltPaid = document.getElementById("fltPaid");
+    const fltPending = document.getElementById("fltPending");
+    const selBox = document.getElementById("selBox");
+    const selContent = document.getElementById("selContent");
+
+    let sourceMode = "local";
+    let allEvents = [];
+    let currentFilter = "ALL";
+    let byId = new Map();
+    let cursor = new Date();
+    cursor.setDate(1);
+
+    calHead.innerHTML = DAYS.map(d => `<div>${d}</div>`).join("");
+
+    function safeParse(raw, fallback){
+      const txt = String(raw == null ? "" : raw).trim();
+      if (!txt) return fallback;
+      try { return JSON.parse(txt); }
+      catch (e) {
+        throw new Error("Reponse JSON invalide. Détail: " + e.message + " | Brut: " + txt.slice(0, 220));
+      }
+    }
+
+    function notify(msg, isError){
+      alertBox.style.display = "block";
+      alertBox.className = isError ? "alert err" : "alert";
+      alertBox.textContent = msg;
+    }
+
+    function setApiBadge(mode, state, isError){
+      sourceMode = mode;
+      apiSource.className = "apiTag " + (mode === "microsoft" ? "live" : "local");
+      apiSource.textContent = "Source: " + (mode === "microsoft" ? "Microsoft Graph API (Outlook)" : "Local DB");
+      apiState.className = "apiTag " + (isError ? "err" : (mode === "microsoft" ? "live" : "local"));
+      apiState.textContent = "Etat: " + state;
+      loadMsBtn.setAttribute("data-active", mode === "microsoft" ? "true" : "false");
+      loadLocalBtn.setAttribute("data-active", mode === "local" ? "true" : "false");
+    }
+
+    function setBusy(on){
+      [syncMsBtn, loadMsBtn, loadLocalBtn, diagBtn, prevBtn, todayBtn, nextBtn].forEach(b => b.disabled = !!on);
+      if (on) apiState.textContent = "Etat: chargement...";
+    }
+
+    function parseRid(text){
+      const m = String(text || "").match(/\[RID:(\d+)\]/i);
+      return m ? Number(m[1]) : 0;
+    }
+
+    function mapMs(ev){
+      const subject = String(ev.subject || "");
+      const preview = String(ev.bodyPreview || "");
+      const status = subject.toUpperCase().includes("[PAYE]") ? "PAYE" : "EN_ATTENTE";
+      const rid = parseRid(subject + " " + preview);
+      let date = "";
+      if (ev.start && ev.start.dateTime) date = String(ev.start.dateTime).slice(0, 10);
+      if (!date && ev.start && ev.start.date) date = String(ev.start.date).slice(0, 10);
+      const mm = preview.match(/Montant paye:\s*([0-9.]+)\s*\/\s*([0-9.]+)/i);
+      const montantPaye = mm ? Number(mm[1]) : 0;
+      const montantDu = mm ? Number(mm[2]) : 0;
+      const project = subject.replace(/\[INVESTIA\]|\[PAYE\]|\[EN_ATTENTE\]|\[RID:\d+\]/gi, "").trim();
+      return { id: rid, date, status, montantPaye, montantDu, project: project || "Remboursement" };
+    }
+
+    function toIso(d){
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    }
+
+    function monthRange(){
+      const y = cursor.getFullYear(), m = cursor.getMonth();
+      return { startDate: toIso(new Date(y,m,1)), endDate: toIso(new Date(y,m+1,1)) };
+    }
+
+    function eventsByDate(items){
+      const m = new Map();
+      items.forEach(e => {
+        const k = String(e.date || "");
+        if (!k) return;
+        if (!m.has(k)) m.set(k, []);
+        m.get(k).push(e);
+      });
+      return m;
+    }
+
+    function formatMoney(v){
+      const n = Number(v || 0);
+      return Number.isFinite(n) ? n.toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "0,00";
+    }
+
+    function formatDateFr(iso){
+      const s = String(iso || "");
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return s || "-";
+      const y = s.slice(0, 4);
+      const m = s.slice(5, 7);
+      const d = s.slice(8, 10);
+      return `${d}/${m}/${y}`;
+    }
+
+    function openRemboursement(id){
+      const rid = Number(id || 0);
+      if (!rid) return;
+      window.location.href = `remboursement-detail.html?id=${encodeURIComponent(String(rid))}`;
+    }
+
+    function setFilter(mode){
+      currentFilter = mode;
+      fltAll.setAttribute("data-active", mode === "ALL" ? "true" : "false");
+      fltPaid.setAttribute("data-active", mode === "PAID" ? "true" : "false");
+      fltPending.setAttribute("data-active", mode === "PENDING" ? "true" : "false");
+      render();
+    }
+
+    function passFilter(ev){
+      const st = String(ev.status || "").toUpperCase();
+      if (currentFilter === "PAID") return st === "PAYE";
+      if (currentFilter === "PENDING") return st !== "PAYE";
+      return true;
+    }
+
+    function selectRemboursement(id){
+      const rid = Number(id || 0);
+      const ev = byId.get(rid);
+      if (!ev){
+        selContent.textContent = "Echeance introuvable.";
+        return;
+      }
+      const ok = String(ev.status || "").toUpperCase() === "PAYE";
+      const reste = Math.max(0, Number(ev.montantDu || 0) - Number(ev.montantPaye || 0));
+      selContent.innerHTML =
+        `<div class="selLine"><strong>Projet:</strong> ${ev.project || "Remboursement"}</div>` +
+        `<div class="selLine"><strong>Date:</strong> ${formatDateFr(ev.date)}</div>` +
+        `<div class="selLine"><strong>Statut:</strong> ${ok ? "PAYE" : "EN_ATTENTE"}</div>` +
+        `<div class="selAmt">Paye ${formatMoney(ev.montantPaye)} / Du ${formatMoney(ev.montantDu)} TND (Reste ${formatMoney(reste)} TND)</div>` +
+        `<button type="button" class="selBtn" onclick="openRemboursement(${rid})">Ouvrir le detail</button>`;
+    }
+
+    function fetchLocalCalendarRaw(){
+      if (!window.javaBridge || typeof window.javaBridge.getRemboursementCalendarForCurrentEntrepreneurJson !== "function") {
+        return [];
+      }
+      try {
+        const raw = window.javaBridge.getRemboursementCalendarForCurrentEntrepreneurJson();
+        const arr = safeParse(raw, []);
+        return Array.isArray(arr) ? arr : [];
+      } catch (_e) {
+        return [];
+      }
+    }
+
+    function mergeByRemboursementId(localEvents, msEvents){
+      const map = new Map();
+      (Array.isArray(localEvents) ? localEvents : []).forEach(ev => {
+        const rid = Number(ev.id || 0);
+        const key = rid > 0 ? `rid:${rid}` : `k:${String(ev.date||"")}|${String(ev.project||"")}`;
+        map.set(key, ev);
+      });
+      (Array.isArray(msEvents) ? msEvents : []).forEach(ev => {
+        const rid = Number(ev.id || 0);
+        const key = rid > 0 ? `rid:${rid}` : `k:${String(ev.date||"")}|${String(ev.project||"")}`;
+        if (map.has(key)) {
+          const base = map.get(key) || {};
+          // Keep local status when available (ensures EN_ATTENTE/PAYE coherent with DB)
+          const merged = Object.assign({}, ev, base);
+          merged.date = base.date || ev.date;
+          merged.project = base.project || ev.project;
+          map.set(key, merged);
+        } else {
+          map.set(key, ev);
+        }
+      });
+      return Array.from(map.values());
+    }
+
+    function render(){
+      const y = cursor.getFullYear(), m = cursor.getMonth();
+      monthTitle.textContent = new Intl.DateTimeFormat("fr-FR", {month:"long", year:"numeric"}).format(cursor).toUpperCase();
+
+      const first = new Date(y,m,1);
+      const last = new Date(y,m+1,0);
+      const lead = (first.getDay() + 6) % 7;
+      const count = last.getDate();
+
+      const monthly = allEvents.filter(e => String(e.date || "").startsWith(`${y}-${String(m+1).padStart(2,"0")}-`));
+      const monthlyFiltered = monthly.filter(passFilter);
+      monthly.sort((a,b) => String(a.date).localeCompare(String(b.date)) || Number(a.id||0)-Number(b.id||0));
+      byId = new Map(monthly.map(e => [Number(e.id || 0), e]));
+
+      const total = allEvents.length;
+      const paid = allEvents.filter(e => String(e.status).toUpperCase() === "PAYE").length;
+      const pending = total - paid;
+      kTotal.textContent = String(total);
+      kPaid.textContent = String(paid);
+      kPending.textContent = String(pending);
+      kMonth.textContent = String(monthly.length);
+
+      const map = eventsByDate(monthlyFiltered);
+      const cells = [];
+      for (let i=0; i<lead; i++) cells.push(null);
+      for (let d=1; d<=count; d++) cells.push(new Date(y,m,d));
+      while (cells.length % 7) cells.push(null);
+
+      grid.innerHTML = cells.map(dt => {
+        if (!dt) return '<div class="day empty"></div>';
+        const key = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;
+        const evs = map.get(key) || [];
+        const chips = evs.slice(0,3).map(ev => {
+          const ok = String(ev.status).toUpperCase() === "PAYE";
+          const cls = ok ? "ok" : "wait";
+          const lbl = ok ? "PAYE" : "ATTENTE";
+          const title = `${ev.project} | ${formatMoney(ev.montantPaye)} / ${formatMoney(ev.montantDu)} TND`;
+          return `<button type="button" class="mark ${cls}" title="${title}" onclick="selectRemboursement(${Number(ev.id||0)})">${lbl}</button>`;
+        }).join("");
+        const more = evs.length > 3 ? `<div class="mark wait" style="cursor:default;">+${evs.length-3} autres</div>` : "";
+        return `<div class="day"><div class="dNum">${dt.getDate()}</div>${chips}${more}</div>`;
+      }).join("");
+
+      list.innerHTML = monthlyFiltered.length ? monthlyFiltered.map(ev => {
+        const ok = String(ev.status).toUpperCase() === "PAYE";
+        return `
+          <div class="item">
+            <div class="topLine">
+              <div class="project" style="cursor:pointer;" onclick="selectRemboursement(${Number(ev.id||0)})">${ev.project || "Remboursement"}</div>
+              <span class="status ${ok ? "ok" : "wait"}">${ok ? "PAYE" : "EN_ATTENTE"}</span>
+            </div>
+            <div class="date">${formatDateFr(ev.date)} | Echeance #${Number(ev.id || 0)}</div>
+            <div class="amt">Paye ${formatMoney(ev.montantPaye)} / Du ${formatMoney(ev.montantDu)} TND</div>
+          </div>
+        `;
+      }).join("") : '<div class="item">Aucune echeance pour ce mois.</div>';
+    }
+
+    function loadLocal(){
+      setBusy(true);
+      if (!window.javaBridge || typeof window.javaBridge.getRemboursementCalendarForCurrentEntrepreneurJson !== "function") {
+        setApiBadge("local", "bridge indisponible", true);
+        notify("API locale indisponible.", true);
+        setBusy(false);
+        return;
+      }
+      try {
+        allEvents = fetchLocalCalendarRaw();
+        setApiBadge("local", `ok (${allEvents.length} events)`, false);
+        notify("Calendrier local charge.", false);
+      } catch (e) {
+        allEvents = [];
+        setApiBadge("local", "erreur", true);
+        notify("Erreur chargement local: " + e.message, true);
+      }
+      render();
+      setBusy(false);
+    }
+
+    function loadMicrosoft(){
+      setBusy(true);
+      if (!window.javaBridge || typeof window.javaBridge.getMicrosoftCalendarEventsFromJs !== "function") {
+        setApiBadge("microsoft", "bridge indisponible", true);
+        notify("Bridge Microsoft Calendar indisponible.", true);
+        setBusy(false);
+        return;
+      }
+      try {
+        const r = monthRange();
+        const payload = new URLSearchParams({startDate: r.startDate, endDate: r.endDate}).toString();
+        const raw = window.javaBridge.getMicrosoftCalendarEventsFromJs(payload);
+        const obj = safeParse(raw, {ok:false, value:[]});
+        if (obj && obj.ok === false) {
+          allEvents = [];
+          setApiBadge("microsoft", "erreur API", true);
+          notify("Outlook API: " + (obj.message || "erreur inconnue"), true);
+          render();
+          setBusy(false);
+          return;
+        }
+        const items = Array.isArray(obj.value) ? obj.value : [];
+        const msEvents = items.map(mapMs).filter(x => String(x.date || "").length >= 10);
+        const localEvents = fetchLocalCalendarRaw();
+        allEvents = mergeByRemboursementId(localEvents, msEvents);
+        setApiBadge("microsoft", `ok (${allEvents.length} events)`, false);
+        notify(`Outlook API charge avec succes. Affichage fusionne (Outlook + local): ${allEvents.length} echeance(s).`, false);
+      } catch (e) {
+        allEvents = [];
+        setApiBadge("microsoft", "reponse invalide", true);
+        notify("Erreur chargement Outlook API: " + e.message, true);
+      }
+      render();
+      setBusy(false);
+    }
+
+    function syncMicrosoft(){
+      setBusy(true);
+      if (!window.javaBridge || typeof window.javaBridge.syncRemboursementCalendarToMicrosoftFromJs !== "function") {
+        notify("Sync Microsoft indisponible.", true);
+        setBusy(false);
+        return;
+      }
+      try {
+        const raw = window.javaBridge.syncRemboursementCalendarToMicrosoftFromJs();
+        const res = safeParse(raw, {ok:false});
+        if (!res.ok) {
+          notify("Sync echouee: " + (res.message || "inconnue"), true);
+          setBusy(false);
+          return;
+        }
+        const created = Number(res.created || 0);
+        const updated = Number(res.updated || 0);
+        const skipped = Number(res.skipped || 0);
+        const failed = Number(res.failed || 0);
+        let msg = `Sync Outlook OK: ${created} cree(s), ${updated} mis a jour, ${skipped} deja existant(s), ${failed} erreur(s), total ${Number(res.total||0)}.`;
+        const failures = Array.isArray(res.failures) ? res.failures.slice(0, 3) : [];
+        if (failures.length) {
+          msg += " Exemples erreurs: " + failures.map(f => `RID ${f.rid}: ${f.message}`).join(" | ");
+        }
+        notify(msg, failed > 0);
+        const now = new Date();
+        lastSync.textContent = "Derniere sync: " + now.toLocaleString("fr-FR");
+      } catch (e) {
+        notify("Erreur sync Outlook API: " + e.message, true);
+      }
+      setBusy(false);
+    }
+
+    function runDiagnostic(){
+      setBusy(true);
+      if (!window.javaBridge || typeof window.javaBridge.getCalendarSyncDiagnosticsFromJs !== "function") {
+        notify("Diagnostic indisponible: bridge manquant.", true);
+        setBusy(false);
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getCalendarSyncDiagnosticsFromJs();
+        const d = safeParse(raw, {ok:false});
+        if (!d.ok) {
+          notify("Diagnostic erreur: " + (d.message || "inconnue"), true);
+          setBusy(false);
+          return;
+        }
+        const msg = `Diagnostic: Projets=${Number(d.projects||0)}, Financements=${Number(d.financements||0)}, Remboursements=${Number(d.remboursements||0)}, Payes=${Number(d.paye||0)}, En attente=${Number(d.enAttente||0)}, Graph configure=${d.graphConfigured ? "oui" : "non"}.`;
+        notify(msg, false);
+      } catch (e) {
+        notify("Diagnostic erreur: " + e.message, true);
+      }
+      setBusy(false);
+    }
+
+    prevBtn.addEventListener("click", () => { cursor.setMonth(cursor.getMonth()-1); if (sourceMode === "microsoft") loadMicrosoft(); else render(); });
+    nextBtn.addEventListener("click", () => { cursor.setMonth(cursor.getMonth()+1); if (sourceMode === "microsoft") loadMicrosoft(); else render(); });
+    todayBtn.addEventListener("click", () => { cursor = new Date(); cursor.setDate(1); if (sourceMode === "microsoft") loadMicrosoft(); else render(); });
+
+    syncMsBtn.addEventListener("click", syncMicrosoft);
+    loadMsBtn.addEventListener("click", loadMicrosoft);
+    loadLocalBtn.addEventListener("click", loadLocal);
+    diagBtn.addEventListener("click", runDiagnostic);
+    fltAll.addEventListener("click", () => setFilter("ALL"));
+    fltPaid.addEventListener("click", () => setFilter("PAID"));
+    fltPending.addEventListener("click", () => setFilter("PENDING"));
+
+    window.openRemboursement = openRemboursement;
+    window.selectRemboursement = selectRemboursement;
+
+    function init(){
+      if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function") {
+        const role = String(window.javaBridge.getCurrentUserRole() || "");
+        if (role && role !== "ENTREPRENEUR") {
+          notify("Page reservee a l'entrepreneur.", true);
+          return;
+        }
+      }
+      loadMicrosoft();
+    }
+
+    (function waitForBridge(retries){
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) { notify("Bridge Java indisponible.", true); return; }
+      setTimeout(() => waitForBridge(retries - 1), 200);
+    })(35);
+  </script>
+</body>
+</html>

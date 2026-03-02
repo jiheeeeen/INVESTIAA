@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8"/>
+    <script src="../navbar.js" defer></script>
+    <title>Modifier l'événement</title>
+    <style>
+        :root{
+            --bg:#f6f8fc;--card:#fff;--text:#0f172a;--muted:#64748b;
+            --border:rgba(15,23,42,.10);--shadow:0 14px 35px rgba(15,23,42,.08);
+            --primary:#1d4ed8;--accent:#06b6d4;--success:#16a34a;
+            --danger:#ef4444;--warning:#d97706;--radius:18px;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+        .container{max-width:700px;margin:32px auto 60px;padding:0 16px}
+
+        .page-header{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:20px;position:relative;overflow:hidden}
+        .page-header::before{content:"";position:absolute;inset:0;pointer-events:none;
+            background:radial-gradient(700px 200px at 12% 0%,rgba(29,78,216,.10),transparent 55%),
+            radial-gradient(700px 200px at 98% 0%,rgba(217,119,6,.10),transparent 55%)}
+        .page-header-inner{position:relative;z-index:1}
+        .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;border:1px solid rgba(217,119,6,.2);background:rgba(217,119,6,.06);color:#92400e;margin-bottom:10px}
+        h1{margin:0 0 6px;font-size:24px;font-weight:900}
+        .subtitle{margin:0;color:var(--muted);font-size:14px}
+
+        .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+        .section-title{margin:0 0 14px;font-size:16px;font-weight:900;display:flex;align-items:center;gap:8px}
+
+        label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#0b2a55;font-weight:900;margin:0 0 6px}
+        .req{color:var(--danger)}
+        input,textarea{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;outline:none;font-size:14px;color:var(--text);transition:border-color .15s,box-shadow .15s;font-family:inherit}
+        textarea{min-height:90px;resize:vertical}
+        input:focus,textarea:focus{border-color:rgba(29,78,216,.35);box-shadow:0 0 0 4px rgba(29,78,216,.10)}
+
+        /* ✅ CONTRÔLE DE SAISIE */
+        input.f-error,textarea.f-error{border-color:rgba(239,68,68,.55)!important;box-shadow:0 0 0 3px rgba(239,68,68,.10)!important;background:rgba(239,68,68,.02)}
+        input.f-ok,textarea.f-ok{border-color:rgba(22,163,74,.45);box-shadow:0 0 0 3px rgba(22,163,74,.08)}
+        .f-msg{font-size:11.5px;margin-top:5px;font-weight:700;min-height:16px;display:flex;align-items:center;gap:4px}
+        .f-msg.err{color:var(--danger)}
+        .f-msg.ok {color:var(--success)}
+
+        .field{margin-bottom:14px}
+        .field:last-child{margin-bottom:0}
+        .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        @media(max-width:500px){.row2{grid-template-columns:1fr}}
+        .hint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+
+        .mode-toggle{display:flex;gap:8px}
+        .mode-opt{flex:1;padding:10px;border-radius:12px;border:2px solid var(--border);background:#fff;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:all .2s}
+        .mode-opt:hover{border-color:rgba(29,78,216,.3);color:var(--primary)}
+        .mode-opt.selected{border-color:var(--primary);background:rgba(29,78,216,.06);color:var(--primary)}
+
+        .cond-field{overflow:hidden;transition:max-height .3s,opacity .3s,margin .3s}
+        .cond-field.hidden{max-height:0;opacity:0;margin-bottom:0!important;pointer-events:none}
+        .cond-field.visible{max-height:200px;opacity:1}
+
+        /* ALERT GLOBAL */
+        .global-alert{display:none;border-radius:12px;padding:11px 14px;font-size:13.5px;font-weight:700;margin-bottom:16px}
+        .global-alert.error{border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.07);color:#7f1d1d;display:block}
+        .global-alert.ok   {border:1px solid rgba(22,163,74,.25); background:rgba(22,163,74,.07); color:#14532d;display:block}
+
+        .footer-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+        .btn{border:0;cursor:pointer;font-weight:800;font-size:14px;padding:11px 20px;border-radius:12px;display:inline-flex;align-items:center;gap:8px;transition:transform .15s,filter .15s}
+        .btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 10px 20px rgba(29,78,216,.18)}
+        .btn.ghost  {background:#fff;border:1px solid var(--border);color:var(--text)}
+        .btn:hover  {transform:translateY(-1px);filter:brightness(1.04)}
+        .btn:active {transform:translateY(0)}
+
+        #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(70px);z-index:999;min-width:260px;max-width:420px;background:#1e293b;border-radius:12px;padding:13px 18px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 36px rgba(0,0,0,.3);transition:transform .32s cubic-bezier(.34,1.56,.64,1),opacity .25s;opacity:0;font-size:14px;color:#fff;pointer-events:none}
+        #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+        #toast.success{border-left:4px solid var(--success)}
+        #toast.error  {border-left:4px solid var(--danger)}
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="page-header">
+        <div class="page-header-inner">
+            <div class="badge">✏️ Modification</div>
+            <h1>Modifier l'événement</h1>
+            <p class="subtitle">Modifiez les informations puis cliquez sur Enregistrer.</p>
+        </div>
+    </div>
+
+    <input type="hidden" id="evId"/>
+
+    <!-- ALERT GLOBAL -->
+    <div class="global-alert" id="globalAlert"></div>
+
+    <!-- SECTION 1 -->
+    <div class="card">
+        <h2 class="section-title">📋 Informations générales</h2>
+
+        <div class="field">
+            <label for="titre">Titre <span class="req">*</span></label>
+            <input id="titre" type="text" maxlength="120"
+                   oninput="vf('titre')" onblur="vf('titre')"/>
+            <div class="f-msg" id="msg_titre"></div>
+        </div>
+
+        <div class="row2">
+            <div class="field">
+                <label for="projectId">Project ID <span class="req">*</span></label>
+                <input id="projectId" type="number" min="1"
+                       oninput="vf('projectId')" onblur="vf('projectId')"/>
+                <div class="f-msg" id="msg_projectId"></div>
+            </div>
+            <div class="field">
+                <label for="organisateurId">Organisateur ID <span class="req">*</span></label>
+                <input id="organisateurId" type="number" min="1"
+                       oninput="vf('organisateurId')" onblur="vf('organisateurId')"/>
+                <div class="f-msg" id="msg_organisateurId"></div>
+            </div>
+        </div>
+
+        <div class="field">
+            <label for="description">Description</label>
+            <textarea id="description" placeholder="Décrivez l'événement…"
+                      oninput="vf('description')"></textarea>
+            <div class="f-msg" id="msg_description"></div>
+        </div>
+    </div>
+
+    <!-- SECTION 2 -->
+    <div class="card">
+        <h2 class="section-title">📍 Mode & Localisation</h2>
+        <div class="field">
+            <label>Mode <span class="req">*</span></label>
+            <div class="mode-toggle">
+                <div class="mode-opt selected" id="optEL" onclick="setMode('EN_LIGNE')">🌐 En ligne</div>
+                <div class="mode-opt"          id="optPR" onclick="setMode('PRESENTIEL')">🏢 Présentiel</div>
+            </div>
+            <input type="hidden" id="mode" value="EN_LIGNE"/>
+        </div>
+        <div class="cond-field visible" id="condLien" style="margin-top:12px">
+            <div class="field">
+                <label for="meetingLink">Lien de réunion</label>
+                <input id="meetingLink" type="text" placeholder="https://meet.google.com/…"
+                       oninput="vf('meetingLink')" onblur="vf('meetingLink')"/>
+                <div class="f-msg" id="msg_meetingLink"></div>
+                <p class="hint">Zoom, Teams, Google Meet…</p>
+            </div>
+        </div>
+        <div class="cond-field hidden" id="condLieu" style="margin-top:12px">
+            <div class="field">
+                <label for="lieu">Lieu <span class="req">*</span></label>
+                <input id="lieu" type="text" placeholder="Salle A12, Tunis…"
+                       oninput="vf('lieu')" onblur="vf('lieu')"/>
+                <div class="f-msg" id="msg_lieu"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3 -->
+    <div class="card">
+        <h2 class="section-title">📅 Dates & Horaires</h2>
+        <div class="row2">
+            <div class="field">
+                <label for="dateDebut">Date début <span class="req">*</span></label>
+                <input id="dateDebut" type="datetime-local" onchange="vDates()"/>
+                <div class="f-msg" id="msg_dateDebut"></div>
+            </div>
+            <div class="field">
+                <label for="dateFin">Date fin <span class="req">*</span></label>
+                <input id="dateFin" type="datetime-local" onchange="vDates()"/>
+                <div class="f-msg" id="msg_dateFin"></div>
+            </div>
+        </div>
+        <p class="hint">⚠️ La date de fin doit être postérieure à la date de début.</p>
+    </div>
+
+    <div class="footer-actions">
+        <button class="btn ghost" onclick="retourEvenements()">← Retour</button>
+        <button class="btn ghost"   onclick="fermer()">Annuler</button>
+        <button class="btn primary" onclick="submitModifier()">💾 Enregistrer les modifications</button>
+    </div>
+</div>
+
+<div id="toast"><span id="toastMsg"></span></div>
+
+<script>
+    // ══════════════════════════════════════════════
+    //  RÈGLES DE VALIDATION PAR CHAMP
+    // ══════════════════════════════════════════════
+    var RULES = {
+        titre         : { required:true,  minLen:3, maxLen:120, label:'Titre' },
+        projectId     : { required:true,  isInt:true, min:1,   label:'Project ID' },
+        organisateurId: { required:true,  isInt:true, min:1,   label:'Organisateur ID' },
+        description   : { required:false, maxLen:500,           label:'Description' },
+        meetingLink   : { required:false, isUrl:true,           label:'Lien de réunion' },
+        lieu          : { required:false,                        label:'Lieu' }
+    };
+
+    // ── Valider un champ ──
+    function vf(id) {
+        var el   = document.getElementById(id);
+        var msg  = document.getElementById('msg_' + id);
+        if (!el || !msg) return true;
+        var val  = (el.value || '').trim();
+        var rule = RULES[id];
+        if (!rule) return true;
+        var mode = document.getElementById('mode').value;
+
+        // ✅ meetingLink obligatoire si EN_LIGNE, lieu obligatoire si PRESENTIEL
+        if (id === 'meetingLink') rule.required = (mode === 'EN_LIGNE');
+        if (id === 'lieu')        rule.required = (mode === 'PRESENTIEL');
+
+        if (rule.required && !val) {
+            return setState(el, msg, false, '⚠️ ' + rule.label + ' est obligatoire.');
+        }
+        if (!val) { return clearState(el, msg); }
+
+        if (rule.isInt) {
+            var n = parseInt(val);
+            if (isNaN(n) || n < (rule.min || 1)) {
+                return setState(el, msg, false, '⚠️ Doit être un nombre entier ≥ ' + (rule.min||1) + '.');
+            }
+        }
+        if (rule.minLen && val.length < rule.minLen) {
+            return setState(el, msg, false, '⚠️ Minimum ' + rule.minLen + ' caractères.');
+        }
+        if (rule.maxLen && val.length > rule.maxLen) {
+            return setState(el, msg, false, '⚠️ Maximum ' + rule.maxLen + ' caractères (' + val.length + '/' + rule.maxLen + ').');
+        }
+        if (rule.isUrl && val && !val.match(/^https?:\/\/.+/)) {
+            return setState(el, msg, false, '⚠️ Doit commencer par http:// ou https://');
+        }
+        return setState(el, msg, true, '✓ ' + rule.label + ' valide');
+    }
+
+    // ── Valider les dates ──
+    function vDates() {
+        var dd   = document.getElementById('dateDebut').value;
+        var df   = document.getElementById('dateFin').value;
+        var msgD = document.getElementById('msg_dateDebut');
+        var msgF = document.getElementById('msg_dateFin');
+        var ok   = true;
+
+        if (!dd) { setState(document.getElementById('dateDebut'), msgD, false, '⚠️ Date de début obligatoire.'); ok=false; }
+        else clearState(document.getElementById('dateDebut'), msgD);
+
+        if (!df) { setState(document.getElementById('dateFin'), msgF, false, '⚠️ Date de fin obligatoire.'); ok=false; }
+        else if (dd && new Date(df) <= new Date(dd)) {
+            setState(document.getElementById('dateFin'), msgF, false, '⚠️ Doit être après la date de début.'); ok=false;
+        } else clearState(document.getElementById('dateFin'), msgF);
+
+        return ok;
+    }
+
+    // ── Valider tout ──
+    function vAll() {
+        var ok   = true;
+        var mode = document.getElementById('mode').value;
+        // Champs toujours validés
+        ['titre','projectId','organisateurId','description'].forEach(function(id) {
+            if (!vf(id)) ok = false;
+        });
+        // meetingLink : optionnel, visible seulement en EN_LIGNE
+        if (mode === 'EN_LIGNE') {
+            var linkVal = (document.getElementById('meetingLink').value || '').trim();
+            if (linkVal) {
+                // Valeur présente : vérifier le format
+                if (!linkVal.match(/^https?:\/\/.+/)) {
+                    setState(document.getElementById('meetingLink'), document.getElementById('msg_meetingLink'),
+                        false, '⚠️ Doit commencer par http:// ou https://');
+                    ok = false;
+                } else {
+                    setState(document.getElementById('meetingLink'), document.getElementById('msg_meetingLink'),
+                        true, '✓ Lien de réunion valide');
+                }
+            } else {
+                // Vide = autorisé (champ optionnel)
+                clearState(document.getElementById('meetingLink'), document.getElementById('msg_meetingLink'));
+            }
+        } else {
+            // PRESENTIEL : champ caché, ignorer
+            clearState(document.getElementById('meetingLink'), document.getElementById('msg_meetingLink'));
+        }
+        // lieu : obligatoire seulement en PRESENTIEL
+        if (mode === 'PRESENTIEL') {
+            if (!vf('lieu')) ok = false;
+        } else {
+            clearState(document.getElementById('lieu'), document.getElementById('msg_lieu'));
+        }
+        if (!vDates()) ok = false;
+        return ok;
+    }
+
+    function setState(el, msg, isOk, text) {
+        el.classList.toggle('f-ok',    isOk);
+        el.classList.toggle('f-error', !isOk);
+        msg.textContent = text;
+        msg.className   = 'f-msg ' + (isOk ? 'ok' : 'err');
+        return isOk;
+    }
+    function clearState(el, msg) {
+        el.classList.remove('f-ok', 'f-error');
+        msg.className = 'f-msg'; msg.textContent = '';
+        return true;
+    }
+
+    // ══════════════════════════════════════════════
+    //  PRÉREMPLISSAGE — appelé par ModifierEvenementController
+    // ══════════════════════════════════════════════
+    function prefill(id, titre, projectId, organisateurId, description, mode, dateDebut, dateFin, lieu, meetingLink) {
+        document.getElementById('evId').value           = id;
+        document.getElementById('titre').value          = titre          || '';
+        document.getElementById('projectId').value      = projectId      || '';
+        document.getElementById('organisateurId').value = organisateurId || '';
+        document.getElementById('description').value    = description    || '';
+        document.getElementById('meetingLink').value    = meetingLink    || '';
+        document.getElementById('lieu').value           = lieu           || '';
+        setMode(mode || 'EN_LIGNE');
+        if (dateDebut) document.getElementById('dateDebut').value = dateDebut.replace(' ','T').substring(0,16);
+        if (dateFin)   document.getElementById('dateFin').value   = dateFin.replace(' ','T').substring(0,16);
+        // Valider visuellement les champs préremplis (en respectant le mode)
+        vAll();
+    }
+
+    // ══════════════════════════════════════════════
+    //  MODE TOGGLE
+    // ══════════════════════════════════════════════
+    function setMode(m) {
+        document.getElementById('mode').value = m;
+        document.getElementById('optEL').classList.toggle('selected', m === 'EN_LIGNE');
+        document.getElementById('optPR').classList.toggle('selected', m === 'PRESENTIEL');
+        document.getElementById('condLien').className = 'cond-field ' + (m==='EN_LIGNE'   ? 'visible' : 'hidden');
+        document.getElementById('condLieu').className = 'cond-field ' + (m==='PRESENTIEL' ? 'visible' : 'hidden');
+        // ✅ Re-valider meetingLink ET lieu selon le mode actuel
+        vf('meetingLink');
+        vf('lieu');
+    }
+
+    // ══════════════════════════════════════════════
+    //  SUBMIT
+    // ══════════════════════════════════════════════
+    function submitModifier() {
+        var alertEl = document.getElementById('globalAlert');
+        alertEl.className = 'global-alert'; alertEl.textContent = '';
+
+        if (!vAll()) {
+            alertEl.className = 'global-alert error';
+            alertEl.textContent = '⚠️ Veuillez corriger les champs en rouge avant d\'enregistrer.';
+            alertEl.scrollIntoView({ behavior:'smooth', block:'center' });
+            return;
+        }
+
+        var bridge = (window.modifierBridge && typeof window.modifierBridge.modifier === 'function')
+            ? window.modifierBridge
+            : (window.javaBridge && typeof window.javaBridge.modifier === 'function' ? window.javaBridge : null);
+        if (!bridge) {
+            alertEl.className = 'global-alert error';
+            alertEl.textContent = 'Bridge non disponible.';
+            return;
+        }
+
+        var result = bridge.modifier(
+            parseInt(document.getElementById('evId').value),
+            document.getElementById('titre').value.trim(),
+            parseInt(document.getElementById('projectId').value),
+            document.getElementById('description').value.trim(),
+            document.getElementById('mode').value,
+            fmtJava(document.getElementById('dateDebut').value),
+            fmtJava(document.getElementById('dateFin').value),
+            document.getElementById('lieu').value.trim(),
+            document.getElementById('meetingLink').value.trim(),
+            parseInt(document.getElementById('organisateurId').value)
+        );
+
+        if (result === 'OK' || (result && result.startsWith('OK'))) {
+            alertEl.className = 'global-alert ok';
+            alertEl.textContent = '✅ Événement modifié avec succès !';
+            toast('✅ Modifié !', 'success');
+            setTimeout(function() {
+                if (window.modifierBridge && typeof window.modifierBridge.closeModifierWindow === 'function') {
+                    window.modifierBridge.closeModifierWindow();
+                } else {
+                    window.location.href = 'ajoutEvenement.html';
+                }
+            }, 900);
+        } else {
+            alertEl.className = 'global-alert error';
+            alertEl.textContent = '❌ Erreur : ' + (result || 'Inconnue');
+        }
+    }
+
+    // ══════════════════════════════════════════════
+    //  FERMER
+    // ══════════════════════════════════════════════
+    function fermer() {
+        if (window.modifierBridge && typeof window.modifierBridge.closeModifierWindow === 'function') {
+            window.modifierBridge.closeModifierWindow();
+        } else {
+            window.location.href = 'ajoutEvenement.html';
+        }
+    }
+
+    function retourEvenements() {
+        if (window.modifierBridge && typeof window.modifierBridge.closeModifierWindow === 'function') {
+            window.modifierBridge.closeModifierWindow();
+        } else {
+            window.location.href = 'ajoutEvenement.html';
+        }
+    }
+
+    // Préremplissage via query string quand on ouvre Modifierevenement.html directement
+    (function initFromQuery(){
+        try{
+            var q=new URLSearchParams(window.location.search);
+            if(!q.has('id'))return;
+            prefill(
+                q.get('id')||'',
+                q.get('titre')||'',
+                q.get('projectId')||'',
+                q.get('organisateurId')||'',
+                q.get('description')||'',
+                q.get('mode')||'EN_LIGNE',
+                q.get('dateDebut')||'',
+                q.get('dateFin')||'',
+                q.get('lieu')||'',
+                q.get('meetingLink')||''
+            );
+        }catch(e){}
+    })();
+
+    // ══════════════════════════════════════════════
+    //  UTILS
+    // ══════════════════════════════════════════════
+    function fmtJava(s) {
+        if (!s) return '';
+        var p = s.split('T');
+        return p[0] + ' ' + ((p[1]||'00:00').substring(0,5)) + ':00';
+    }
+    var _tt;
+    function toast(msg, type) {
+        var t = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = msg;
+        t.className = 'show ' + (type||'success');
+        clearTimeout(_tt);
+        _tt = setTimeout(function(){ t.className = type||'success'; }, 3000);
+    }
+</script>
+</body>
+</html>

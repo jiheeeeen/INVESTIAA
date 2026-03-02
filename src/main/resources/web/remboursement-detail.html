@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Detail remboursement</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Detail</span>
+        <h1>Detail du remboursement</h1>
+        <p class="sub">Informations completes pour une echeance specifique.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" id="backLink" href="remboursements-list.html">Retour liste</a>
+        <a class="btnTop btnGold" id="payLink" href="remboursement-pay.html">Payer</a>
+        <a class="btnTop btnNavy" href="remboursement-documents.html">Reçus</a>
+      </div>
+    </div>
+
+    <div class='note' id='result' style='display:none;'></div>
+
+    <section class="gridTop">
+      <div class="card">
+        <div class="rowHead">
+          <h2 class="title">Resume</h2>
+          <span class="tag pending" id="statusTag"><span class="tagDot"></span>EN_ATTENTE</span>
+        </div>
+        <div class="note" style="margin-top:0;">
+          <div><strong>Echeance N°:</strong> <span id="rId">-</span></div>
+          <div><strong>Projet finance:</strong> <a class="softLink" id="rFinLink" href="#">-</a></div>
+          <div><strong>Date echeance:</strong> <span id="rDate">-</span></div>
+          <div><strong>Montant du:</strong> <span id="rDu">-</span></div>
+          <div><strong>Montant paye:</strong> <span id="rPaye">-</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="rowHead">
+          <h2 class="title">Actions</h2>
+        </div>
+        <div class="note">
+          <div><strong>Reste a payer:</strong> <span id="rReste">-</span></div>
+          <div style="margin-top:8px;">Utilise <strong>Payer</strong> pour ajouter un montant au paiement.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const idParam = params.get("id");
+    const id = Number(idParam || 0);
+    const source = params.get("source") || "";
+    const projectId = params.get("projectId") || "";
+    const financementIdParam = params.get("financementId") || "";
+    const returnUrlParam = params.get("returnUrl") || "";
+
+    const result = document.getElementById("result");
+    const statusTag = document.getElementById("statusTag");
+    const rId = document.getElementById("rId");
+    const rFinLink = document.getElementById("rFinLink");
+    const backLink = document.getElementById("backLink");
+    const rDate = document.getElementById("rDate");
+    const rDu = document.getElementById("rDu");
+    const rPaye = document.getElementById("rPaye");
+    const rReste = document.getElementById("rReste");
+    const payLink = document.getElementById("payLink");
+    const projectMap = {};
+
+    (function enforceRoleRouting(){
+      try {
+        if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function") {
+          const role = String(window.javaBridge.getCurrentUserRole() || "");
+          if (role === "INVESTISSEUR") {
+            const target = `remboursement-detail-investisseur.html?id=${encodeURIComponent(String(id || 0))}`;
+            window.location.href = target;
+          }
+        }
+      } catch (e) {}
+    })();
+
+    function money(n){
+      return new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    }
+
+    function round2(n){
+      return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+    }
+
+    function paidCapped(du, paye){
+      const d = Math.max(0, Number(du) || 0);
+      const p = Math.max(0, Number(paye) || 0);
+      return Math.min(d, p);
+    }
+
+    function setStatus(st){
+      const v = String(st || "EN_ATTENTE");
+      statusTag.className = v === "PAYE" ? "tag ok" : "tag pending";
+      statusTag.innerHTML = v === "PAYE"
+        ? '<span class="tagDot"></span>PAYE'
+        : '<span class="tagDot"></span>EN_ATTENTE';
+    }
+
+    function loadProjectsFromDb(){
+      if (!window.javaBridge || typeof window.javaBridge.getProjectsJson !== "function") return;
+      try {
+        const projects = JSON.parse(String(window.javaBridge.getProjectsJson() || "[]"));
+        (Array.isArray(projects) ? projects : []).forEach(p => {
+          projectMap[String(p.id)] = String(p.name || "");
+        });
+      } catch (e) {}
+    }
+
+    function computeEcheanceOrdinal(remboursementId, finId){
+      try {
+        if (!window.javaBridge || typeof window.javaBridge.getRemboursementsByFinancementJson !== "function") return 0;
+        const fid = Number(finId || 0);
+        if (!fid) return 0;
+        const rows = JSON.parse(String(window.javaBridge.getRemboursementsByFinancementJson(fid) || "[]"));
+        if (!Array.isArray(rows) || !rows.length) return 0;
+        const sorted = rows.slice().sort((a, b) => {
+          const da = Date.parse(String(a.dateEcheance || ""));
+          const db = Date.parse(String(b.dateEcheance || ""));
+          const va = Number.isFinite(da) ? da : Number.MAX_SAFE_INTEGER;
+          const vb = Number.isFinite(db) ? db : Number.MAX_SAFE_INTEGER;
+          if (va !== vb) return va - vb;
+          return Number(a.id || 0) - Number(b.id || 0);
+        });
+        const idx = sorted.findIndex(x => Number(x.id || 0) === Number(remboursementId || 0));
+        return idx >= 0 ? (idx + 1) : 0;
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    function loadRemboursement(){
+      if (!id) {
+        result.style.display = "block";
+        result.textContent = "ID remboursement manquant.";
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.getRemboursementByIdJson !== "function") return;
+      try {
+        const r = JSON.parse(window.javaBridge.getRemboursementByIdJson(id));
+        if (!r || !r.id) {
+          result.style.display = "block";
+          result.textContent = "Aucun remboursement trouve.";
+          return;
+        }
+        const effectiveFinId = String(r.financementId || financementIdParam || "");
+        const ord = computeEcheanceOrdinal(r.id, effectiveFinId);
+        rId.textContent = ord > 0 ? String(ord) : "-";
+        let projectIdOfFin = "";
+        if (effectiveFinId && window.javaBridge && typeof window.javaBridge.getFinancementByIdJson === "function") {
+          try {
+            const fin = JSON.parse(String(window.javaBridge.getFinancementByIdJson(Number(effectiveFinId)) || "{}"));
+            if (fin && fin.projectId) projectIdOfFin = String(fin.projectId);
+          } catch (e) {}
+        }
+        const projectName = projectIdOfFin ? (projectMap[String(projectIdOfFin)] || ("Projet #" + projectIdOfFin)) : "-";
+        rFinLink.textContent = projectName;
+        rFinLink.href = projectIdOfFin
+          ? `../projet/projet-detail.html?id=${encodeURIComponent(projectIdOfFin)}`
+          : "#";
+        if (backLink) {
+          if (returnUrlParam) {
+            backLink.href = returnUrlParam;
+          } else if (effectiveFinId) {
+            if (source === "entrepreneur" && projectId) {
+              backLink.href = `remboursements-financement.html?source=entrepreneur&projectId=${encodeURIComponent(String(projectId))}&financementId=${encodeURIComponent(effectiveFinId)}`;
+            } else {
+              backLink.href = `remboursements-financement.html?financementId=${encodeURIComponent(effectiveFinId)}`;
+            }
+          } else {
+            backLink.href = "remboursements-financement.html";
+          }
+        }
+
+        rDate.textContent = r.dateEcheance || "-";
+        const du = Number(r.montantDu || 0);
+        const paye = paidCapped(du, Number(r.montantPaye || 0));
+        const reste = Math.max(0, round2(du - paye));
+        const statutCalc = (du > 0 && paye + 1e-9 >= du) ? "PAYE" : "EN_ATTENTE";
+        rDu.textContent = money(du);
+        rPaye.textContent = money(paye);
+        rReste.textContent = money(reste);
+        setStatus(statutCalc);
+
+        if (payLink) {
+          payLink.href = `remboursement-pay.html?id=${encodeURIComponent(String(r.id))}`;
+          payLink.style.pointerEvents = (statutCalc === "PAYE") ? "none" : "";
+          payLink.style.opacity = (statutCalc === "PAYE") ? "0.55" : "";
+        }
+      } catch (e) {
+        result.style.display = "block";
+        result.textContent = "Erreur chargement remboursement.";
+      }
+    }
+
+    function deleteRemboursement(){
+      if (!id) return;
+      result.style.display = "block";
+      result.textContent = "Suppression en cours...";
+      if (!window.javaBridge || typeof window.javaBridge.deleteRemboursementFromJs !== "function") {
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      const payload = new URLSearchParams({ id: String(id) }).toString();
+      const raw = window.javaBridge.deleteRemboursementFromJs(payload);
+      if (raw !== undefined && raw !== null && raw !== "") {
+        handleDeleteResult(raw);
+      }
+    }
+    window.deleteRemboursement = deleteRemboursement;
+
+    function handleDeleteResult(raw){
+      if (raw === undefined || raw === null || raw === "") {
+        result.style.display = "block";
+        result.textContent = "Erreur: reponse vide du bridge.";
+        return;
+      }
+      const res = JSON.parse(String(raw));
+      result.style.display = "block";
+      result.textContent = res.ok ? "Remboursement supprime." : ("Erreur: " + (res.message || "inconnue"));
+      if (res.ok) {
+        window.location.href = backLink ? backLink.href : "remboursements-list.html";
+      }
+    }
+    window.onDeleteResult = handleDeleteResult;
+
+    // Paiement: utilise la page `remboursement-pay.html` (formulaire)
+
+    window.onJavaBridgeReady = function(){
+      loadProjectsFromDb();
+      loadRemboursement();
+    };
+
+    function waitForBridge(retries){
+      if (window.javaBridge) { window.onJavaBridgeReady(); return; }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(20);
+  </script>
+</body>
+</html>

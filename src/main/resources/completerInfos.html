@@ -21,9 +21,9 @@
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       background:
-        radial-gradient(800px 320px at 10% 0%, rgba(18,65,138,.12), transparent 60%),
-        radial-gradient(900px 360px at 100% 0%, rgba(11,42,85,.10), transparent 60%),
-        var(--bg);
+              radial-gradient(800px 320px at 10% 0%, rgba(18,65,138,.12), transparent 60%),
+              radial-gradient(900px 360px at 100% 0%, rgba(11,42,85,.10), transparent 60%),
+              var(--bg);
       color:var(--text);
     }
     .wrap{
@@ -265,495 +265,553 @@
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <section class="card">
-      <button class="back-btn" type="button" onclick="goBackToLogin()">â† Retour</button>
-      <h1>Completer vos informations</h1>
-      <p>
-        Cette etape est obligatoire lors de votre premiere connexion.
-        Votre dossier sera envoye a l'administrateur pour verification.
-      </p>
+<main class="wrap">
+  <section class="card">
+    <button class="back-btn" type="button" onclick="goBackToLogin()">Retour</button>
+    <h1>Completer vos informations</h1>
+    <p>
+      Cette etape est obligatoire lors de votre premiere connexion.
+      Votre dossier sera envoye a l'administrateur pour verification.
+    </p>
 
-      <form id="profileForm" novalidate>
-        <div class="grid">
-          <div>
-            <label for="dateNaissance">Date naissance</label>
-            <div class="date-picker">
-              <input id="dateNaissance" type="text" readonly placeholder="YYYY-MM-DD" />
-            </div>
-          </div>
-          <div>
-            <label for="nationalite">Nationalite</label>
-            <input id="nationalite" placeholder="Ex: Tunisienne" />
-          </div>
-          <div>
-            <label for="ville">Ville</label>
-            <input id="ville" placeholder="Ex: Sfax" />
-          </div>
-          <div>
-            <label for="photoUrl">Photo profil</label>
-            <input id="photoUrl" type="hidden" />
-            <div class="file-picker">
-              <input id="photoUrlDisplay" readonly placeholder="Aucune image selectionnee" />
-              <button class="btn secondary" type="button" onclick="pickImage('photoUrl','photoUrlDisplay','photo_profil')">Charger image</button>
-            </div>
-          </div>
-          <div class="span2">
-            <label for="adresse">Adresse *</label>
-            <input id="adresse" required placeholder="Adresse complete" />
-          </div>
-          <div>
-            <label for="rib">RIB *</label>
-            <input id="rib" required maxlength="34" placeholder="RIB" />
-            <div style="margin-top:6px; font-size:12px; color:#64748b;">
-              Format: 10 a 34 chiffres (0-9), sans lettres.
-            </div>
-          </div>
-          <div>
-            <label for="cinRectoUrl">CIN recto PDF *</label>
-            <input id="cinRectoUrl" type="hidden" />
-            <div class="pdf-picker">
-              <input id="cinRectoUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
-              <button class="btn secondary" type="button" onclick="pickPdf('cinRectoUrl','cinRectoUrlDisplay','cin_recto')">Charger PDF</button>
-            </div>
-          </div>
-          <div>
-            <label for="cinVersoUrl">CIN verso PDF *</label>
-            <input id="cinVersoUrl" type="hidden" />
-            <div class="pdf-picker">
-              <input id="cinVersoUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
-              <button class="btn secondary" type="button" onclick="pickPdf('cinVersoUrl','cinVersoUrlDisplay','cin_verso')">Charger PDF</button>
-            </div>
-          </div>
-          <div>
-            <label for="justificatifDomicileUrl">Justificatif domicile PDF *</label>
-            <input id="justificatifDomicileUrl" type="hidden" />
-            <div class="pdf-picker">
-              <input id="justificatifDomicileUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
-              <button class="btn secondary" type="button" onclick="pickPdf('justificatifDomicileUrl','justificatifDomicileUrlDisplay','justificatif_domicile')">Charger PDF</button>
-            </div>
-          </div>
-          <div class="span2">
-            <label for="bio">Bio</label>
-            <textarea id="bio" placeholder="Presentation de votre activite"></textarea>
-          </div>
-          <div>
-            <label for="registreCommerceUrl">Registre commerce PDF</label>
-            <input id="registreCommerceUrl" type="hidden" />
-            <div class="pdf-picker">
-              <input id="registreCommerceUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
-              <button class="btn secondary" type="button" onclick="pickPdf('registreCommerceUrl','registreCommerceUrlDisplay','registre_commerce')">Charger PDF</button>
-            </div>
-          </div>
-          <div>
-            <label for="patenteUrl">Patente PDF</label>
-            <input id="patenteUrl" type="hidden" />
-            <div class="pdf-picker">
-              <input id="patenteUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
-              <button class="btn secondary" type="button" onclick="pickPdf('patenteUrl','patenteUrlDisplay','patente')">Charger PDF</button>
-            </div>
-          </div>
-          <div>
-            <label for="matriculeFiscalUrl">Matricule fiscal PDF</label>
-            <input id="matriculeFiscalUrl" type="hidden" />
-            <div class="pdf-picker">
-              <input id="matriculeFiscalUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
-              <button class="btn secondary" type="button" onclick="pickPdf('matriculeFiscalUrl','matriculeFiscalUrlDisplay','matricule_fiscal')">Charger PDF</button>
-            </div>
-          </div>
-          <div>
-            <label for="carteFiscaleUrl">Carte fiscale PDF</label>
-            <input id="carteFiscaleUrl" type="hidden" />
-            <div class="pdf-picker">
-              <input id="carteFiscaleUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
-              <button class="btn secondary" type="button" onclick="pickPdf('carteFiscaleUrl','carteFiscaleUrlDisplay','carte_fiscale')">Charger PDF</button>
-            </div>
-          </div>
-          <div class="span2">
-            <label>Secteurs</label>
-            <div class="chips" id="secteursGroup">
-              <label class="chip"><input type="checkbox" value="AGRITECH"> AGRITECH</label>
-              <label class="chip"><input type="checkbox" value="EDTECH"> EDTECH</label>
-              <label class="chip"><input type="checkbox" value="FINTECH"> FINTECH</label>
-              <label class="chip"><input type="checkbox" value="HEALTHTECH"> HEALTHTECH</label>
-              <label class="chip"><input type="checkbox" value="GREENTECH"> GREENTECH</label>
-              <label class="chip"><input type="checkbox" value="INDUSTRIE"> INDUSTRIE</label>
-              <label class="chip"><input type="checkbox" value="SERVICES"> SERVICES</label>
-              <label class="chip"><input id="secteurAutre" type="checkbox" value="AUTRE" onchange="toggleAutreInput()"> AUTRE</label>
-            </div>
-            <div id="autreSecteurWrap" class="hidden" style="margin-top:10px;">
-              <label for="autreSecteur">Precisez autre secteur *</label>
-              <input id="autreSecteur" placeholder="Ex: LOGISTIQUE" />
-            </div>
+    <form id="profileForm" novalidate>
+      <div class="grid">
+        <div>
+          <label for="dateNaissance">Date naissance</label>
+          <div class="date-picker">
+            <input id="dateNaissance" type="text" readonly placeholder="YYYY-MM-DD" />
           </div>
         </div>
-
-        <div class="actions">
-          <button class="btn primary" type="submit">Valider mes informations</button>
+        <div>
+          <label for="nationalite">Nationalite</label>
+          <input id="nationalite" placeholder="Ex: Tunisienne" />
         </div>
-
-        <div id="okBox" class="alert ok"></div>
-        <div id="errBox" class="alert err"></div>
-      </form>
-    </section>
-  </main>
-  <div class="calendar-overlay" id="birthCalendarOverlay">
-    <div class="calendar-box">
-      <div class="calendar-head">
-        <div class="calendar-title">
-          <select id="calMonthSelect" class="calendar-select"></select>
-          <select id="calYearSelect" class="calendar-select"></select>
+        <div>
+          <label for="ville">Ville</label>
+          <input id="ville" placeholder="Ex: Sfax" />
+        </div>
+        <div>
+          <label for="photoUrl">Photo profil</label>
+          <input id="photoUrl" type="hidden" />
+          <div class="file-picker">
+            <input id="photoUrlDisplay" readonly placeholder="Aucune image selectionnee" />
+            <button class="btn secondary" type="button" onclick="pickImage('photoUrl','photoUrlDisplay','photo_profil')">Charger image</button>
+          </div>
+        </div>
+        <div class="span2">
+          <label for="adresse">Adresse *</label>
+          <input id="adresse" required placeholder="Adresse complete" />
+        </div>
+        <div>
+          <label for="rib">RIB *</label>
+          <input id="rib" required maxlength="34" placeholder="RIB" />
+          <div style="margin-top:6px; font-size:12px; color:#64748b;">
+            Format: 10 a 34 chiffres (0-9), sans lettres.
+          </div>
+        </div>
+        <div>
+          <label for="cinRectoUrl">CIN recto PDF *</label>
+          <input id="cinRectoUrl" type="hidden" />
+          <div class="pdf-picker">
+            <input id="cinRectoUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
+            <button class="btn secondary" type="button" onclick="pickPdf('cinRectoUrl','cinRectoUrlDisplay','cin_recto')">Charger PDF</button>
+          </div>
+        </div>
+        <div>
+          <label for="cinVersoUrl">CIN verso PDF *</label>
+          <input id="cinVersoUrl" type="hidden" />
+          <div class="pdf-picker">
+            <input id="cinVersoUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
+            <button class="btn secondary" type="button" onclick="pickPdf('cinVersoUrl','cinVersoUrlDisplay','cin_verso')">Charger PDF</button>
+          </div>
+        </div>
+        <div>
+          <label for="justificatifDomicileUrl">Justificatif domicile PDF *</label>
+          <input id="justificatifDomicileUrl" type="hidden" />
+          <div class="pdf-picker">
+            <input id="justificatifDomicileUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
+            <button class="btn secondary" type="button" onclick="pickPdf('justificatifDomicileUrl','justificatifDomicileUrlDisplay','justificatif_domicile')">Charger PDF</button>
+          </div>
+        </div>
+        <div class="span2">
+          <label for="bio">Bio</label>
+          <textarea id="bio" placeholder="Presentation de votre activite"></textarea>
+        </div>
+        <div>
+          <label for="registreCommerceUrl">Registre commerce PDF</label>
+          <input id="registreCommerceUrl" type="hidden" />
+          <div class="pdf-picker">
+            <input id="registreCommerceUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
+            <button class="btn secondary" type="button" onclick="pickPdf('registreCommerceUrl','registreCommerceUrlDisplay','registre_commerce')">Charger PDF</button>
+          </div>
+        </div>
+        <div>
+          <label for="patenteUrl">Patente PDF</label>
+          <input id="patenteUrl" type="hidden" />
+          <div class="pdf-picker">
+            <input id="patenteUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
+            <button class="btn secondary" type="button" onclick="pickPdf('patenteUrl','patenteUrlDisplay','patente')">Charger PDF</button>
+          </div>
+        </div>
+        <div>
+          <label for="matriculeFiscalUrl">Matricule fiscal PDF</label>
+          <input id="matriculeFiscalUrl" type="hidden" />
+          <div class="pdf-picker">
+            <input id="matriculeFiscalUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
+            <button class="btn secondary" type="button" onclick="pickPdf('matriculeFiscalUrl','matriculeFiscalUrlDisplay','matricule_fiscal')">Charger PDF</button>
+          </div>
+        </div>
+        <div>
+          <label for="carteFiscaleUrl">Carte fiscale PDF</label>
+          <input id="carteFiscaleUrl" type="hidden" />
+          <div class="pdf-picker">
+            <input id="carteFiscaleUrlDisplay" readonly placeholder="Aucun fichier selectionne" />
+            <button class="btn secondary" type="button" onclick="pickPdf('carteFiscaleUrl','carteFiscaleUrlDisplay','carte_fiscale')">Charger PDF</button>
+          </div>
+        </div>
+        <div class="span2">
+          <label>Secteurs</label>
+          <div class="chips" id="secteursGroup">
+            <label class="chip"><input type="checkbox" value="AGRITECH"> AGRITECH</label>
+            <label class="chip"><input type="checkbox" value="EDTECH"> EDTECH</label>
+            <label class="chip"><input type="checkbox" value="FINTECH"> FINTECH</label>
+            <label class="chip"><input type="checkbox" value="HEALTHTECH"> HEALTHTECH</label>
+            <label class="chip"><input type="checkbox" value="GREENTECH"> GREENTECH</label>
+            <label class="chip"><input type="checkbox" value="INDUSTRIE"> INDUSTRIE</label>
+            <label class="chip"><input type="checkbox" value="SERVICES"> SERVICES</label>
+            <label class="chip"><input id="secteurAutre" type="checkbox" value="AUTRE" onchange="toggleAutreInput()"> AUTRE</label>
+          </div>
+          <div id="autreSecteurWrap" class="hidden" style="margin-top:10px;">
+            <label for="autreSecteur">Precisez autre secteur *</label>
+            <input id="autreSecteur" placeholder="Ex: LOGISTIQUE" />
+          </div>
         </div>
       </div>
-      <div class="calendar-grid" id="calDowRow"></div>
-      <div class="calendar-grid" id="calDaysGrid"></div>
-      <div class="calendar-foot">
-        <button class="btn secondary" type="button" id="calTodayBtn">Aujourd hui</button>
-        <button class="btn secondary" type="button" id="calCloseBtn">Fermer</button>
+
+      <div class="actions">
+        <button class="btn primary" type="submit">Valider mes informations</button>
+      </div>
+
+      <div id="okBox" class="alert ok"></div>
+      <div id="errBox" class="alert err"></div>
+    </form>
+  </section>
+</main>
+<div class="calendar-overlay" id="birthCalendarOverlay">
+  <div class="calendar-box">
+    <div class="calendar-head">
+      <div class="calendar-title">
+        <select id="calMonthSelect" class="calendar-select"></select>
+        <select id="calYearSelect" class="calendar-select"></select>
       </div>
     </div>
+    <div class="calendar-grid" id="calDowRow"></div>
+    <div class="calendar-grid" id="calDaysGrid"></div>
+    <div class="calendar-foot">
+      <button class="btn secondary" type="button" id="calTodayBtn">Aujourd hui</button>
+      <button class="btn secondary" type="button" id="calCloseBtn">Fermer</button>
+    </div>
   </div>
-  <script>
-    const form = document.getElementById("profileForm");
-    const okBox = document.getElementById("okBox");
-    const errBox = document.getElementById("errBox");
-    const autreCheckbox = document.getElementById("secteurAutre");
-    const autreSecteurWrap = document.getElementById("autreSecteurWrap");
-    const autreSecteurInput = document.getElementById("autreSecteur");
-    const secteurInputs = Array.from(document.querySelectorAll('#secteursGroup input[type="checkbox"]'));
+</div>
+<script>
+  const form = document.getElementById("profileForm");
+  const okBox = document.getElementById("okBox");
+  const errBox = document.getElementById("errBox");
+  const autreCheckbox = document.getElementById("secteurAutre");
+  const autreSecteurWrap = document.getElementById("autreSecteurWrap");
+  const autreSecteurInput = document.getElementById("autreSecteur");
+  const secteurInputs = Array.from(document.querySelectorAll('#secteursGroup input[type="checkbox"]'));
 
-    function showOk(msg){
-      okBox.textContent = msg;
-      okBox.style.display = "block";
-      errBox.style.display = "none";
-    }
-    function showErr(msg){
-      errBox.textContent = msg;
-      errBox.style.display = "block";
-      okBox.style.display = "none";
-    }
-    function getBridge(){
-      return window.javaBridge || null;
-    }
-    function withBridge(onReady, onFail){
-      const start = Date.now();
-      const timer = setInterval(() => {
-        if (window.javaBridge) {
-          clearInterval(timer);
-          onReady(window.javaBridge);
-          return;
-        }
-        if (Date.now() - start > 2500) {
-          clearInterval(timer);
-          if (onFail) onFail();
-        }
-      }, 100);
-    }
-    function getSecteursCsv(){
-      const checks = Array.from(document.querySelectorAll("#secteursGroup input[type=checkbox]:checked"));
-      return checks.map(c => c.value).join(",");
-    }
-    function normalizeRib(value){
-      return (value || "").replace(/\s+/g, "").trim();
-    }
-    function isValidRib(value){
-      const rib = normalizeRib(value);
-      return /^[0-9]{10,34}$/.test(rib);
-    }
-    function getPdfStoredPath(id){
-      const el = document.getElementById(id);
-      if (!el) return "";
-      return (el.value || "").trim();
-    }
-    function getDisplayFileName(path){
-      if (!path) return "";
-      const normalized = path.split("\\").join("/");
-      const idx = normalized.lastIndexOf("/");
-      return idx >= 0 ? normalized.substring(idx + 1) : normalized;
-    }
-    function isPdfName(name){
-      return !!name && name.toLowerCase().endsWith(".pdf");
-    }
-    function pickPdf(targetInputId, displayInputId, docType){
-      const bridge = getBridge();
-      if (!bridge || typeof bridge.uploadPdf !== "function") {
-        showErr("Bridge Java indisponible pour upload PDF.");
-        return;
-      }
-      const res = bridge.uploadPdf(docType);
-      if (!res) return;
-      if (res.startsWith("ERROR:")) {
-        showErr(res.replace("ERROR:", ""));
-        return;
-      }
-      document.getElementById(targetInputId).value = res;
-      document.getElementById(displayInputId).value = getDisplayFileName(res);
-      showOk("PDF charge avec succes.");
-    }
-    window.pickPdf = pickPdf;
-    function pickImage(targetInputId, displayInputId, docType){
-      const bridge = getBridge();
-      if (!bridge || typeof bridge.uploadImage !== "function") {
-        showErr("Bridge Java indisponible pour upload image.");
-        return;
-      }
-      const res = bridge.uploadImage(docType);
-      if (!res) return;
-      if (res.startsWith("ERROR:")) {
-        showErr(res.replace("ERROR:", ""));
-        return;
-      }
-      document.getElementById(targetInputId).value = res;
-      document.getElementById(displayInputId).value = getDisplayFileName(res);
-      showOk("Image chargee avec succes.");
-    }
-    window.pickImage = pickImage;
-    const birthInput = document.getElementById("dateNaissance");
-    const calOverlay = document.getElementById("birthCalendarOverlay");
-    const calMonthSelect = document.getElementById("calMonthSelect");
-    const calYearSelect = document.getElementById("calYearSelect");
-    const calDowRow = document.getElementById("calDowRow");
-    const calDaysGrid = document.getElementById("calDaysGrid");
-    const calTodayBtn = document.getElementById("calTodayBtn");
-    const calCloseBtn = document.getElementById("calCloseBtn");
-    const DOW = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
-    const MONTHS = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
-    let calViewDate = new Date();
+  function showOk(msg){
+    okBox.textContent = msg;
+    okBox.style.display = "block";
+    errBox.style.display = "none";
+  }
+  function showErr(msg){
+    errBox.textContent = msg;
+    errBox.style.display = "block";
+    okBox.style.display = "none";
+  }
+  function getBridge(){
+    return window.javaBridge
+            || window.javaBridgeUpload
+            || window.javaBridgeInvest
+            || window.app
+            || window.Bridge
+            || null;
+  }
 
-    function toIsoDate(d){
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    }
-    function parseIsoDate(v){
-      if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
-      const [y,m,d] = v.split("-").map(Number);
-      const dt = new Date(y, m - 1, d);
-      if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-      return dt;
-    }
-    function startOfCalendarGrid(view){
-      const first = new Date(view.getFullYear(), view.getMonth(), 1);
-      const day = (first.getDay() + 6) % 7;
-      first.setDate(first.getDate() - day);
-      return first;
-    }
-    function renderBirthCalendar(){
-      calMonthSelect.innerHTML = MONTHS.map((m, idx) => `<option value="${idx}">${m}</option>`).join("");
-      const thisYear = new Date().getFullYear();
-      const minYear = thisYear - 100;
-      const maxYear = thisYear + 1;
-      const years = [];
-      for (let y = minYear; y <= maxYear; y++) years.push(y);
-      calYearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
-      calMonthSelect.value = String(calViewDate.getMonth());
-      calYearSelect.value = String(calViewDate.getFullYear());
-      calDowRow.innerHTML = DOW.map(d => `<div class="calendar-dow">${d}</div>`).join("");
-      const selected = parseIsoDate((birthInput.value || "").trim());
-      const gridStart = startOfCalendarGrid(calViewDate);
-      const items = [];
-      for (let i = 0; i < 42; i++) {
-        const d = new Date(gridStart);
-        d.setDate(gridStart.getDate() + i);
-        const inMonth = d.getMonth() === calViewDate.getMonth();
-        const isSelected = selected && toIsoDate(d) === toIsoDate(selected);
-        items.push(`<button type="button" class="calendar-day${inMonth ? "" : " muted"}${isSelected ? " selected" : ""}" data-date="${toIsoDate(d)}" ${inMonth ? "" : "tabindex=\"-1\""}>${d.getDate()}</button>`);
+  function bridgeOk(){
+    const b = getBridge();
+    return !!b;
+  }
+  function withBridge(onReady, onFail){
+    const start = Date.now();
+    const timer = setInterval(() => {
+      if (window.javaBridge) {
+        clearInterval(timer);
+        onReady(window.javaBridge);
+        return;
       }
-      calDaysGrid.innerHTML = items.join("");
-      calDaysGrid.querySelectorAll(".calendar-day").forEach(btn => {
-        if (btn.classList.contains("muted")) return;
-        btn.addEventListener("click", () => {
-          birthInput.value = btn.dataset.date;
-          closeBirthCalendar();
-        });
+      if (Date.now() - start > 2500) {
+        clearInterval(timer);
+        if (onFail) onFail();
+      }
+    }, 100);
+  }
+  function getSecteursCsv(){
+    const checks = Array.from(document.querySelectorAll("#secteursGroup input[type=checkbox]:checked"));
+    return checks.map(c => c.value).join(",");
+  }
+  function normalizeRib(value){
+    return (value || "").replace(/\s+/g, "").trim();
+  }
+  function isValidRib(value){
+    const rib = normalizeRib(value);
+    return /^[0-9]{10,34}$/.test(rib);
+  }
+  function getPdfStoredPath(id){
+    const el = document.getElementById(id);
+    if (!el) return "";
+    return (el.value || "").trim();
+  }
+  function getDisplayFileName(path){
+    if (!path) return "";
+    const normalized = path.split("\\").join("/");
+    const idx = normalized.lastIndexOf("/");
+    return idx >= 0 ? normalized.substring(idx + 1) : normalized;
+  }
+  function isPdfName(name){
+    return !!name && name.toLowerCase().endsWith(".pdf");
+  }
+  function pickPdf(targetInputId, displayInputId, docType){
+    const bridge = getBridge();
+    if (!bridge || typeof bridge.uploadPdf !== "function") {
+      showErr("Bridge Java indisponible pour upload PDF.");
+      return;
+    }
+    const res = bridge.uploadPdf(docType);
+    if (!res) return;
+    if (res.startsWith("ERROR:")) {
+      showErr(res.replace("ERROR:", ""));
+      return;
+    }
+    document.getElementById(targetInputId).value = res;
+    document.getElementById(displayInputId).value = getDisplayFileName(res);
+    showOk("PDF charge avec succes.");
+  }
+  window.pickPdf = pickPdf;
+  function pickImage(targetInputId, displayInputId, docType){
+    const bridge = getBridge();
+    if (!bridge || typeof bridge.uploadImage !== "function") {
+      showErr("Bridge Java indisponible pour upload image.");
+      return;
+    }
+    const res = bridge.uploadImage(docType);
+    if (!res) return;
+    if (res.startsWith("ERROR:")) {
+      showErr(res.replace("ERROR:", ""));
+      return;
+    }
+    document.getElementById(targetInputId).value = res;
+    document.getElementById(displayInputId).value = getDisplayFileName(res);
+    showOk("Image chargee avec succes.");
+  }
+  window.pickImage = pickImage;
+  const birthInput = document.getElementById("dateNaissance");
+  const calOverlay = document.getElementById("birthCalendarOverlay");
+  const calMonthSelect = document.getElementById("calMonthSelect");
+  const calYearSelect = document.getElementById("calYearSelect");
+  const calDowRow = document.getElementById("calDowRow");
+  const calDaysGrid = document.getElementById("calDaysGrid");
+  const calTodayBtn = document.getElementById("calTodayBtn");
+  const calCloseBtn = document.getElementById("calCloseBtn");
+  const DOW = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+  const MONTHS = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+  let calViewDate = new Date();
+
+  function toIsoDate(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+  function parseIsoDate(v){
+    if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+    const [y,m,d] = v.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return dt;
+  }
+  function startOfCalendarGrid(view){
+    const first = new Date(view.getFullYear(), view.getMonth(), 1);
+    const day = (first.getDay() + 6) % 7;
+    first.setDate(first.getDate() - day);
+    return first;
+  }
+  function renderBirthCalendar(){
+    calMonthSelect.innerHTML = MONTHS.map((m, idx) => `<option value="${idx}">${m}</option>`).join("");
+    const thisYear = new Date().getFullYear();
+    const minYear = thisYear - 100;
+    const maxYear = thisYear + 1;
+    const years = [];
+    for (let y = minYear; y <= maxYear; y++) years.push(y);
+    calYearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+    calMonthSelect.value = String(calViewDate.getMonth());
+    calYearSelect.value = String(calViewDate.getFullYear());
+    calDowRow.innerHTML = DOW.map(d => `<div class="calendar-dow">${d}</div>`).join("");
+    const selected = parseIsoDate((birthInput.value || "").trim());
+    const gridStart = startOfCalendarGrid(calViewDate);
+    const items = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(gridStart);
+      d.setDate(gridStart.getDate() + i);
+      const inMonth = d.getMonth() === calViewDate.getMonth();
+      const isSelected = selected && toIsoDate(d) === toIsoDate(selected);
+      items.push(`<button type="button" class="calendar-day${inMonth ? "" : " muted"}${isSelected ? " selected" : ""}" data-date="${toIsoDate(d)}" ${inMonth ? "" : "tabindex=\"-1\""}>${d.getDate()}</button>`);
+    }
+    calDaysGrid.innerHTML = items.join("");
+    calDaysGrid.querySelectorAll(".calendar-day").forEach(btn => {
+      if (btn.classList.contains("muted")) return;
+      btn.addEventListener("click", () => {
+        birthInput.value = btn.dataset.date;
+        closeBirthCalendar();
       });
-    }
-    function openBirthCalendar(){
-      const existing = parseIsoDate((birthInput.value || "").trim());
-      calViewDate = existing || new Date();
-      renderBirthCalendar();
-      calOverlay.classList.add("open");
-    }
-    function closeBirthCalendar(){
-      calOverlay.classList.remove("open");
-    }
-    window.openBirthCalendar = openBirthCalendar;
-    birthInput.addEventListener("click", openBirthCalendar);
-    birthInput.addEventListener("focus", openBirthCalendar);
-    calMonthSelect.addEventListener("change", () => {
-      calViewDate = new Date(calViewDate.getFullYear(), Number(calMonthSelect.value), 1);
-      renderBirthCalendar();
     });
-    calYearSelect.addEventListener("change", () => {
-      calViewDate = new Date(Number(calYearSelect.value), calViewDate.getMonth(), 1);
-      renderBirthCalendar();
-    });
-    calTodayBtn.addEventListener("click", () => {
-      const now = new Date();
-      birthInput.value = toIsoDate(now);
-      calViewDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      renderBirthCalendar();
-    });
-    calCloseBtn.addEventListener("click", closeBirthCalendar);
-    calOverlay.addEventListener("click", (e) => {
-      if (e.target === calOverlay) closeBirthCalendar();
-    });
-    function goBackToLogin(){
-      const bridge = getBridge();
+  }
+  function openBirthCalendar(){
+    const existing = parseIsoDate((birthInput.value || "").trim());
+    calViewDate = existing || new Date();
+    renderBirthCalendar();
+    calOverlay.classList.add("open");
+  }
+  function closeBirthCalendar(){
+    calOverlay.classList.remove("open");
+  }
+  window.openBirthCalendar = openBirthCalendar;
+  birthInput.addEventListener("click", openBirthCalendar);
+  birthInput.addEventListener("focus", openBirthCalendar);
+  calMonthSelect.addEventListener("change", () => {
+    calViewDate = new Date(calViewDate.getFullYear(), Number(calMonthSelect.value), 1);
+    renderBirthCalendar();
+  });
+  calYearSelect.addEventListener("change", () => {
+    calViewDate = new Date(Number(calYearSelect.value), calViewDate.getMonth(), 1);
+    renderBirthCalendar();
+  });
+  calTodayBtn.addEventListener("click", () => {
+    const now = new Date();
+    birthInput.value = toIsoDate(now);
+    calViewDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    renderBirthCalendar();
+  });
+  calCloseBtn.addEventListener("click", closeBirthCalendar);
+  calOverlay.addEventListener("click", (e) => {
+    if (e.target === calOverlay) closeBirthCalendar();
+  });
+  function goBackToLogin(){
+    const bridge = getBridge();
+    try {
       if (bridge && typeof bridge.logout === "function") {
-        bridge.logout();
+        const out = bridge.logout();
+        if (!out || out === "OK") return;
       }
-    }
-    window.goBackToLogin = goBackToLogin;
-
-    function validatePdfInputs(){
-      const requiredIds = ["cinRectoUrl", "cinVersoUrl", "justificatifDomicileUrl"];
-      for (const id of requiredIds) {
-        const name = getPdfStoredPath(id);
-        if (!isPdfName(name)) return false;
+    } catch (e) {}
+    window.location.href = "login.html";
+    setTimeout(() => {
+      if (window.location.href.indexOf("login.html") === -1) {
+        window.location.href = "html/login.html";
       }
-      const optionalIds = ["registreCommerceUrl", "patenteUrl", "matriculeFiscalUrl", "carteFiscaleUrl"];
-      for (const id of optionalIds) {
-        const name = getPdfStoredPath(id);
-        if (name && !isPdfName(name)) return false;
-      }
-      return true;
-    }
-    function isAutreChecked(){
-      return !!(autreCheckbox && autreCheckbox.checked);
-    }
-    function toggleAutreInput(){
-      if (!autreSecteurWrap || !autreSecteurInput) return;
-      const show = isAutreChecked();
-      autreSecteurWrap.classList.toggle("hidden", !show);
-      autreSecteurWrap.style.display = show ? "block" : "none";
-      autreSecteurInput.required = show;
-      if (!show) autreSecteurInput.value = "";
-    }
-    window.toggleAutreInput = toggleAutreInput;
+    }, 200);
+  }
+  window.goBackToLogin = goBackToLogin;
 
-    function refreshSecteurStyles(){
-      secteurInputs.forEach((input) => {
-        const chip = input.closest(".chip");
-        if (!chip) return;
-        chip.classList.toggle("selected", input.checked);
-      });
+  function validatePdfInputs(){
+    const requiredIds = ["cinRectoUrl", "cinVersoUrl", "justificatifDomicileUrl"];
+    for (const id of requiredIds) {
+      const name = getPdfStoredPath(id);
+      if (!isPdfName(name)) return false;
     }
+    const optionalIds = ["registreCommerceUrl", "patenteUrl", "matriculeFiscalUrl", "carteFiscaleUrl"];
+    for (const id of optionalIds) {
+      const name = getPdfStoredPath(id);
+      if (name && !isPdfName(name)) return false;
+    }
+    return true;
+  }
+  function isAutreChecked(){
+    return !!(autreCheckbox && autreCheckbox.checked);
+  }
+  function toggleAutreInput(){
+    if (!autreSecteurWrap || !autreSecteurInput) return;
+    const show = isAutreChecked();
+    autreSecteurWrap.classList.toggle("hidden", !show);
+    autreSecteurWrap.style.display = show ? "block" : "none";
+    autreSecteurInput.required = show;
+    if (!show) autreSecteurInput.value = "";
+  }
+  window.toggleAutreInput = toggleAutreInput;
 
+  function refreshSecteurStyles(){
     secteurInputs.forEach((input) => {
-      input.addEventListener("change", () => {
-        refreshSecteurStyles();
-        if (input.value === "AUTRE") toggleAutreInput();
-      });
+      const chip = input.closest(".chip");
+      if (!chip) return;
+      chip.classList.toggle("selected", input.checked);
     });
-    if (autreCheckbox) {
-      autreCheckbox.addEventListener("change", toggleAutreInput);
-      toggleAutreInput();
-    }
-    refreshSecteurStyles();
+  }
 
-    let cachedCurrent = { user: null, profil: null };
-    function loadCurrentUserAndProfil(){
-      withBridge((bridge) => {
-        if (typeof bridge.getCurrentUserWithProfil !== "function") return;
-        try {
-          const payload = JSON.parse(bridge.getCurrentUserWithProfil() || "{}");
-          cachedCurrent = payload || { user: null, profil: null };
-          const u = cachedCurrent.user || {};
-          const p = cachedCurrent.profil || {};
-          if (u.dateNaissance) document.getElementById("dateNaissance").value = String(u.dateNaissance).slice(0, 10);
-          document.getElementById("nationalite").value = u.nationalite || "";
-          document.getElementById("ville").value = u.ville || "";
-          document.getElementById("photoUrl").value = p.photoUrl || "";
-          document.getElementById("photoUrlDisplay").value = p.photoUrl ? getDisplayFileName(p.photoUrl) : "";
-        } catch (e) {
-          cachedCurrent = { user: null, profil: null };
-        }
-      }, () => {});
-    }
-    try { loadCurrentUserAndProfil(); } catch (e) {}
+  secteurInputs.forEach((input) => {
+    input.addEventListener("change", () => {
+      refreshSecteurStyles();
+      if (input.value === "AUTRE") toggleAutreInput();
+    });
+  });
+  if (autreCheckbox) {
+    autreCheckbox.addEventListener("change", toggleAutreInput);
+    toggleAutreInput();
+  }
+  refreshSecteurStyles();
 
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      if (!form.checkValidity()) {
-        showErr("Veuillez remplir les champs obligatoires.");
-        return;
-      }
-      if (isAutreChecked() && !autreSecteurInput.value.trim()) {
-        showErr("Veuillez preciser le secteur 'AUTRE'.");
-        return;
-      }
-      if (!isValidRib(document.getElementById("rib").value)) {
-        showErr("RIB invalide. Utilisez uniquement des chiffres (10 a 34).");
-        return;
-      }
-      if (!validatePdfInputs()) {
-        showErr("Veuillez charger uniquement des fichiers PDF.");
-        return;
-      }
-
-      const bridge = getBridge();
-      if (!bridge || typeof bridge.submitProfileForVerification !== "function") {
-        showErr("Bridge Java indisponible.");
-        return;
-      }
-
-      if (typeof bridge.updateCurrentUserAndProfil === "function") {
+  let cachedCurrent = { user: null, profil: null };
+  function loadCurrentUserAndProfil(){
+    withBridge((bridge) => {
+      if (typeof bridge.getCurrentUserWithProfil !== "function") return;
+      try {
+        const payload = JSON.parse(bridge.getCurrentUserWithProfil() || "{}");
+        cachedCurrent = payload || { user: null, profil: null };
         const u = cachedCurrent.user || {};
-        const updateRes = bridge.updateCurrentUserAndProfil(
-          (u.nom || "").trim(),
-          (u.prenom || "").trim(),
-          (u.telephone || "").trim(),
-          (u.cin || "").trim(),
-          document.getElementById("dateNaissance").value.trim(),
-          document.getElementById("nationalite").value.trim(),
-          document.getElementById("adresse").value.trim(),
-          document.getElementById("ville").value.trim(),
-          document.getElementById("adresse").value.trim(),
-          normalizeRib(document.getElementById("rib").value),
-          document.getElementById("bio").value.trim(),
-          document.getElementById("photoUrl").value.trim(),
-          getSecteursCsv(),
-          autreSecteurInput.value.trim()
-        );
-        if (updateRes !== "OK") {
-          showErr((updateRes || "ERROR").replace("ERROR:", ""));
-          return;
-        }
+        const p = cachedCurrent.profil || {};
+        if (u.dateNaissance) document.getElementById("dateNaissance").value = String(u.dateNaissance).slice(0, 10);
+        document.getElementById("nationalite").value = u.nationalite || "";
+        document.getElementById("ville").value = u.ville || "";
+        document.getElementById("photoUrl").value = p.photoUrl || "";
+        document.getElementById("photoUrlDisplay").value = p.photoUrl ? getDisplayFileName(p.photoUrl) : "";
+      } catch (e) {
+        cachedCurrent = { user: null, profil: null };
       }
+    }, () => {});
+  }
+  try { loadCurrentUserAndProfil(); } catch (e) {}
 
-      const res = bridge.submitProfileForVerification(
-        document.getElementById("adresse").value.trim(),
-        getPdfStoredPath("cinRectoUrl"),
-        getPdfStoredPath("cinVersoUrl"),
-        getPdfStoredPath("justificatifDomicileUrl"),
-        normalizeRib(document.getElementById("rib").value),
-        document.getElementById("bio").value.trim(),
-        getPdfStoredPath("registreCommerceUrl"),
-        getPdfStoredPath("patenteUrl"),
-        getPdfStoredPath("matriculeFiscalUrl"),
-        getPdfStoredPath("carteFiscaleUrl"),
-        getSecteursCsv(),
-        autreSecteurInput.value.trim()
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) {
+      showErr("Veuillez remplir les champs obligatoires.");
+      return;
+    }
+    if (isAutreChecked() && !autreSecteurInput.value.trim()) {
+      showErr("Veuillez preciser le secteur 'AUTRE'.");
+      return;
+    }
+    if (!isValidRib(document.getElementById("rib").value)) {
+      showErr("RIB invalide. Utilisez uniquement des chiffres (10 a 34).");
+      return;
+    }
+    if (!validatePdfInputs()) {
+      showErr("Veuillez charger uniquement des fichiers PDF.");
+      return;
+    }
+
+    const bridge = getBridge();
+    if (!bridge || typeof bridge.submitProfileForVerification !== "function") {
+      showErr("Bridge Java indisponible.");
+      return;
+    }
+
+    if (typeof bridge.updateCurrentUserAndProfil === "function") {
+      const u = cachedCurrent.user || {};
+      const updateRes = bridge.updateCurrentUserAndProfil(
+              (u.nom || "").trim(),
+              (u.prenom || "").trim(),
+              (u.telephone || "").trim(),
+              (u.cin || "").trim(),
+              document.getElementById("dateNaissance").value.trim(),
+              document.getElementById("nationalite").value.trim(),
+              document.getElementById("adresse").value.trim(),
+              document.getElementById("ville").value.trim(),
+              document.getElementById("adresse").value.trim(),
+              normalizeRib(document.getElementById("rib").value),
+              document.getElementById("bio").value.trim(),
+              document.getElementById("photoUrl").value.trim(),
+              getSecteursCsv(),
+              autreSecteurInput.value.trim()
       );
-
-      if (res === "OK") {
-        showOk("Demande envoyee a l'admin. Votre compte sera bloque tant que la verification n'est pas validee.");
-        setTimeout(() => {
-          try {
-            if (typeof bridge.logout === "function") {
-              const out = bridge.logout();
-              if (out === "OK") return;
-            }
-          } catch (e) {}
-          window.location.href = "html/login.html";
-        }, 1200);
+      if (updateRes !== "OK") {
+        showErr((updateRes || "ERROR").replace("ERROR:", ""));
         return;
       }
+    }
 
-      showErr((res || "ERROR").replace("ERROR:", ""));
-    });
-  </script>
+    const res = bridge.submitProfileForVerification(
+            document.getElementById("adresse").value.trim(),
+            getPdfStoredPath("cinRectoUrl"),
+            getPdfStoredPath("cinVersoUrl"),
+            getPdfStoredPath("justificatifDomicileUrl"),
+            normalizeRib(document.getElementById("rib").value),
+            document.getElementById("bio").value.trim(),
+            getPdfStoredPath("registreCommerceUrl"),
+            getPdfStoredPath("patenteUrl"),
+            getPdfStoredPath("matriculeFiscalUrl"),
+            getPdfStoredPath("carteFiscaleUrl"),
+            getSecteursCsv(),
+            autreSecteurInput.value.trim()
+    );
+
+    if (res === "OK") {
+      showOk("Demande envoyee a l'admin. Votre compte sera bloque tant que la verification n'est pas validee.");
+      setTimeout(() => {
+        try {
+          if (typeof bridge.logout === "function") {
+            const out = bridge.logout();
+            if (out === "OK") return;
+          }
+        } catch (e) {}
+        window.location.href = "html/login.html";
+      }, 1200);
+      return;
+    }
+
+    showErr((res || "ERROR").replace("ERROR:", ""));
+  });
+
+  document.getElementById("btnSubmit").addEventListener("click", () => {
+    const adresse = document.getElementById("adresse").value;
+
+    const cinRectoUrl = document.getElementById("cinRectoUrl").value;
+    const cinVersoUrl = document.getElementById("cinVersoUrl").value;
+    const justificatifDomicileUrl = document.getElementById("justificatifDomicileUrl").value;
+
+    const rib = document.getElementById("rib").value;
+    const bio = document.getElementById("bio").value;
+
+    const registreCommerceUrl = document.getElementById("registreCommerceUrl").value;
+    const patenteUrl = document.getElementById("patenteUrl").value;
+    const matriculeFiscalUrl = document.getElementById("matriculeFiscalUrl").value;
+    const carteFiscaleUrl = document.getElementById("carteFiscaleUrl").value;
+
+    const secteursCsv = getSelectedSecteursCsv(); // selon ta logique (chips / checkbox)
+    const autreSecteur = document.getElementById("autreSecteur").value;
+
+    const res = window.bridge.submitProfileForVerification(
+            adresse,
+            cinRectoUrl,
+            cinVersoUrl,
+            justificatifDomicileUrl,
+            rib,
+            bio,
+            registreCommerceUrl,
+            patenteUrl,
+            matriculeFiscalUrl,
+            carteFiscaleUrl,
+            secteursCsv,
+            autreSecteur
+    );
+
+    if (String(res).startsWith("ERROR:")) { alert(res); return; }
+    window.location.href = "login.html?pending=1";
+  });
+</script>
 </body>
 </html>
+
+

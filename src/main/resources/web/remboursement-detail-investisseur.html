@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Detail remboursement (Investisseur)</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Detail</span>
+        <h1>Detail du remboursement</h1>
+        <p class="sub">Lecture seule.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="remboursements-investisseur.html">Retour liste</a>
+      </div>
+    </div>
+
+    <div class='note' id='result' style='display:none;'></div>
+
+    <section class="gridTop">
+      <div class="card">
+        <div class="rowHead">
+          <h2 class="title">Resume</h2>
+          <span class="tag pending" id="statusTag"><span class="tagDot"></span>EN_ATTENTE</span>
+        </div>
+        <div class="note" style="margin-top:0;">
+          <div><strong>ID:</strong> <span id="rId">-</span></div>
+          <div><strong>Projet:</strong> <span id="rProject">-</span></div>
+          <div><strong>Financement:</strong> <a class="softLink" id="rFinLink" href="#">#-</a></div>
+          <div><strong>Date echeance:</strong> <span id="rDate">-</span></div>
+          <div><strong>Montant du:</strong> <span id="rDu">-</span></div>
+          <div><strong>Montant paye:</strong> <span id="rPaye">-</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="rowHead">
+          <h2 class="title">Infos</h2>
+        </div>
+        <div class="note">
+          <div><strong>Reste a payer:</strong> <span id="rReste">-</span></div>
+          <div style="margin-top:8px;">Pour tout changement, contactez l'entrepreneur.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = Number(params.get("id") || 0);
+
+    const result = document.getElementById("result");
+    const statusTag = document.getElementById("statusTag");
+    const rId = document.getElementById("rId");
+    const rProject = document.getElementById("rProject");
+    const rFinLink = document.getElementById("rFinLink");
+    const rDate = document.getElementById("rDate");
+    const rDu = document.getElementById("rDu");
+    const rPaye = document.getElementById("rPaye");
+    const rReste = document.getElementById("rReste");
+
+    function money(n){
+      return new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    }
+
+    function setStatus(st){
+      const v = String(st || "EN_ATTENTE");
+      statusTag.className = v === "PAYE" ? "tag ok" : "tag pending";
+      statusTag.innerHTML = v === "PAYE"
+        ? '<span class="tagDot"></span>PAYE'
+        : '<span class="tagDot"></span>EN_ATTENTE';
+    }
+
+    function loadRemboursement(){
+      if (!id) {
+        result.style.display = "block";
+        result.textContent = "ID remboursement manquant.";
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.getRemboursementByIdJson !== "function") return;
+      try {
+        const r = JSON.parse(String(window.javaBridge.getRemboursementByIdJson(id) || "{}"));
+        if (!r || !r.id) {
+          result.style.display = "block";
+          result.textContent = "Aucun remboursement trouve.";
+          return;
+        }
+
+        rId.textContent = String(r.id);
+        rFinLink.textContent = "#" + r.financementId;
+        rFinLink.href = `../financement/financement-detail.html?id=${encodeURIComponent(String(r.financementId))}`;
+
+        rDate.textContent = r.dateEcheance || "-";
+        const du = Number(r.montantDu || 0);
+        const paye = Number(r.montantPaye || 0);
+        rDu.textContent = money(du);
+        rPaye.textContent = money(paye);
+        rReste.textContent = money(Math.max(0, du - paye));
+        setStatus(r.statut);
+
+        // Optional extras (if provided by DB join in the future)
+        if (r.projectName) rProject.textContent = String(r.projectName);
+        else if (r.projectId) rProject.textContent = "Projet #" + String(r.projectId);
+      } catch (e) {
+        result.style.display = "block";
+        result.textContent = "Erreur chargement remboursement.";
+      }
+    }
+
+    function init(){
+      loadRemboursement();
+    }
+    window.onJavaBridgeReady = init;
+
+    function waitForBridge(retries){
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) {
+        result.style.display = "block";
+        result.textContent = "Bridge Java indisponible.";
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(30);
+  </script>
+</body>
+</html>
+

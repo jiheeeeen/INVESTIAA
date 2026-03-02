@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Detail projet</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Projet - Suivi</span>
+        <h1>Detail du projet</h1>
+        <p class="sub">Suivi et progression du projet.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="../financement/financements-list.html">Retour financements</a>
+      </div>
+    </div>
+
+    <div class='note' id='result' style='display:none;'></div>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2 class="title" id="pTitle">Suivi du projet</h2>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="kpiLabel">Objectif</div>
+          <div class="kpiValue" id="pObjective">-</div>
+        </div>
+        <div class="kpi">
+          <div class="kpiLabel">Leves</div>
+          <div class="kpiValue" id="pRaised">-</div>
+        </div>
+        <div class="kpi">
+          <div class="kpiLabel">Reste</div>
+          <div class="kpiValue" id="pRemaining">-</div>
+        </div>
+      </div>
+
+      <div class="note" style="margin-bottom:0;">
+        <div class="progressRow">
+          <strong>Progression</strong>
+          <span id="pProgressPct">0%</span>
+        </div>
+        <div class="progressBar" aria-hidden="true"><div class="progressFill" id="pProgressFill" style="width:0%"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const idParam = params.get("id");
+    const projectId = Number(idParam || 0);
+
+    const result = document.getElementById("result");
+    const pTitle = document.getElementById("pTitle");
+    const pObjective = document.getElementById("pObjective");
+    const pRaised = document.getElementById("pRaised");
+    const pRemaining = document.getElementById("pRemaining");
+    const pProgressPct = document.getElementById("pProgressPct");
+    const pProgressFill = document.getElementById("pProgressFill");
+
+    function money(n){
+      return new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    }
+
+    function loadProjectDashboard(){
+      if (!projectId) {
+        if (result) {
+          result.style.display = "block";
+          result.textContent = "ID projet manquant.";
+        }
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.getProjectDashboardJson !== "function") {
+        if (result) {
+          result.style.display = "block";
+          result.textContent = "Bridge Java indisponible.";
+        }
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getProjectDashboardJson(projectId);
+        const p = JSON.parse(String(raw || "{}"));
+        if (!p || !p.id) {
+          result.style.display = "block";
+          result.textContent = "Projet introuvable.";
+          return;
+        }
+
+        if (pTitle) pTitle.textContent = "Suivi du projet: " + (p.name || ("#" + p.id));
+
+        const objective = Number(p.objective || 0);
+        const raised = Number(p.raised || 0);
+        const remaining = Number(p.remaining || 0);
+        const pct = Number.isFinite(p.progressPct) ? Number(p.progressPct) : (objective > 0 ? Math.round((raised / objective) * 100) : 0);
+        const safePct = Math.max(0, Math.min(100, pct));
+
+        if (pObjective) pObjective.textContent = money(objective);
+        if (pRaised) pRaised.textContent = money(raised);
+        if (pRemaining) pRemaining.textContent = money(remaining);
+        if (pProgressPct) pProgressPct.textContent = safePct + "%";
+        if (pProgressFill) pProgressFill.style.width = safePct + "%";
+      } catch (e) {
+        result.style.display = "block";
+        result.textContent = "Erreur chargement projet.";
+      }
+    }
+
+    window.onJavaBridgeReady = function(){
+      loadProjectDashboard();
+    };
+
+    function waitForBridge(retries){
+      if (window.javaBridge) {
+        window.onJavaBridgeReady();
+        return;
+      }
+      if (retries <= 0) {
+        if (result) {
+          result.style.display = "block";
+          result.textContent = "Bridge Java indisponible.";
+        }
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+
+    waitForBridge(20);
+  </script>
+</body>
+</html>

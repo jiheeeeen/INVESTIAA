@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
     const form = document.getElementById("signupForm");
     const errorBox = document.getElementById("errorBox");
     const okBox = document.getElementById("okBox");
@@ -22,6 +22,7 @@
         return null;
     }
 
+
     function goLogin() {
         const bridge = getBridge();
         if (bridge && typeof bridge.goLogin === "function") {
@@ -39,6 +40,7 @@
     }
 
     form.addEventListener("submit", (e) => {
+
         e.preventDefault();
 
         errorBox.style.display = "none";
@@ -57,6 +59,7 @@
         const confirmPassword = document.getElementById("confirmPassword").value;
         const role = document.getElementById("role").value;
         const terms = document.getElementById("terms").checked;
+        const faceTemplate = (document.getElementById("faceTemplate")?.value || "").trim();
 
         if (!terms) {
             showError("Veuillez accepter les conditions d'utilisation.");
@@ -74,7 +77,7 @@
             return;
         }
 
-        const res = bridge.register(fullName, email, password, role, phone, cin);
+        const res = bridge.register(fullName, email, password, role, phone, cin,faceTemplate);
 
         if (res === "OK") {
             showOk("Compte cree. Connectez-vous pour completer vos informations.");
@@ -87,4 +90,5 @@
             showError("Erreur: " + res);
         }
     });
+
 })();

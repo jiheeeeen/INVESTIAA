@@ -1,8 +1,6 @@
 package Services;
 
 import Entities.Evenement;
-import Entities.ModeEvenement;
-import Entities.Statut;
 import Utils.MyBD;
 
 import java.sql.*;
@@ -13,7 +11,11 @@ import java.util.List;
 public class EvenementCRUD {
 
     private final Connection conn;
-    private String cachedStatusCol;
+
+    // Statuts (en DB)
+    public static final String STATUT_EN_ATTENTE = "EN_ATTENTE";
+    public static final String STATUT_VALIDE     = "VALIDE";
+    public static final String STATUT_REFUSE     = "REFUSE";
 
     public EvenementCRUD() {
         conn = MyBD.getInstance().getConn();
@@ -31,15 +33,12 @@ public class EvenementCRUD {
     private Evenement mapEvent(ResultSet rs) throws SQLException {
         Evenement e = new Evenement();
         e.setId(rs.getInt("id"));
-
-        // ✅ IMPORTANT: colonne = projectId (pas projetId)
         e.setProjectId(rs.getInt("projectId"));
-
         e.setTitre(rs.getString("titre"));
         e.setDescription(rs.getString("description"));
 
-        String mode = rs.getString("mode");
-        if (mode != null) e.setMode(ModeEvenement.valueOf(mode));
+        // ✅ mode est String dans l'entité
+        e.setMode(rs.getString("mode"));
 
         e.setDateDebut(toLdt(rs.getTimestamp("dateDebut")));
         e.setDateFin(toLdt(rs.getTimestamp("dateFin")));
@@ -49,8 +48,8 @@ public class EvenementCRUD {
 
         e.setOrganisateurId(rs.getInt("organisateurId"));
 
-        String statut = rs.getString("statut");
-        if (statut != null) e.setStatut(Statut.valueOf(statut));
+        // ✅ On ne fait rien avec "statut" ici car l'entité Evenement ne le contient pas
+        // (mais la colonne peut exister et être utilisée dans les filtres/update)
 
         return e;
     }
@@ -65,7 +64,9 @@ public class EvenementCRUD {
             pst.setString(2, e.getTitre());
             pst.setString(3, e.getDescription());
 
-            pst.setString(4, e.getMode() == null ? null : e.getMode().name());
+            // ✅ mode String direct (ex: "EN_LIGNE" / "PRESENTIEL")
+            pst.setString(4, e.getMode());
+
             pst.setTimestamp(5, toTs(e.getDateDebut()));
             pst.setTimestamp(6, toTs(e.getDateFin()));
 
@@ -73,7 +74,9 @@ public class EvenementCRUD {
             pst.setString(8, e.getMeetingLink());
 
             pst.setInt(9, e.getOrganisateurId());
-            pst.setString(10, e.getStatut() == null ? Statut.EN_ATTENTE.name() : e.getStatut().name());
+
+            // ✅ statut par défaut en DB
+            pst.setString(10, STATUT_EN_ATTENTE);
 
             pst.executeUpdate();
 
@@ -95,7 +98,16 @@ public class EvenementCRUD {
             }
         }
     }
-
+    public String getStatutById(int id) throws SQLException {
+        String sql = "SELECT statut FROM evenement WHERE id=?";
+        try (PreparedStatement pst = conn.prepareStatement(sql)) {
+            pst.setInt(1, id);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) return rs.getString("statut");
+                return "";
+            }
+        }
+    }
     public List<Evenement> getAll() throws SQLException {
         String sql = "SELECT * FROM evenement ORDER BY dateDebut DESC";
         List<Evenement> list = new ArrayList<>();
@@ -107,14 +119,10 @@ public class EvenementCRUD {
     }
 
     public List<Evenement> getPendingEvents() throws SQLException {
-        String statusCol = resolveStatusColumn();
-        if (statusCol == null) {
-            return getAll();
-        }
-        String sql = "SELECT * FROM evenement WHERE " + statusCol + "=? ORDER BY dateDebut DESC";
+        String sql = "SELECT * FROM evenement WHERE statut=? ORDER BY dateDebut DESC";
         List<Evenement> list = new ArrayList<>();
         try (PreparedStatement pst = conn.prepareStatement(sql)) {
-            pst.setString(1, Statut.EN_ATTENTE.name());
+            pst.setString(1, STATUT_EN_ATTENTE);
             try (ResultSet rs = pst.executeQuery()) {
                 while (rs.next()) list.add(mapEvent(rs));
             }
@@ -122,39 +130,11 @@ public class EvenementCRUD {
         return list;
     }
 
-    // --------- UPDATE ----------
-    public void updateEvent(Evenement e) throws SQLException {
-        String sql = "UPDATE evenement SET projectId=?, titre=?, description=?, mode=?, dateDebut=?, dateFin=?, lieu=?, meetingLink=?, organisateurId=?, statut=? " +
-                "WHERE id=?";
-
+    // --------- UPDATE statut (DB) ----------
+    public void updateStatut(int id, String statut) throws SQLException {
+        String sql = "UPDATE evenement SET statut=? WHERE id=?";
         try (PreparedStatement pst = conn.prepareStatement(sql)) {
-            pst.setInt(1, e.getProjectId());
-            pst.setString(2, e.getTitre());
-            pst.setString(3, e.getDescription());
-
-            pst.setString(4, e.getMode() == null ? null : e.getMode().name());
-            pst.setTimestamp(5, toTs(e.getDateDebut()));
-            pst.setTimestamp(6, toTs(e.getDateFin()));
-
-            pst.setString(7, e.getLieu());
-            pst.setString(8, e.getMeetingLink());
-
-            pst.setInt(9, e.getOrganisateurId());
-            pst.setString(10, e.getStatut() == null ? Statut.EN_ATTENTE.name() : e.getStatut().name());
-
-            pst.setInt(11, e.getId());
-            pst.executeUpdate();
-        }
-    }
-
-    public void updateStatut(int id, Statut statut) throws SQLException {
-        String statusCol = resolveStatusColumn();
-        if (statusCol == null) {
-            return;
-        }
-        String sql = "UPDATE evenement SET " + statusCol + "=? WHERE id=?";
-        try (PreparedStatement pst = conn.prepareStatement(sql)) {
-            pst.setString(1, statut.name());
+            pst.setString(1, statut);
             pst.setInt(2, id);
             pst.executeUpdate();
         }
@@ -171,67 +151,10 @@ public class EvenementCRUD {
 
     // --------- ADMIN actions ----------
     public void acceptEvent(int id) throws SQLException {
-        updateStatut(id, Statut.VALIDE);
+        updateStatut(id, STATUT_VALIDE);
     }
 
     public void rejectEvent(int id) throws SQLException {
-        updateStatut(id, Statut.REFUSE);
-    }
-
-    private String resolveStatusColumn() throws SQLException {
-        if (cachedStatusCol != null) return cachedStatusCol;
-        if (conn == null) return null;
-        List<String> cols = loadColumns("evenement");
-        cachedStatusCol = firstExisting(cols, "statut", "status", "etat");
-        return cachedStatusCol;
-    }
-
-    private List<String> loadColumns(String table) throws SQLException {
-        List<String> cols = new ArrayList<>();
-        try {
-            DatabaseMetaData meta = conn.getMetaData();
-            try (ResultSet rs = meta.getColumns(conn.getCatalog(), null, table, null)) {
-                while (rs.next()) {
-                    String name = rs.getString("COLUMN_NAME");
-                    if (name != null) cols.add(name);
-                }
-            }
-        } catch (Exception ignore) {
-        }
-        if (!cols.isEmpty()) return cols;
-
-        String sql = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, table);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    String name = rs.getString(1);
-                    if (name != null) cols.add(name);
-                }
-            }
-        }
-        if (!cols.isEmpty()) return cols;
-
-        String fallbackSql = "SELECT * FROM " + table + " LIMIT 1";
-        try (PreparedStatement ps = conn.prepareStatement(fallbackSql);
-             ResultSet rs = ps.executeQuery()) {
-            ResultSetMetaData meta = rs.getMetaData();
-            for (int i = 1; i <= meta.getColumnCount(); i++) {
-                String name = meta.getColumnName(i);
-                if (name != null) cols.add(name);
-            }
-        } catch (Exception ignore) {
-        }
-        return cols;
-    }
-
-    private static String firstExisting(List<String> cols, String... candidates) {
-        if (cols == null || cols.isEmpty()) return null;
-        for (String c : candidates) {
-            for (String col : cols) {
-                if (col.equalsIgnoreCase(c)) return col;
-            }
-        }
-        return null;
+        updateStatut(id, STATUT_REFUSE);
     }
 }

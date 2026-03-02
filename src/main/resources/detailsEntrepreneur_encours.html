@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Investra — Details Entrepreneur (En cours)</title>
+  <title>Investra — Détails Entrepreneur (En cours)</title>
   <style>
     :root{
       --bg:#f6f8fc;
@@ -174,6 +174,7 @@
     }
     .actions{display:flex; gap:10px; flex-wrap:wrap;}
     .small{font-size:12px; color:var(--muted); line-height:1.4;}
+    .export-status{font-size:12px; color:var(--muted); min-height:16px;}
 
     .grid{
       display:grid;
@@ -369,13 +370,14 @@
         <strong class="muted" id="breadcrumbTitle">Détails</strong>
       </div>
       <div class="actions">
+        <span class="export-status" id="exportStatus"></span>
         <button class="btn ghost suivi" id="backDetailsBtn">Retour détails</button>
+        <button class="btn ghost" id="exportPdfBtn">Exporter PDF</button>
         <button class="btn primary" id="editBtn">Modifier</button>
       </div>
     </div>
 
-    <h1 style="margin:6px 0 8px;">Suivi du projet</h1>
-    <p class="muted" style="margin:0 0 16px;">Visualisation des investissements et de l'avancement.</p>
+                <h1 style="margin:6px 0 8px;">suivi investissement</h1>
     <section class="progress-wide">
       <div class="row">
         <span>Progression</span>
@@ -558,11 +560,11 @@
           </div>
         </section>
         <section class="card" id="echeancier" style="margin-top:18px;">
-          <h2>Echeancier (apercu)</h2>
+          <h2>Échéancier (aperçu)</h2>
           <table>
             <thead>
               <tr>
-                <th>Echeance</th>
+                <th>Échéance</th>
                 <th class="num">Montant</th>
                 <th class="num">Statut</th>
               </tr>
@@ -589,6 +591,14 @@
                 <td><b>Taux / Durée</b></td>
                 <td class="num" id="rateDuration">—</td>
               </tr>
+              <tr>
+                <td><b>Taux plateforme (sur gains)</b></td>
+                <td class="num" id="platformRate">—</td>
+              </tr>
+              <tr>
+                <td><b>Gain plateforme estimé</b></td>
+                <td class="num" id="platformGain">—</td>
+              </tr>
             </tbody>
           </table>
         </section>
@@ -600,7 +610,7 @@
               <tr>
                 <th>Phase</th>
                 <th>Objectif</th>
-                <th class="num">Periode</th>
+                <th class="num">Période</th>
               </tr>
             </thead>
             <tbody id="calendarTable"></tbody>
@@ -613,32 +623,32 @@
             <div class="analysis-card">
               <div class="analysis-title">CA mensuel (courbe)</div>
               <div class="chart" id="chartLine"></div>
-              <p class="muted" style="margin:8px 0 0; font-size:12px;">Tendance mensuelle du chiffre d'affaires estime.</p>
+              <p class="muted" style="margin:8px 0 0; font-size:12px;">Tendance mensuelle du chiffre d'affaires estimé.</p>
             </div>
             <div class="analysis-card">
-              <div class="analysis-title">Marge vs Resultat net</div>
+              <div class="analysis-title">Marge vs Résultat net</div>
               <div class="chart" id="chartBars"></div>
-              <p class="muted" style="margin:8px 0 0; font-size:12px;">Comparaison entre marge brute et resultat net.</p>
+              <p class="muted" style="margin:8px 0 0; font-size:12px;">Comparaison entre marge brute et résultat net.</p>
             </div>
             <div class="analysis-card">
-              <div class="analysis-title">Repartition de l'objectif</div>
+              <div class="analysis-title">Répartition de l'objectif</div>
               <div class="chart" id="chartDonut"></div>
               <div class="chart-legend">
                 <span><span class="legend-dot" style="background:#1d4ed8;"></span>R&D</span>
                 <span><span class="legend-dot" style="background:#06b6d4;"></span>Production</span>
                 <span><span class="legend-dot" style="background:#f59e0b;"></span>Marketing</span>
               </div>
-              <p class="muted" style="margin:8px 0 0; font-size:12px;">Distribution indicative des postes de depenses.</p>
+              <p class="muted" style="margin:8px 0 0; font-size:12px;">Distribution indicative des postes de dépenses.</p>
             </div>
             <div class="analysis-card">
               <div class="analysis-title">Score de risque</div>
               <div class="chart" id="chartRisk"></div>
-              <p class="muted" style="margin:8px 0 0; font-size:12px;" id="riskNote">Score calcule a partir du taux, de la duree et de la marge.</p>
-              <p class="muted" style="margin:6px 0 0; font-size:12px;">Formule: score = f(taux, duree, marge). Taux (0-40), duree (0-30), marge (0-30). Plus le score est eleve, plus le risque est grand.</p>
+              <p class="muted" style="margin:8px 0 0; font-size:12px;" id="riskNote">Score calculé à partir du taux, de la durée et de la marge.</p>
+              <p class="muted" style="margin:6px 0 0; font-size:12px;">Formule: score = f(taux, durée, marge). Taux (0-40), durée (0-30), marge (0-30). Plus le score est élevé, plus le risque est grand.</p>
               <div class="chart-legend">
                 <span><span class="legend-dot" style="background:#16a34a;"></span>Faible (0-34)</span>
-                <span><span class="legend-dot" style="background:#f59e0b;"></span>Modere (35-69)</span>
-                <span><span class="legend-dot" style="background:#ef4444;"></span>Eleve (70-100)</span>
+                <span><span class="legend-dot" style="background:#f59e0b;"></span>Modéré (35-69)</span>
+                <span><span class="legend-dot" style="background:#ef4444;"></span>Élevé (70-100)</span>
               </div>
             </div>
           </div>
@@ -649,12 +659,31 @@
 
   <script>
     const fmt = (n) => new Intl.NumberFormat("fr-TN").format(n) + " TND";
+    const PLATFORM_FEES_PCT = 7.0;
     let currentId = null;
 
     function scrollToSection(id){
       document.getElementById(id).scrollIntoView({behavior:"smooth", block:"start"});
     }
     window.scrollToSection = scrollToSection;
+    function setExportStatus(msg){
+      const el = document.getElementById("exportStatus");
+      if (el) el.textContent = msg || "";
+    }
+    function buildPdfHtml(){
+      const cloned = document.documentElement.cloneNode(true);
+      const scripts = cloned.querySelectorAll("script");
+      scripts.forEach((s) => s.remove());
+      const navEls = cloned.querySelectorAll(
+        "nav, header, .navbar, .nav-links, #navbar, #topbar, [class*='nav'], [id*='nav']"
+      );
+      navEls.forEach((n) => n.remove());
+      const topbar = cloned.querySelector(".topbar");
+      if (topbar) topbar.remove();
+      const actions = cloned.querySelector(".actions");
+      if (actions) actions.remove();
+      return "<!doctype html>\n" + cloned.outerHTML;
+    }
 
     function withBridge(onReady, onFail){
       const start = Date.now();
@@ -683,6 +712,50 @@
     }
 
     function loadProject(){
+      const exportPdfBtn = document.getElementById("exportPdfBtn");
+      if (exportPdfBtn && !exportPdfBtn.dataset.bound) {
+        exportPdfBtn.dataset.bound = "1";
+        exportPdfBtn.addEventListener("click", () => {
+          const originalText = exportPdfBtn.textContent;
+          exportPdfBtn.disabled = true;
+          exportPdfBtn.textContent = "Export...";
+          setTimeout(() => {
+            withBridge((bridge) => {
+              if (typeof bridge.exportCurrentPagePdfWithPdflayer !== "function") {
+                exportPdfBtn.disabled = false;
+                exportPdfBtn.textContent = originalText;
+                setExportStatus("Export PDF indisponible.");
+                return;
+              }
+              const result = bridge.exportCurrentPagePdfWithPdflayer(
+                window.location.href,
+                buildPdfHtml(),
+                "A4",
+                "",
+                "",
+                "",
+                ""
+              );
+              exportPdfBtn.disabled = false;
+              exportPdfBtn.textContent = originalText;
+              if ((result || "").startsWith("OK_OPENED:")) {
+                setExportStatus("PDF exporte et ouvert.");
+              } else if ((result || "").startsWith("OK_SAVED_ONLY:")) {
+                setExportStatus("PDF exporte: " + result.substring("OK_SAVED_ONLY:".length));
+              } else if (result) {
+                setExportStatus("Echec export PDF: " + result);
+              } else {
+                setExportStatus("Export annule.");
+              }
+            }, () => {
+              exportPdfBtn.disabled = false;
+              exportPdfBtn.textContent = originalText;
+              setExportStatus("Bridge indisponible.");
+            });
+          }, 50);
+        });
+      }
+
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id");
       if (!id) return;
@@ -697,7 +770,6 @@
           window.location.href = "detailsEntrepreneur.html?id=" + encodeURIComponent(currentId);
         });
       }
-
       withBridge((bridge) => {
         if (typeof bridge.getProjetById !== "function") return;
         const json = bridge.getProjetById(id);
@@ -760,6 +832,19 @@
         document.getElementById("statusTag").textContent = raised > 0 ? "En cours" : mapStatusLabel(p.statut);
         document.getElementById("repayMode").textContent = p.modeRemboursement || "—";
         document.getElementById("rateDuration").textContent = rate + " • " + duration;
+        document.getElementById("platformRate").textContent = PLATFORM_FEES_PCT.toFixed(0) + " %";
+        {
+          const months = Math.max(1, Number(p.dureeRemboursementMois || 12));
+          const principal = Number(goal || 0);
+          const annualRate = Number(p.tauxInteretPct || 0) / 100;
+          const monthlyRate = annualRate / 12;
+          const monthlyAmount = monthlyRate > 0
+            ? (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months))
+            : (principal / months);
+          const totalInterest = Math.max(0, (monthlyAmount * months) - principal);
+          const platformGain = totalInterest * (PLATFORM_FEES_PCT / 100);
+          document.getElementById("platformGain").textContent = fmt(Math.round(platformGain));
+        }
 
         document.getElementById("planSummary").textContent = p.descriptionCourte || "—";
         document.getElementById("valueList").innerHTML = "<li>" + (p.descriptionCourte || "—") + "</li>";
@@ -777,7 +862,7 @@
         const pnl = [
           { label: "Objectif", amount: goal },
           { label: "Marge brute", amount: marge },
-          { label: "Resultat net (estime)", amount: net }
+          { label: "Résultat net (estimé)", amount: net }
         ];
         const pBody = document.getElementById("pnlTable");
         pBody.innerHTML = pnl.map(row => `
@@ -821,7 +906,7 @@
 
         renderInvestmentCharts(investments, goal, raised);
         renderCalendar(p.dureeCampagneJours);
-        renderRepayments(goal, p.dureeRemboursementMois);
+        renderRepayments(goal, p.dureeRemboursementMois, p.tauxInteretPct);
 
         const invBody = document.getElementById("investissementsBody");
         if (invBody) {
@@ -962,10 +1047,10 @@
       const w = 420, h = 90, pad = 10;
       const fill = score < 35 ? "#16a34a" : (score < 70 ? "#f59e0b" : "#ef4444");
       const note = score < 35
-        ? "Risque faible: taux modere, duree courte ou marge confortable."
+        ? "Risque faible: taux modéré, durée courte ou marge confortable."
         : (score < 70
-          ? "Risque modere: surveiller la duree et la marge."
-          : "Risque eleve: taux/duree eleves ou marge faible.");
+          ? "Risque modéré: surveiller la durée et la marge."
+          : "Risque élevé: taux/durée élevés ou marge faible.");
       const svg = `
         <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
           <rect x="${pad}" y="18" width="${w - pad*2}" height="14" rx="7" fill="rgba(15,23,42,.10)" />
@@ -999,9 +1084,14 @@
       `).join("");
     }
 
-    function renderRepayments(goal, dureeMois){
+    function renderRepayments(goal, dureeMois, tauxInteretPct){
       const months = Math.max(1, Number(dureeMois || 12));
-      const amount = months > 0 ? Math.round(Number(goal || 0) / months) : 0;
+      const principal = Number(goal || 0);
+      const annualRate = Number(tauxInteretPct || 0) / 100;
+      const monthlyRate = annualRate / 12;
+      const amount = monthlyRate > 0
+        ? Math.round((principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -months)))
+        : Math.round(principal / months);
       const now = new Date();
       const body = document.getElementById("repaymentTable");
       const rows = Array.from({ length: 5 }, (_, i) => {
@@ -1035,18 +1125,6 @@
     })();
   </script></body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

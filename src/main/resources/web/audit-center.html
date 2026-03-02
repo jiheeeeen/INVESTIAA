@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Historique systeme</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+  <style>
+    .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:end; }
+    .toolbar .fieldSmall { min-width:180px; }
+    .kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin:12px 0; }
+    .kpi { border:1px solid #dbe5f4; border-radius:12px; background:#fff; padding:10px; }
+    .kpiLabel { color:#5f7597; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+    .kpiVal { color:#153a6b; font-size:26px; font-weight:800; line-height:1.1; margin-top:4px; }
+    .miniGrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px; }
+    .miniPanel { border:1px solid #dbe5f4; border-radius:12px; background:#fff; padding:10px; }
+    .miniPanel h3 { margin:0 0 8px 0; color:#153a6b; font-size:14px; }
+    .miniList { margin:0; padding:0; list-style:none; }
+    .miniList li { display:flex; justify-content:space-between; gap:8px; border-top:1px solid #eef2fb; padding:7px 0; font-size:13px; }
+    .miniList li:first-child { border-top:none; padding-top:0; }
+    .badgeCnt { color:#153a6b; font-weight:800; }
+    .lvl { border-radius:999px; padding:3px 10px; font-size:11px; font-weight:800; display:inline-block; }
+    .lvl.INFO { color:#1f4d8c; background:#e7f0ff; }
+    .lvl.WARN { color:#8a6400; background:#fff4de; }
+    .lvl.ERROR,.lvl.CRITICAL { color:#8f1f1f; background:#ffe9e9; }
+    .mono { font-family: Consolas, "Courier New", monospace; font-size:12px; color:#334d6e; }
+    @media (max-width: 1050px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr));} .miniGrid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Audit - Historique systeme</span>
+        <h1>Journal des actions</h1>
+        <p class="sub">Traçabilite des actions utilisateur: authentification, paiement, signature, rapports et operations metier.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a id="backBtn" class="btnTop btnGhost" href="remboursements-financement.html">Retour</a>
+        <a class="btnTop btnNavy" href="audit-center.html">Rafraichir</a>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="toolbar">
+        <div class="fieldSmall">
+          <label for="module">Module</label>
+          <select id="module">
+            <option value="ALL">Tous</option>
+            <option value="AUTH">AUTH</option>
+            <option value="FINANCEMENT">FINANCEMENT</option>
+            <option value="REMBOURSEMENT">REMBOURSEMENT</option>
+            <option value="PAYMENT">PAYMENT</option>
+            <option value="SIGNATURE">SIGNATURE</option>
+            <option value="REPORT">REPORT</option>
+            <option value="CALENDAR">CALENDAR</option>
+            <option value="NOTES">NOTES</option>
+            <option value="CALCULATOR">CALCULATOR</option>
+          </select>
+        </div>
+        <div class="fieldSmall">
+          <label for="level">Niveau</label>
+          <select id="level">
+            <option value="ALL">Tous</option>
+            <option value="INFO">INFO</option>
+            <option value="WARN">WARN</option>
+            <option value="ERROR">ERROR</option>
+            <option value="CRITICAL">CRITICAL</option>
+          </select>
+        </div>
+        <div class="fieldSmall" style="min-width:260px;">
+          <label for="q">Recherche</label>
+          <input id="q" placeholder="action, details, email..." />
+        </div>
+        <div class="fieldSmall">
+          <label for="limit">Limite</label>
+          <select id="limit">
+            <option value="100">100</option>
+            <option value="200" selected>200</option>
+            <option value="500">500</option>
+          </select>
+        </div>
+        <button id="applyBtn" class="btnTop btnNavy" type="button">Appliquer</button>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="kpiLabel">Total logs</div><div id="kTotal" class="kpiVal">0</div></div>
+        <div class="kpi"><div class="kpiLabel">Niveau WARN+</div><div id="kWarn" class="kpiVal">0</div></div>
+        <div class="kpi"><div class="kpiLabel">Utilisateurs actifs</div><div id="kUsers" class="kpiVal">0</div></div>
+        <div class="kpi"><div class="kpiLabel">Modules touches</div><div id="kModules" class="kpiVal">0</div></div>
+      </div>
+
+      <div class="miniGrid">
+        <div class="miniPanel">
+          <h3>Top actions</h3>
+          <ul id="topActions" class="miniList"></ul>
+        </div>
+        <div class="miniPanel">
+          <h3>Top modules</h3>
+          <ul id="topModules" class="miniList"></ul>
+        </div>
+      </div>
+
+      <table aria-label="Historique systeme">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Module</th>
+            <th>Action</th>
+            <th>Niveau</th>
+            <th>Utilisateur</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+
+      <div class="note" id="note" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const role = String(params.get("role") || "").toUpperCase();
+    const backBtn = document.getElementById("backBtn");
+    const moduleSel = document.getElementById("module");
+    const levelSel = document.getElementById("level");
+    const q = document.getElementById("q");
+    const limitSel = document.getElementById("limit");
+    const applyBtn = document.getElementById("applyBtn");
+    const tbody = document.getElementById("tbody");
+    const note = document.getElementById("note");
+    const kTotal = document.getElementById("kTotal");
+    const kWarn = document.getElementById("kWarn");
+    const kUsers = document.getElementById("kUsers");
+    const kModules = document.getElementById("kModules");
+    const topActions = document.getElementById("topActions");
+    const topModules = document.getElementById("topModules");
+
+    function esc(s){
+      return String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\"","&quot;");
+    }
+
+    function setupBack(){
+      if (role === "INVESTISSEUR") backBtn.href = "remboursements-investisseur.html";
+      else backBtn.href = "remboursements-financement.html";
+    }
+
+    function renderKpis(arr){
+      const total = arr.length;
+      const warn = arr.filter(r => {
+        const lv = String(r.level || "").toUpperCase();
+        return lv === "WARN" || lv === "ERROR" || lv === "CRITICAL";
+      }).length;
+      const users = new Set(arr.map(r => String(r.userEmail || "").trim() || ("USER#" + String(r.userId || 0))).filter(Boolean)).size;
+      const modules = new Set(arr.map(r => String(r.module || "").trim()).filter(Boolean)).size;
+      kTotal.textContent = String(total);
+      kWarn.textContent = String(warn);
+      kUsers.textContent = String(users);
+      kModules.textContent = String(modules);
+    }
+
+    function renderTopList(node, map, emptyMsg){
+      const rows = Array.from(map.entries()).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      if (!rows.length) {
+        node.innerHTML = `<li><span>${esc(emptyMsg)}</span><span class="badgeCnt">0</span></li>`;
+        return;
+      }
+      node.innerHTML = rows.map(([name,count]) =>
+        `<li><span>${esc(name)}</span><span class="badgeCnt">${count}</span></li>`
+      ).join("");
+    }
+
+    function loadAudit(){
+      if (!window.javaBridge || typeof window.javaBridge.getAuditLogsJsonFromJs !== "function") {
+        note.style.display = "block";
+        note.textContent = "Bridge audit indisponible.";
+        tbody.innerHTML = "";
+        return;
+      }
+      try {
+        const payload = new URLSearchParams({
+          module: moduleSel.value || "ALL",
+          level: levelSel.value || "ALL",
+          q: q.value || "",
+          limit: limitSel.value || "200"
+        }).toString();
+        const rows = JSON.parse(String(window.javaBridge.getAuditLogsJsonFromJs(payload) || "[]"));
+        const arr = Array.isArray(rows) ? rows : [];
+        renderKpis(arr);
+        const actionMap = new Map();
+        const moduleMap = new Map();
+        arr.forEach(r => {
+          const a = String(r.action || "-");
+          const m = String(r.module || "-");
+          actionMap.set(a, (actionMap.get(a) || 0) + 1);
+          moduleMap.set(m, (moduleMap.get(m) || 0) + 1);
+        });
+        renderTopList(topActions, actionMap, "Aucune action");
+        renderTopList(topModules, moduleMap, "Aucun module");
+        if (!arr.length) {
+          tbody.innerHTML = "<tr><td colspan='6'>Aucune action audit trouvee.</td></tr>";
+          return;
+        }
+        note.style.display = "none";
+        tbody.innerHTML = arr.map(r => {
+          const level = String(r.level || "INFO").toUpperCase();
+          const dt = String(r.createdAt || "-");
+          const user = String(r.userEmail || "").trim() || (Number(r.userId || 0) > 0 ? ("USER#" + r.userId) : "-");
+          return `<tr>
+            <td class="mono">${esc(dt)}</td>
+            <td>${esc(r.module || "-")}</td>
+            <td><strong>${esc(r.action || "-")}</strong></td>
+            <td><span class="lvl ${esc(level)}">${esc(level)}</span></td>
+            <td>${esc(user)}</td>
+            <td>${esc(r.details || "-")}</td>
+          </tr>`;
+        }).join("");
+      } catch (e) {
+        note.style.display = "block";
+        note.textContent = "Erreur chargement audit: " + e;
+      }
+    }
+
+    function init(){
+      setupBack();
+      loadAudit();
+    }
+
+    applyBtn.addEventListener("click", loadAudit);
+    [moduleSel, levelSel, limitSel].forEach(el => el.addEventListener("change", loadAudit));
+    q.addEventListener("keydown", e => { if (e.key === "Enter") loadAudit(); });
+
+    window.onJavaBridgeReady = init;
+    function waitForBridge(retries){
+      if (window.javaBridge) { init(); return; }
+      if (retries <= 0) { note.style.display = "block"; note.textContent = "Bridge Java indisponible."; return; }
+      setTimeout(() => waitForBridge(retries - 1), 200);
+    }
+    waitForBridge(30);
+  </script>
+</body>
+</html>

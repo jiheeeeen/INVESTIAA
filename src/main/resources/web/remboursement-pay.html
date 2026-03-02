@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Payer un remboursement</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Remboursement - Paiement</span>
+        <h1>Payer une echeance</h1>
+        <p class="sub">Paiement carte securise via Stripe Checkout (aucune saisie carte dans l'application).</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" id="backLink" href="remboursement-detail.html">Retour</a>
+        <button class="btnTop btnNavy" id="submitBtn" type="button">Payer</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="rowHead">
+        <h2 class="title">Formulaire</h2>
+      </div>
+      <form id="payForm">
+        <div class="formGrid">
+          <div>
+            <label for="rid">ID remboursement</label>
+            <input id="rid" type="text" disabled />
+          </div>
+          <div>
+            <label for="amount">Montant a payer (TND)</label>
+            <input id="amount" type="number" min="0.01" step="0.01" value="100" required />
+          </div>
+          <div>
+            <label for="paymentMethod">Mode de paiement</label>
+            <select id="paymentMethod" required>
+              <option value="CARTE_BANCAIRE" selected>Carte bancaire (Stripe Checkout)</option>
+              <option value="VIREMENT">Virement</option>
+              <option value="WALLET">Wallet</option>
+            </select>
+          </div>
+          <div>
+            <label for="reference">Reference paiement (optionnel)</label>
+            <input id="reference" type="text" placeholder="EX: TXN-2026-0001" />
+          </div>
+        </div>
+        <div class="note" id="result" style="display:none;"></div>
+        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="checkStatusBtn" type="button" class="miniBtn edit" style="display:none;">Verifier statut Stripe</button>
+          <span id="statusHint" class="note" style="display:none; margin:0;">Retourne apres paiement Stripe puis clique "Verifier statut Stripe".</span>
+        </div>
+      </form>
+    </section>
+  </main>
+  <div id="successModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); align-items:center; justify-content:center; z-index:9999;">
+    <div style="background:#fff; width:min(460px,92vw); border-radius:14px; padding:20px; box-shadow:0 8px 28px rgba(0,0,0,.2);">
+      <h3 style="margin:0 0 8px 0;">Paiement valide</h3>
+      <p style="margin:0 0 16px 0; color:#334;">Le paiement Stripe a ete confirme avec succes.</p>
+      <div style="display:flex; justify-content:flex-end;">
+        <button id="continueBtn" class="btnTop btnNavy" type="button">Continuer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const id = Number(params.get("id") || 0);
+    const rid = document.getElementById("rid");
+    const amountEl = document.getElementById("amount");
+    const paymentMethodEl = document.getElementById("paymentMethod");
+    const referenceEl = document.getElementById("reference");
+    const submitBtn = document.getElementById("submitBtn");
+    const checkStatusBtn = document.getElementById("checkStatusBtn");
+    const statusHint = document.getElementById("statusHint");
+    const backLink = document.getElementById("backLink");
+    const result = document.getElementById("result");
+    const form = document.getElementById("payForm");
+    const successModal = document.getElementById("successModal");
+    const continueBtn = document.getElementById("continueBtn");
+
+    let pendingSessionId = "";
+    let paymentLocked = false;
+    let confirmedSessionId = "";
+    let confirmedAmount = 0;
+
+    (function enforceRole(){
+      try {
+        if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function") {
+          const role = String(window.javaBridge.getCurrentUserRole() || "");
+          if (role === "INVESTISSEUR") {
+            window.location.href = "remboursements-investisseur.html";
+          }
+        }
+      } catch (e) {}
+    })();
+
+    rid.value = id ? String(id) : "";
+    backLink.href = id ? `remboursement-detail.html?id=${encodeURIComponent(String(id))}` : "remboursements-financement.html";
+
+    submitBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    });
+
+    function showMessage(txt){
+      result.style.display = "block";
+      result.textContent = txt;
+    }
+
+    function parseAmount(raw){
+      const s = String(raw || "").trim().replace(/\s+/g, "").replace(",", ".");
+      const n = Number(s);
+      return Number.isFinite(n) ? n : NaN;
+    }
+
+    function showSuccessModal(){
+      successModal.style.display = "flex";
+    }
+
+    function openUrlExternally(url){
+      if (window.javaBridge && typeof window.javaBridge.openStripeCheckoutPopup === "function") {
+        try {
+          const r = window.javaBridge.openStripeCheckoutPopup("url=" + encodeURIComponent(url));
+          if (r) return;
+        } catch (e) {}
+      }
+      if (!window.javaBridge || typeof window.javaBridge.openExternalUrl !== "function") {
+        window.location.href = url;
+        return;
+      }
+      try {
+        window.javaBridge.openExternalUrl("url=" + encodeURIComponent(url));
+      } catch (e) {
+        window.location.href = url;
+      }
+    }
+
+    function startStripeCheckout(amount, reference){
+      if (paymentLocked) {
+        showMessage("Paiement deja valide pour cette session.");
+        return;
+      }
+      if (pendingSessionId) {
+        showMessage("Une session Stripe est deja en attente. Clique d'abord sur \"Verifier statut Stripe\".");
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.createStripeCheckoutSessionFromJs !== "function") {
+        showMessage("Bridge Stripe indisponible.");
+        return;
+      }
+      showMessage("Creation de session Stripe...");
+      const payload = new URLSearchParams({
+        id: String(id),
+        amount: String(amount),
+        reference: reference
+      }).toString();
+      const raw = window.javaBridge.createStripeCheckoutSessionFromJs(payload);
+      if (!raw) {
+        showMessage("Reponse Stripe vide.");
+        return;
+      }
+      try {
+        const res = JSON.parse(String(raw));
+        if (!res.ok || !res.sessionId || !res.checkoutUrl) {
+          showMessage("Erreur Stripe: " + (res.message || "inconnue"));
+          return;
+        }
+        pendingSessionId = String(res.sessionId);
+        submitBtn.disabled = true;
+        checkStatusBtn.style.display = "inline-block";
+        statusHint.style.display = "inline-block";
+        showMessage("Session Stripe creee. Ouverture de la page de paiement...");
+        openUrlExternally(String(res.checkoutUrl));
+      } catch (e) {
+        showMessage("Erreur lecture reponse Stripe.");
+      }
+    }
+
+    function confirmStripeCheckout(){
+      if (!pendingSessionId) {
+        showMessage("Aucune session Stripe en attente.");
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.confirmStripeCheckoutPaymentFromJs !== "function") {
+        showMessage("Bridge confirmation Stripe indisponible.");
+        return;
+      }
+      showMessage("Verification du statut Stripe...");
+      const payload = new URLSearchParams({
+        sessionId: pendingSessionId
+      }).toString();
+      const raw = window.javaBridge.confirmStripeCheckoutPaymentFromJs(payload);
+      if (!raw) {
+        showMessage("Reponse confirmation vide.");
+        return;
+      }
+      try {
+        const res = JSON.parse(String(raw));
+        if (res.ok) {
+          paymentLocked = true;
+          confirmedSessionId = String(res.sessionId || pendingSessionId || "");
+          confirmedAmount = Number(res.amountApplied || 0);
+          pendingSessionId = "";
+          submitBtn.disabled = true;
+          showMessage("Paiement confirme et enregistre.");
+          showSuccessModal();
+        } else {
+          showMessage("Statut actuel: " + (res.status || "unknown") + ". " + (res.message || ""));
+          if ((res.status || "").toLowerCase() === "unpaid" || (res.status || "").toLowerCase() === "expired") {
+            pendingSessionId = "";
+            submitBtn.disabled = false;
+            checkStatusBtn.style.display = "none";
+            statusHint.style.display = "none";
+          }
+        }
+      } catch (e) {
+        showMessage("Erreur lecture confirmation Stripe.");
+      }
+    }
+
+    checkStatusBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      confirmStripeCheckout();
+    });
+
+    continueBtn.addEventListener("click", () => {
+      const q = new URLSearchParams({
+        id: String(id),
+        sessionId: confirmedSessionId,
+        amount: String(confirmedAmount || 0)
+      });
+      window.location.href = `remboursement-signature.html?${q.toString()}`;
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!id) {
+        showMessage("ID remboursement manquant.");
+        return;
+      }
+      const amount = parseAmount(amountEl.value);
+      const paymentMethod = String(paymentMethodEl.value || "").trim();
+      const reference = String(referenceEl.value || "").trim();
+      if (!Number.isFinite(amount) || amount <= 0) {
+        showMessage("Montant invalide.");
+        return;
+      }
+      if (!window.javaBridge) {
+        showMessage("Bridge Java indisponible.");
+        return;
+      }
+      if (paymentLocked) {
+        showMessage("Paiement deja valide.");
+        return;
+      }
+
+      if (paymentMethod === "CARTE_BANCAIRE") {
+        startStripeCheckout(amount, reference);
+        return;
+      }
+
+      if (typeof window.javaBridge.payRemboursementFromJs !== "function") {
+        showMessage("Bridge paiement indisponible.");
+        return;
+      }
+
+      showMessage("Paiement en cours...");
+      const payload = new URLSearchParams({
+        id: String(id),
+        amount: String(amount),
+        paymentMethod: paymentMethod,
+        reference: reference,
+        cardToken: ""
+      }).toString();
+      const raw = window.javaBridge.payRemboursementFromJs(payload);
+      if (raw !== undefined && raw !== null && raw !== "") {
+        const res = JSON.parse(String(raw));
+        showMessage(res.ok ? "Paiement enregistre." : ("Erreur: " + (res.message || "inconnue")));
+        if (res.ok) {
+          window.location.href = `remboursement-detail.html?id=${encodeURIComponent(String(id))}`;
+        }
+      }
+    });
+
+    function waitForBridge(retries){
+      if (window.javaBridge) return;
+      if (retries <= 0) {
+        showMessage("Bridge Java indisponible.");
+        return;
+      }
+      setTimeout(function(){ waitForBridge(retries - 1); }, 200);
+    }
+    waitForBridge(30);
+
+    window.onStripeCheckoutPopupResult = function(payload){
+      try {
+        const res = (typeof payload === "string") ? JSON.parse(payload) : payload;
+        if (!res || !res.status) return;
+        if (res.status === "success") {
+          if (res.sessionId) pendingSessionId = String(res.sessionId);
+          showMessage("Paiement termine. Verification en cours...");
+          confirmStripeCheckout();
+          return;
+        }
+        if (res.status === "cancel") {
+          showMessage("Paiement annule.");
+          pendingSessionId = "";
+          submitBtn.disabled = false;
+          checkStatusBtn.style.display = "none";
+          statusHint.style.display = "none";
+        }
+      } catch (e) {}
+    };
+  </script>
+</body>
+</html>

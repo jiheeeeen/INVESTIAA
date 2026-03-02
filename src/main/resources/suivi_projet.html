@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investra - Suivi projet</title>
+  <style>
+    :root{
+      --bg:#f3f7ff; --card:#fff; --text:#0b1f3a; --muted:#5f708a; --line:rgba(30,58,138,.14);
+      --primary:#1e40af; --accent:#0284c7; --ok:#16a34a; --warn:#f59e0b; --radius:16px;
+      --shadow:0 16px 34px rgba(30,58,138,.10);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text);}
+    .container{max-width:1120px; margin:28px auto 54px; padding:0 16px;}
+    .top{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px;}
+    .crumb{
+      font-size:13px;
+      color:#6b7e99;
+      font-weight:700;
+      letter-spacing:.15px;
+    }
+    h1{
+      margin:6px 0 0;
+      font-size:34px;
+      color:#0b2a55;
+      letter-spacing:.25px;
+      line-height:1.1;
+      text-shadow:0 1px 0 rgba(255,255,255,.5);
+    }
+    .sub{margin:8px 0 0; color:var(--muted); font-size:14px;}
+    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-start;}
+    .btn{border:0; border-radius:12px; padding:10px 14px; font-weight:800; cursor:pointer; align-self:flex-start;}
+    .btn.primary{background:linear-gradient(135deg,var(--primary),var(--accent)); color:#fff;}
+    .btn.ghost{background:#fff; border:1px solid var(--line); color:var(--text);}
+    .btn.google{
+      background:linear-gradient(135deg,#facc15,#f59e0b);
+      color:#422006;
+      border:1px solid rgba(180,83,9,.35);
+      box-shadow:0 10px 18px rgba(245,158,11,.28);
+    }
+    .btn.google:hover{filter:brightness(1.03);}
+    .btn.back{
+      background:linear-gradient(135deg,#1e40af,#2563eb);
+      color:#fff;
+      border:1px solid rgba(29,78,216,.35);
+      box-shadow:0 8px 18px rgba(29,78,216,.2);
+      padding:8px 12px;
+      font-size:13px;
+    }
+    .btn.back:hover{filter:brightness(1.03);}
+    .grid{display:grid; grid-template-columns:1.2fr .8fr; gap:18px;}
+    .stack{display:grid; gap:16px;}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px;}
+    .hero{background:linear-gradient(135deg,rgba(30,64,175,.10),rgba(2,132,199,.08));}
+    .meta{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
+    .pill{padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff; font-size:12px; font-weight:800;}
+    .pill.status{background:rgba(2,132,199,.12); border-color:rgba(2,132,199,.35); color:#0e7490;}
+    .kpis{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:10px;}
+    .kpi{background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%); border:1px solid var(--line); border-radius:12px; padding:10px;}
+    .kpi .l{font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:800;}
+    .kpi .v{font-size:20px; font-weight:900; margin-top:4px;}
+    .progress{margin-top:10px;}
+    .bar{height:10px; border-radius:999px; background:rgba(15,23,42,.08); overflow:hidden;}
+    .bar > div{height:100%; width:0; background:linear-gradient(135deg,var(--primary),var(--accent));}
+    .row{display:flex; justify-content:space-between; font-size:12px; color:var(--muted); font-weight:700; margin-bottom:7px;}
+    h2{margin:0 0 10px; font-size:19px; color:#123a75; letter-spacing:.2px;}
+    .card > h2{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .card > h2::before{
+      content:"";
+      width:9px;
+      height:9px;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      box-shadow:0 0 0 3px rgba(2,132,199,.14);
+    }
+    .muted{margin:0 0 10px; color:var(--muted); font-size:13px;}
+    table{width:100%; border-collapse:separate; border-spacing:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);}
+    th,td{padding:10px; border-bottom:1px solid var(--line); font-size:13px; text-align:left; vertical-align:top;}
+    th{font-size:11px; text-transform:uppercase; background:rgba(30,64,175,.08); color:#123a75;}
+    tr:last-child td{border-bottom:0;}
+    .num{text-align:right; font-variant-numeric:tabular-nums;}
+    .badge{display:inline-flex; border:1px solid var(--line); border-radius:999px; padding:4px 8px; font-size:11px; font-weight:800;}
+    .b-ok{background:rgba(22,163,74,.11); color:#166534; border-color:rgba(22,163,74,.3);}
+    .b-warn{background:rgba(245,158,11,.11); color:#7c2d12; border-color:rgba(245,158,11,.35);}
+    .task-chart{
+      margin-top:10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:10px;
+    }
+    .task-chart svg{width:100%; height:180px; display:block;}
+    .task{border:1px solid var(--line); border-radius:12px; background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%); padding:10px; margin-bottom:8px;}
+    .task:last-child{margin-bottom:0;}
+    .task h4{margin:0 0 5px;}
+    .task .m{font-size:12px; color:var(--muted); margin-bottom:5px;}
+    .task-actions{display:flex; justify-content:flex-end; margin-top:6px;}
+    .task-actions button{border:1px solid var(--line); background:#fff; color:#1e3a8a; border-radius:8px; padding:4px 8px; font-size:12px; font-weight:800; cursor:pointer;}
+    .task-actions button.syncing{opacity:.6; pointer-events:none;}
+    .empty{font-size:13px; color:var(--muted);}
+    .flux-mini{
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:linear-gradient(180deg,#ffffff 0%, #f8fbff 100%);
+      padding:8px 10px;
+      margin-bottom:8px;
+    }
+    aside.stack{position:sticky; top:14px; align-self:start;}
+    .sub{max-width:74ch;}
+    .flux-mini:last-child{margin-bottom:0;}
+    .flux-mini .h{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      font-size:13px;
+      font-weight:800;
+      color:#0f172a;
+    }
+    .flux-mini .d{
+      margin-top:3px;
+      font-size:12px;
+      color:var(--muted);
+      text-align:right;
+    }
+    .cal-app{margin-top:10px; border:1px solid var(--line); border-radius:12px; background:#fff; overflow:hidden;}
+    .cal-toolbar{
+      display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px;
+      background:linear-gradient(180deg,#fff,#f8fbff); border-bottom:1px solid var(--line);
+    }
+    .cal-nav{display:flex; gap:6px; align-items:center;}
+    .cal-btn{
+      border:1px solid var(--line); background:#fff; color:#123a75; border-radius:8px; padding:6px 10px;
+      font-size:12px; font-weight:800; cursor:pointer;
+    }
+    .cal-title{font-size:14px; font-weight:900; color:#0b2a55;}
+    .cal-grid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr));}
+    .cal-dow{
+      padding:8px; text-align:center; font-size:11px; font-weight:800; color:#64748b;
+      border-bottom:1px solid var(--line); background:rgba(30,64,175,.04);
+    }
+    .cal-cell{
+      min-height:68px; border-right:1px solid var(--line); border-bottom:1px solid var(--line);
+      padding:6px; background:#fff;
+    }
+    .cal-cell:nth-child(7n){border-right:0;}
+    .cal-cell.out{background:#f8fafc; color:#94a3b8;}
+    .cal-day{font-size:12px; font-weight:800; margin-bottom:4px;}
+    .cal-chip{
+      display:block; margin-bottom:4px; padding:3px 6px; border-radius:999px; font-size:11px; font-weight:700;
+      background:rgba(2,132,199,.12); color:#0e7490; border:1px solid rgba(2,132,199,.25);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .cal-detail{
+      margin-top:10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:10px;
+    }
+    .cal-detail h4{
+      margin:0 0 8px;
+      font-size:14px;
+      color:#123a75;
+    }
+    .cal-detail-item{
+      border:1px solid var(--line);
+      border-radius:10px;
+      background:#f8fbff;
+      padding:8px;
+      margin-bottom:8px;
+      font-size:12px;
+      color:#0f172a;
+    }
+    .cal-detail-item:last-child{margin-bottom:0;}
+    .cal-detail-meta{font-size:11px; color:#64748b; margin-top:4px;}
+    @media (max-width:1000px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr} aside.stack{position:static;}}
+    @media (max-width:640px){.kpis{grid-template-columns:1fr}}
+  </style>
+  <script src="navbar.js" defer></script>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <div class="crumb">Mes projets / Voir plus / Suivi projet</div>
+        <h1>Suivi projet</h1>
+      </div>
+      <div class="actions">
+        <button class="btn back" type="button" onclick="window.location.href='detailsEntrepreneur.html'+window.location.search">← Retour détails</button>
+      </div>
+    </div>
+
+    <section class="card hero">
+      <h2 id="projectTitle">Projet</h2>
+      <div class="meta">
+        <span class="pill status" id="projectStatus">-</span>
+        <span class="pill" id="projectSector">-</span>
+        <span class="pill">Début: <span id="startDate">-</span></span>
+        <span class="pill">Fin cible: <span id="targetDate">-</span></span>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="l">Avancement global</div><div class="v" id="kProgress">0%</div></div>
+        <div class="kpi"><div class="l">Jours restants</div><div class="v" id="kDaysLeft">0</div></div>
+        <div class="kpi"><div class="l">Budget consomme</div><div class="v" id="kConsumed">0 TND</div></div>
+        <div class="kpi"><div class="l">Derniere MAJ</div><div class="v" style="font-size:16px;" id="kUpdated">-</div></div>
+      </div>
+      <div class="progress">
+        <div class="row"><span>Execution</span><span id="progressPctLabel">0%</span></div>
+        <div class="bar"><div id="progressBar"></div></div>
+      </div>
+    </section>
+
+    <section class="grid" style="margin-top:16px;">
+      <div class="stack">
+        <article class="card">
+          <h2>Calendrier</h2>
+          <div class="cal-app">
+            <div class="cal-toolbar">
+              <div class="cal-nav">
+                <button class="cal-btn" type="button" id="calPrevBtn">‹</button>
+                <button class="cal-btn" type="button" id="calTodayBtn">Aujourd'hui</button>
+                <button class="cal-btn" type="button" id="calNextBtn">›</button>
+              </div>
+              <div class="cal-title" id="calTitle">-</div>
+            </div>
+            <div class="cal-grid" id="calDow"></div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+          <div class="cal-detail" id="calDetailBox">
+            <h4 id="calDetailTitle">Details des tâches</h4>
+            <div id="calDetailList" class="empty">Cliquez une date pour voir les tâches.</div>
+          </div>
+          <div style="margin:10px 0 0;">
+            <button class="btn google" type="button" onclick="openGoogleCalendarFull()">Continuez avec Google</button>
+          </div>
+        </article>
+        <article class="card">
+          <h2>Taches realisees</h2>
+          <p class="muted">Journal dynamique saisi par l'entrepreneur depuis la page Modifier projet.</p>
+          <div id="tasksWrap" class="empty">Aucune tache enregistree.</div>
+          <div class="task-chart" id="tasksChart">
+            <div class="empty">Graphique indisponible (aucune tache).</div>
+          </div>
+        </article>
+      </div>
+      <aside class="stack">
+        <article class="card">
+          <h2>Budget execution</h2>
+          <table>
+            <tbody>
+              <tr><td><b>Budget alloue</b></td><td class="num" id="budgetAllocated">0 TND</td></tr>
+              <tr><td><b>Budget consomme</b></td><td class="num" id="budgetConsumed">0 TND</td></tr>
+              <tr><td><b>Reste budget</b></td><td class="num" id="budgetRemaining">0 TND</td></tr>
+              <tr><td><b>Financement confirme</b></td><td class="num" id="confirmedTotal">0 TND</td></tr>
+            </tbody>
+          </table>
+        </article>
+        <article class="card">
+          <h2>Charges</h2>
+          <table>
+            <tbody>
+              <tr><td><b>Total charges</b></td><td class="num" id="totalCharges">0 TND</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;">
+            <div class="muted" style="margin-bottom:6px;">Dernieres charges</div>
+            <div id="chargesWrap" class="empty">Aucune charge.</div>
+          </div>
+        </article>
+        <article class="card">
+          <h2>Gains</h2>
+          <table>
+            <tbody>
+              <tr><td><b>Total gains</b></td><td class="num" id="totalGains">0 TND</td></tr>
+              <tr><td><b>Net operationnel</b></td><td class="num" id="netOperations">0 TND</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:10px;">
+            <div class="muted" style="margin-bottom:6px;">Derniers gains</div>
+            <div id="gainsWrap" class="empty">Aucun gain.</div>
+          </div>
+        </article>
+        <article class="card">
+          <h2>Remboursements</h2>
+          <table>
+            <tbody>
+              <tr><td><b>Prochaine echeance</b></td><td class="num" id="nextDue">-</td></tr>
+              <tr><td><b>Total paye</b></td><td class="num" id="totalPaid">0 TND</td></tr>
+              <tr><td><b>Reste a payer</b></td><td class="num" id="remaining">0 TND</td></tr>
+              <tr><td><b>Taux echeances payees</b></td><td class="num" id="onTimeRate">0%</td></tr>
+            </tbody>
+          </table>
+        </article>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const fmt = (n) => new Intl.NumberFormat("fr-TN").format(Math.round(Number(n || 0))) + " TND";
+    const jsonString = (v) => (v == null ? "" : String(v));
+
+    function withBridge(onReady){
+      const start = Date.now();
+      const t = setInterval(() => {
+        if (window.javaBridge) {
+          clearInterval(t);
+          onReady(window.javaBridge);
+          return;
+        }
+        if (Date.now() - start > 2000) clearInterval(t);
+      }, 100);
+    }
+
+    function statusLabel(raw){
+      const s = String(raw || "").toUpperCase();
+      if (s === "INVESTISSEMENT_EN_COURS") return "Campagne d'investissement en cours";
+      if (s === "PROJET_EN_COURS") return "Projet en cours";
+      if (s === "INVESTISSEMENT_TERMINE") return "Investissement termine";
+      if (s === "EN_ATTENTE") return "En attente";
+      if (s === "BROUILLON") return "Brouillon";
+      if (s === "REFUSE") return "Refuse";
+      if (s === "VALIDE") return "Valide";
+      return raw || "-";
+    }
+
+    function renderTasks(tasks){
+      const host = document.getElementById("tasksWrap");
+      if (!Array.isArray(tasks) || !tasks.length) {
+        host.className = "empty";
+        host.textContent = "Aucune tache enregistree.";
+        renderTasksChart([]);
+        return;
+      }
+      host.className = "";
+      host.innerHTML = tasks.map(t => `
+        <div class="task">
+          <h4>${jsonString(t.title)}</h4>
+          <div class="m">Du ${jsonString(t.dateStart || t.date || "-")} au ${jsonString(t.dateEnd || t.date || "-")} • Delta progression: ${Number(t.progressDelta || 0)}% • Coût: ${fmt(t.cost)}</div>
+          <div class="m">Calendar: ${jsonString(t.calendarStatus || "-")} ${jsonString(t.calendarSyncedAt || "")}</div>
+          <p>${jsonString(t.description) || "Sans description."}</p>
+          <div class="task-actions">
+            <button type="button" class="sync-task-btn" data-task-id="${Number(t.id || 0)}">Sync Calendar</button>
+          </div>
+        </div>
+      `).join("");
+      host.querySelectorAll(".sync-task-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.getAttribute("data-task-id") || 0);
+          if (!id) return;
+          syncOneTaskToCalendar(id, btn);
+        });
+      });
+      renderTasksChart(tasks);
+    }
+
+    function renderFluxList(hostId, list, emptyText){
+      const host = document.getElementById(hostId);
+      if (!host) return;
+      if (!Array.isArray(list) || !list.length){
+        host.className = "empty";
+        host.textContent = emptyText;
+        return;
+      }
+      host.className = "";
+      host.innerHTML = list.slice(0,5).map(x => `
+        <div class="flux-mini">
+          <div class="h">
+            <span>${jsonString(x.description || "-")}</span>
+            <span>${fmt(x.amount)}</span>
+          </div>
+          <div class="d">${jsonString(x.date || "")}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderTasksChart(tasks){
+      const host = document.getElementById("tasksChart");
+      if (!host) return;
+      if (!Array.isArray(tasks) || !tasks.length){
+        host.innerHTML = `<div class="empty">Graphique indisponible (aucune tache).</div>`;
+        return;
+      }
+
+      const ordered = tasks.slice().reverse(); // oldest -> newest
+      let cum = 0;
+      const series = ordered.map((t) => {
+        const delta = Number(t && t.progressDelta != null ? t.progressDelta : 0);
+        cum += (Number.isFinite(delta) ? delta : 0);
+        if (cum < 0) cum = 0;
+        if (cum > 100) cum = 100;
+        const labelRaw = String((t && (t.dateStart || t.date || t.dateEnd)) || "");
+        return {
+          xLabel: labelRaw.length >= 10 ? labelRaw.slice(5, 10) : (labelRaw || String((t && t.id) || "")),
+          y: cum
+        };
+      });
+      if (!series.length) {
+        host.innerHTML = `<div class="empty">Graphique indisponible (aucune tache).</div>`;
+        return;
+      }
+
+      const w = 760, h = 180, p = 22;
+      const innerW = w - p * 2;
+      const innerH = h - p * 2;
+      const step = series.length > 1 ? innerW / (series.length - 1) : 0;
+
+      const points = series.map((v, i) => {
+        const x = p + (step * i);
+        const y = p + (innerH - (v.y / 100) * innerH);
+        return `${x},${y}`;
+      }).join(" ");
+
+      const labels = series.map((v, i) => {
+        const x = p + (step * i);
+        const y = h - 4;
+        return `<text x="${x}" y="${y}" text-anchor="middle" font-size="10" fill="#64748b">${v.xLabel}</text>`;
+      }).join("");
+
+      const yGuides = [0,25,50,75,100].map((val) => {
+        const y = p + (innerH - (val / 100) * innerH);
+        return `
+          <line x1="${p}" y1="${y}" x2="${w - p}" y2="${y}" stroke="rgba(15,23,42,.10)" stroke-width="1" />
+          <text x="4" y="${y + 3}" font-size="10" fill="#64748b">${val}%</text>
+        `;
+      }).join("");
+
+      const last = series[series.length - 1];
+      const finalLabel = `<text x="${w - p}" y="${p - 6}" text-anchor="end" font-size="11" fill="#0f172a" font-weight="700">Avancement cumule: ${Math.round(last.y)}%</text>`;
+
+      host.innerHTML = `
+        <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+          ${yGuides}
+          <polyline fill="none" stroke="rgba(29,78,216,.20)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+          <polyline fill="none" stroke="#1d4ed8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+          ${labels}
+          ${finalLabel}
+        </svg>
+      `;
+    }
+
+    let calViewDate = new Date();
+    let calTasks = [];
+    const CAL_DOW = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+    const CAL_MONTHS = ["Janvier","Fevrier","Mars","Avril","Mai","Juin","Juillet","Aout","Septembre","Octobre","Novembre","Decembre"];
+    const toIso = (d) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    };
+    const parseIsoDate = (s) => {
+      if (!s || typeof s !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+      const p = s.split("-").map(Number);
+      return new Date(p[0], p[1] - 1, p[2]);
+    };
+
+    function tasksForDay(day){
+      const dayIso = toIso(day);
+      return calTasks.filter((t) => {
+        const st = String(t && t.calendarStatus || "").toUpperCase();
+        if (!st.startsWith("SYNCED")) return false;
+        const s = parseIsoDate(t.dateStart || t.date);
+        const e = parseIsoDate(t.dateEnd || t.dateStart || t.date);
+        if (!s || !e) return false;
+        return dayIso >= toIso(s) && dayIso <= toIso(e);
+      });
+    }
+
+    function renderIntegratedCalendar(){
+      const dow = document.getElementById("calDow");
+      const grid = document.getElementById("calGrid");
+      const title = document.getElementById("calTitle");
+      if (!dow || !grid || !title) return;
+
+      dow.innerHTML = CAL_DOW.map((d) => `<div class="cal-dow">${d}</div>`).join("");
+      title.textContent = `${CAL_MONTHS[calViewDate.getMonth()]} ${calViewDate.getFullYear()}`;
+
+      const first = new Date(calViewDate.getFullYear(), calViewDate.getMonth(), 1);
+      const start = new Date(first);
+      start.setDate(first.getDate() - first.getDay());
+
+      const cells = [];
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const inMonth = d.getMonth() === calViewDate.getMonth();
+        const dayTasks = tasksForDay(d);
+        const chips = dayTasks.slice(0, 2).map((t) => `<span class="cal-chip">${jsonString(t.title || "Tache")}</span>`).join("");
+        cells.push(`<div class="cal-cell ${inMonth ? "" : "out"}" data-date="${toIso(d)}"><div class="cal-day">${d.getDate()}</div>${chips}</div>`);
+      }
+      grid.innerHTML = cells.join("");
+      grid.querySelectorAll(".cal-cell").forEach((el) => {
+        el.addEventListener("click", () => {
+          const raw = String(el.getAttribute("data-date") || "");
+          const day = parseIsoDate(raw);
+          if (!day) return;
+          showCalendarDayDetails(day);
+        });
+      });
+      showCalendarDayDetails(new Date());
+    }
+
+    function showCalendarDayDetails(day){
+      const title = document.getElementById("calDetailTitle");
+      const list = document.getElementById("calDetailList");
+      if (!title || !list) return;
+      const dayIso = toIso(day);
+      const rows = tasksForDay(day);
+      title.textContent = `Taches du ${dayIso}`;
+      if (!rows.length){
+        list.className = "empty";
+        list.textContent = "Aucune tâche synchronisée pour cette date.";
+        return;
+      }
+      list.className = "";
+      list.innerHTML = rows.map((t) => `
+        <div class="cal-detail-item">
+          <div><b>${jsonString(t.title || "-")}</b></div>
+          <div class="cal-detail-meta">${jsonString(t.dateStart || t.date || "-")} -> ${jsonString(t.dateEnd || t.date || "-")}</div>
+          <div style="margin-top:6px;">${jsonString(t.description || "Sans description.")}</div>
+        </div>
+      `).join("");
+    }
+
+    function openGoogleCalendarFull(){
+      withBridge((bridge) => {
+        if (!bridge || typeof bridge.openGoogleCalendarInApp !== "function") {
+          alert("Vue Google complète non disponible.");
+          return;
+        }
+        const r = bridge.openGoogleCalendarInApp();
+        if (!(r && r.startsWith("OK"))) alert((r || "Erreur ouverture calendrier").replace("ERROR:", ""));
+      });
+    }
+
+    function load(){
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      if (!id) return;
+      withBridge((bridge) => {
+        if (typeof bridge.getSuiviProjetJson !== "function") return;
+        const payload = bridge.getSuiviProjetJson(String(id));
+        const data = JSON.parse(payload || "{}");
+        const p = data.project || {};
+        const e = data.execution || {};
+        const f = data.finance || {};
+        const r = data.repayments || {};
+        const tasks = data.tasks || [];
+        const charges = data.charges || [];
+        const gains = data.gains || [];
+        const op = data.operations || {};
+
+        document.getElementById("projectTitle").textContent = p.title || "Projet";
+        document.getElementById("projectStatus").textContent = statusLabel(p.status);
+        document.getElementById("projectSector").textContent = p.sector || "-";
+        document.getElementById("startDate").textContent = p.startDate || "-";
+        document.getElementById("targetDate").textContent = p.targetEndDate || "-";
+
+        const progress = Math.max(0, Math.min(100, Number(e.progressPct || 0)));
+        const allocated = Number(e.budgetAllocated || 0);
+        const consumed = Number(e.budgetConsumed || 0);
+
+        document.getElementById("kProgress").textContent = progress + "%";
+        document.getElementById("kDaysLeft").textContent = Number(e.daysLeft || 0);
+        document.getElementById("kConsumed").textContent = fmt(consumed);
+        document.getElementById("kUpdated").textContent = (e.lastUpdate || "-").replace("T", " ");
+        document.getElementById("progressPctLabel").textContent = progress + "%";
+        document.getElementById("progressBar").style.width = progress + "%";
+
+        document.getElementById("budgetAllocated").textContent = fmt(allocated);
+        document.getElementById("budgetConsumed").textContent = fmt(consumed);
+        document.getElementById("budgetRemaining").textContent = fmt(Math.max(0, allocated - consumed));
+        document.getElementById("confirmedTotal").textContent = fmt(Number(f.confirmedTotal || 0));
+
+        document.getElementById("nextDue").textContent = r.nextDue || "-";
+        document.getElementById("totalPaid").textContent = fmt(Number(r.totalPaid || 0));
+        document.getElementById("remaining").textContent = fmt(Number(r.remaining || 0));
+        document.getElementById("onTimeRate").textContent = Number(r.onTimeRate || 0) + "%";
+        document.getElementById("totalCharges").textContent = fmt(Number(op.totalCharges || 0));
+        document.getElementById("totalGains").textContent = fmt(Number(op.totalGains || 0));
+        document.getElementById("netOperations").textContent = fmt(Number(op.net || 0));
+
+        renderTasks(tasks);
+        calTasks = Array.isArray(tasks) ? tasks.slice() : [];
+        renderIntegratedCalendar();
+        renderFluxList("chargesWrap", charges, "Aucune charge.");
+        renderFluxList("gainsWrap", gains, "Aucun gain.");
+      });
+    }
+
+    function syncOneTaskToCalendar(taskId, btnEl){
+      withBridge((bridge) => {
+        if (typeof bridge.syncTaskToCalendar !== "function") return;
+        if (btnEl) {
+          btnEl.classList.add("syncing");
+          btnEl.textContent = "Sync...";
+        }
+        const r = bridge.syncTaskToCalendar(String(taskId));
+        if (!(r && r.startsWith("OK"))) {
+          alert((r || "Erreur sync").replace("ERROR:", ""));
+        } else {
+          if (typeof bridge.refreshGoogleCalendarInApp === "function") {
+            try { bridge.refreshGoogleCalendarInApp(); } catch (e) {}
+          }
+        }
+        if (btnEl) {
+          btnEl.classList.remove("syncing");
+          btnEl.textContent = "Sync Calendar";
+        }
+        load();
+      });
+    }
+
+    document.getElementById("syncCalendarBtn")?.addEventListener("click", () => {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      if (!id) return;
+      withBridge((bridge) => {
+        if (typeof bridge.syncProjectTasksToCalendar !== "function") return;
+        const r = bridge.syncProjectTasksToCalendar(String(id));
+        if (!(r && r.startsWith("OK"))) alert((r || "Erreur sync globale").replace("ERROR:", ""));
+        load();
+      });
+    });
+
+    document.getElementById("calPrevBtn")?.addEventListener("click", () => {
+      calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth() - 1, 1);
+      renderIntegratedCalendar();
+    });
+    document.getElementById("calNextBtn")?.addEventListener("click", () => {
+      calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth() + 1, 1);
+      renderIntegratedCalendar();
+    });
+    document.getElementById("calTodayBtn")?.addEventListener("click", () => {
+      const now = new Date();
+      calViewDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      renderIntegratedCalendar();
+    });
+
+    load();
+  </script>
+</body>
+</html>
+

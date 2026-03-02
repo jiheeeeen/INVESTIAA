@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Investia - Reçus et signatures</title>
+  <link rel="stylesheet" href="../financement/financement.css" />
+  <script src="../../../../../../inv/INEVSTIAA-F%20(2)/INEVSTIAA-F%20(1)/INEVSTIAA-F/src/main/resources/navbar.js" defer></script>
+  <style>
+    .okBadge { color:#0d7a3d; font-weight:700; }
+    .koBadge { color:#a73333; font-weight:700; }
+    .rowActions { display:flex; gap:8px; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="top">
+      <div>
+        <span class="badgeTop"><span class="badgeDot"></span>Documents de paiement</span>
+        <h1>Historique des reçus et signatures</h1>
+        <p class="sub">Entrepreneur: consultation, ouverture fichier et vérification d'intégrité.</p>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btnTop btnGhost" href="remboursements-financement.html">Retour</a>
+        <button id="refreshBtn" class="btnTop btnNavy" type="button">Rafraichir</button>
+      </div>
+    </div>
+
+    <section class="card">
+      <table aria-label="Historique des documents">
+        <thead>
+          <tr>
+            <th>Reçu</th>
+            <th>Projet</th>
+            <th>Signature</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="note" id="result" style="display:none;"></div>
+    </section>
+  </main>
+
+  <script>
+    const tbody = document.getElementById("tbody");
+    const result = document.getElementById("result");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    function show(msg){
+      result.style.display = "block";
+      result.textContent = msg;
+    }
+
+    function esc(s){
+      return String(s || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll("\"","&quot;");
+    }
+
+    function loadDocs(){
+      if (!window.javaBridge || typeof window.javaBridge.getPaymentDocumentsForCurrentEntrepreneurJson !== "function"){
+        show("Bridge documents indisponible.");
+        return;
+      }
+      try {
+        const raw = window.javaBridge.getPaymentDocumentsForCurrentEntrepreneurJson();
+        const rows = JSON.parse(String(raw || "[]"));
+        render(Array.isArray(rows) ? rows : []);
+      } catch (e){
+        show("Erreur chargement documents: " + e);
+      }
+    }
+
+    function render(rows){
+      if (!rows.length){
+        tbody.innerHTML = "<tr><td colspan='6'>Aucun document disponible.</td></tr>";
+        return;
+      }
+      tbody.innerHTML = rows.map(r => {
+        const recu = "#" + esc(r.recuId);
+        const proj = esc(r.projectName || "-");
+        const sig = esc(r.signatureId || "-");
+        const d = esc(r.generatedAt || "-");
+        const t = esc(r.fileType || "-");
+        const p = esc(r.filePath || "");
+        return `
+          <tr>
+            <td>${recu}<br/><small>Remb. #${esc(r.remboursementId)}</small></td>
+            <td>${proj}</td>
+            <td>${sig}<br/><small>${esc(r.signerName || "")}</small></td>
+            <td>${d}</td>
+            <td>${t}</td>
+            <td>
+              <div class="rowActions">
+                <button class="miniBtn edit" type="button" onclick="openDoc(${Number(r.recuId || 0)}, '${p.replaceAll("\\", "\\\\").replaceAll("'", "\\'")}')">Ouvrir</button>
+                <button class="miniBtn" type="button" onclick="verifyDoc(${Number(r.recuId || 0)})">Verifier integrite</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    window.openDoc = function(recuId, path){
+      const p = String(path || "").trim();
+      const rid = Number(recuId || 0);
+      if (!window.javaBridge){
+        show("Ouverture indisponible.");
+        return;
+      }
+      if (typeof window.javaBridge.openReceiptDocumentFromJs === "function"){
+        const raw = window.javaBridge.openReceiptDocumentFromJs(
+          "recuId=" + encodeURIComponent(String(rid)) + "&path=" + encodeURIComponent(p)
+        );
+        try {
+          const res = JSON.parse(String(raw || "{}"));
+          if (!res.ok) show("Ouverture impossible: " + (res.message || "fichier introuvable"));
+        } catch (_e) {}
+        return;
+      }
+      if (!p){
+        show("Chemin fichier vide.");
+        return;
+      }
+      if (typeof window.javaBridge.openExternalUrl !== "function"){
+        show("Ouverture indisponible.");
+        return;
+      }
+      const normalized = p.replace(/\\/g, "/");
+      window.javaBridge.openExternalUrl("url=" + encodeURIComponent("file:///" + normalized));
+    };
+
+    window.verifyDoc = function(recuId){
+      if (!recuId){
+        show("ID recu invalide.");
+        return;
+      }
+      if (!window.javaBridge || typeof window.javaBridge.verifyReceiptIntegrityFromJs !== "function"){
+        show("Verification indisponible.");
+        return;
+      }
+      const raw = window.javaBridge.verifyReceiptIntegrityFromJs("recuId=" + encodeURIComponent(String(recuId)));
+      if (!raw){
+        show("Reponse verification vide.");
+        return;
+      }
+      try {
+        const res = JSON.parse(String(raw));
+        if (!res.ok){
+          show("Erreur verification: " + (res.message || "inconnue"));
+          return;
+        }
+        show((res.valid ? "Integrite OK" : "Integrite KO") + " | expected=" + (res.expected || "-") + " | actual=" + (res.actual || "-"));
+      } catch (e){
+        show("Erreur lecture verification.");
+      }
+    };
+
+    refreshBtn.addEventListener("click", loadDocs);
+
+    function init(){
+      if (window.javaBridge && typeof window.javaBridge.getCurrentUserRole === "function"){
+        const role = String(window.javaBridge.getCurrentUserRole() || "");
+        if (role && role !== "ENTREPRENEUR"){
+          show("Page reservee a l'entrepreneur.");
+          return;
+        }
+      }
+      loadDocs();
+    }
+
+    function waitForBridge(retries){
+      if (window.javaBridge){ init(); return; }
+      if (retries <= 0){ show("Bridge Java indisponible."); return; }
+      setTimeout(() => waitForBridge(retries - 1), 200);
+    }
+    waitForBridge(30);
+  </script>
+</body>
+</html>

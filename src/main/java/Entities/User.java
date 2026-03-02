@@ -44,6 +44,10 @@ public class User {
         this.role = role;
     }
 
+    private String faceTemplate;
+    public String getFaceTemplate() { return faceTemplate; }
+    public void setFaceTemplate(String faceTemplate) { this.faceTemplate = faceTemplate; }
+
     // --- getters/setters ---
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
